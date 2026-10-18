@@ -20,7 +20,6 @@ import { DiplomacyWindow } from "../../windows/diplomacy/DiplomacyWindow";
 import { DoctrineWindow } from "../../windows/DoctrineWindow";
 import { FacilityPopup } from "../../windows/FacilityPopup";
 import { GlobalUnitsPanel } from "../../windows/GlobalUnitsPanel";
-import { SaveLoadWindow } from "../../windows/SaveLoadWindow";
 import { StockpilePopup } from "../../windows/StockpilePopup";
 import { TurnReportWindow } from "../../windows/turnReport/TurnReportWindow";
 import { UnitDrawer } from "../../windows/UnitDrawer";
@@ -51,8 +50,6 @@ export function GameScreen() {
   return (
     <div className="game-shell">
       <TopBar />
-
-      <SaveLoadWindow />
 
       <DiplomacyWindow />
 

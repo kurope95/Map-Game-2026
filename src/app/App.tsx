@@ -1,19 +1,16 @@
-import { LandingPage } from "../ui/LandingPage";
 import { KitGallery } from "../ui/dev/KitGallery";
 import { GameScreen } from "../ui/screens/game/GameScreen";
+import { StartScreen } from "../ui/screens/start/StartScreen";
 import { GameProvider, useGame } from "../ui/session/GameProvider";
+import { SaveLoadWindow } from "../ui/windows/SaveLoadWindow";
 
 function AppScreens() {
-  const { gameStarted, landingNations, playerCountryId, setPlayerCountryId, handleStartGame } = useGame();
-  return gameStarted ? (
-    <GameScreen />
-  ) : (
-    <LandingPage
-      nations={landingNations}
-      selectedCountryId={playerCountryId}
-      onSelectCountry={setPlayerCountryId}
-      onStartGame={handleStartGame}
-    />
+  const { gameStarted } = useGame();
+  return (
+    <>
+      {gameStarted ? <GameScreen /> : <StartScreen />}
+      <SaveLoadWindow />
+    </>
   );
 }
 

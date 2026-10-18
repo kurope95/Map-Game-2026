@@ -264,6 +264,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and dims every other region; the frame draws a 2 px `#f6e7b0` outline over the highlight and an
   `rgba(0,0,0,.35)` wash elsewhere, and nation labels stay on at every zoom. 2 tests.
   (plan 2026-10-18-visual-overhaul → Task 29)
+- Start screen ([`StartScreen.tsx`](./src/ui/screens/start/StartScreen.tsx)): the canvas map runs in
+  showcase mode as a background under a `rgba(9,11,13,.62)` overlay, with BRICS (6), Neutral (11) and
+  EU NATO (7) columns of nation cards and a 300 px briefing panel (difficulty, capital, territory,
+  starting forces, war entry). Hovering a card highlights that nation on the map; Start begins a new
+  game, Continue loads the autosave, and Load game opens the save window before a game starts
+  (`SaveLoadWindow` now renders from `App`, so it also works pre-game).
+  (plan 2026-10-18-visual-overhaul → Task 29)
 
 ### Decision
 - Task 27 (map labels and extras), choices where the spec or plan left room (plan 2026-10-18-visual-overhaul → Task 27):
@@ -537,6 +544,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- Task 29 start screen, checked in headless Chrome at 1440x900 and 1920x1080: 24 cards in columns of
+  6/11/7, Start as Russia enters the game, hovering Austria switches the showcase highlight, End Turn
+  writes the autosave, reloading shows "Continue · Russia, turn 2" (resumes on turn 2), and Load game
+  opens the save window from the start screen and loads the saved slot. Layout lock PASS at both sizes;
+  `npm run smoke`, `npm run balance-check`, `npm run check:layers` and `npm run validate-map` pass.
+  (plan 2026-10-18-visual-overhaul → Task 29)
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
   `npm run build` OK (1.2 MB JS bundle), `npm run smoke` passed, `npm run balance-check` passed
   for all 24 nations.
