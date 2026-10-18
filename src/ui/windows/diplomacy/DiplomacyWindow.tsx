@@ -12,6 +12,7 @@ import { Tabs } from "../../kit/Tabs";
 import { Window } from "../../kit/Window";
 import { useGame } from "../../session/GameProvider";
 import "./diplomacy.css";
+import "./diplomacy-actions.css";
 import { DiplomacyActions } from "./DiplomacyActions";
 import { DiplomacyBar } from "./DiplomacyBar";
 import { DiplomacyListCard } from "./DiplomacyListCard";

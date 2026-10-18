@@ -513,6 +513,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   callbacks ([`useStableCallback.ts`](./src/ui/session/useStableCallback.ts)); `MapView` is `React.memo` with a props
   comparator ([`mapViewProps.ts`](./src/ui/map/mapViewProps.ts), 6 tests) so re-renders caused by anything but the map's own
   inputs do not redraw it. The `?map=new` switch is gone. (plan 2026-10-18-visual-overhaul → Task 28)
+- [`diplomacy.css`](./src/ui/windows/diplomacy/diplomacy.css) was 427 lines, over the ~400-line signal; the
+  action-tile rules moved verbatim to [`diplomacy-actions.css`](./src/ui/windows/diplomacy/diplomacy-actions.css),
+  imported next to it from [`DiplomacyWindow.tsx`](./src/ui/windows/diplomacy/DiplomacyWindow.tsx). The
+  styleprint is IDENTICAL (17 states, 6234 elements) and the layout lock passes at both sizes.
+  (plan 2026-10-18-visual-overhaul → Task 30)
 
 ### Fixed
 - `npm run check-war-entry` expected one lost Polish key city for the Czech Republic to join, but the
