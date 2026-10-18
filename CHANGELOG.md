@@ -235,7 +235,9 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   network fading out by z 1.6, gold selection links with a faint hover preview, clickable edge pills that pan the
   camera, and the capital / key / other city markers with selection and link rings, in
   [`links.ts`](./src/ui/map/render/layers/links.ts) and [`cities.ts`](./src/ui/map/render/layers/cities.ts), 20
-  tests; the temporary `layers/base.ts` is gone); b2 (order arrows) NOT started; b3 (unit counters and stacks) NOT
+  tests; the temporary `layers/base.ts` is gone); b2 DONE (spec layer 13: the player's pending orders as curved arrows
+  with dark underlay, per-type color and pattern, arrowheads, bombard burst and a ×N badge for merged orders, in
+  [`arrows.ts`](./src/ui/map/render/layers/arrows.ts), 9 tests); b3 (unit counters and stacks) NOT
   started; b4 (depot badge, deposit chips, labels) NOT started; c (hover, tooltip, F3 meter, benchmark) NOT started.
   Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
   (plan 2026-10-18-visual-overhaul → Task 27)

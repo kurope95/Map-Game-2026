@@ -5,6 +5,7 @@ import type { MapGeometry } from "../geometry/buildMapGeometry";
 import type { BBox } from "../geometry/types";
 import type { FrameHitData } from "../layout/hitTest";
 import type { MapViewProps } from "../MapView";
+import { drawOrderArrows } from "./layers/arrows";
 import { drawBorders } from "./layers/borders";
 import { cityScreenPoints, drawCityMarkers } from "./layers/cities";
 import { drawFrontLine } from "./layers/front";
@@ -82,7 +83,7 @@ export function renderFrame(input: FrameInput): FrameHitData {
   );
   drawSupplyOverlay(ctx, geometry, derived, camera);
 
-  // screen space, layers 10-12 (Task 27 part b2-b4 add arrows, counters, depot and deposits, labels)
+  // screen space, layers 10-13 (Task 27 part b3-b4 add counters, depot and deposits, labels)
   setScreenTransform(ctx, dpr);
   const cities = cityScreenPoints(geometry, camera);
   drawLinkNetwork(ctx, linkPairs(state.regions), cities, input.z);
@@ -100,6 +101,8 @@ export function renderFrame(input: FrameInput): FrameHitData {
     selectedRegionId,
     linkedIds: toSet(selectedRegionId ? state.regions[selectedRegionId]?.adjacentRegionIds : undefined)
   });
+  const showcase = props.mode === "showcase";
+  if (!showcase) drawOrderArrows(ctx, derived.arrows, cities, viewport);
 
   return {
     counters: [],
