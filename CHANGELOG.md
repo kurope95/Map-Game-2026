@@ -740,6 +740,18 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (the Claude window has to be in front of every other window); three runs of `pan-zoom-bench.js` need about a minute of
   that, and the legacy numbers of Task 3 (`perf-legacy.md`) need the same. JS draw time is 1.4-1.5 ms on average (p95
   2.1-2.4 ms) with 0 React renders during the benchmark gestures. (plan 2026-10-18-visual-overhaul → Task 28)
+- C3 (no rule changes), checked against the `legacy` branch after Task 28: `git diff legacy main -- src/game` shows only new files
+  (`regionGeo`, `strategicDepot`, `playerActions` with tests, `scenarioBaseline.test.ts`) and two edits to existing files:
+  `turnEngine.ts` lost `hasBlocPathToRegion` (moved verbatim to `strategicDepot.ts`) and `createInitialState.ts` imports the map
+  points from their new file. `countries.ts` (the war-entry data), `diplomacy.ts`, `src/game/ai` and `src/game/sim` are identical.
+  The same fingerprint script run on the legacy tree and on `main` printed identical output (37 lines): Slovakia and Hungary join on
+  turn 5; Belarus joins after a major capital falls, after two key cities of one major power, or after one key city each of two major
+  powers (not after one); the Czech Republic after two Polish key cities or Warsaw (not after one); Finland when the Baltic Federation
+  is overrun (not when only its capital falls); neutral nations start at 0/0 support, diplomacy actions move it, one action per
+  target per turn, and fixed members and nations at war cannot be targeted. `npm run balance-check` printed the same table on both
+  trees. **Pre-existing mismatch, not touched:** `npm run check-war-entry` fails on `legacy` and on `main` alike (its Czech case
+  expects one lost Polish key city; the shipped rule and its description say two; `docs/v1-design.md` says one). Which is intended
+  is Marek's call.
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
