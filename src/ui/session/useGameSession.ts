@@ -37,18 +37,6 @@ export function useGameSession({ activeTab, clearSelection }: GameSessionOptions
     [gameState.units, playerCountryId]
   );
 
-  const landingNations = useMemo(
-    () =>
-      Object.values(gameState.countries)
-        .map((country) => ({
-          country,
-          state: gameState.countryStates[country.id],
-          startingUnitCount: Object.values(gameState.units).filter((unit) => unit.countryId === country.id).length,
-        }))
-        .sort((left, right) => left.country.name.localeCompare(right.country.name)),
-    [gameState.countries, gameState.countryStates, gameState.units]
-  );
-
   // All units belonging to current bloc (for global overview)
   const allPlayerUnits = useMemo(
     () => Object.values(gameState.units).filter((u) => u.countryId === playerCountryId),
@@ -197,7 +185,6 @@ export function useGameSession({ activeTab, clearSelection }: GameSessionOptions
     playerTurnActive,
     playerCountryUnits,
     allPlayerUnits,
-    landingNations,
     victoryStatus,
     currentOrders,
     currentRecommendation,

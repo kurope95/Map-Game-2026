@@ -540,6 +540,9 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (plan 2026-10-18-visual-overhaul → Task 26)
 
 ### Removed
+- The old landing page: `src/ui/LandingPage.tsx` and `LandingPage.css`, replaced by the start screen;
+  the `landingNations` list in `useGameSession` went with it. The `.nation-card` class is kept in
+  `StartScreen.css` for the parity tooling. (plan 2026-10-18-visual-overhaul → Task 29)
 - The SVG map: `src/ui/TheaterMap.tsx` (1206 lines) and `src/ui/TheaterMap.css`. Its `onSelectFacility` prop was declared
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
