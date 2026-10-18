@@ -65,7 +65,7 @@ No game rules, AI or balance change in this round.
 
 | # | Constraint | How it is checked |
 |---|---|---|
-| C1 | **Main-screen arrangement is frozen.** Same controls, same order, same container, same side. Container edges move at most 4 px; control centers at most 32 px horizontally and 4 px vertically (fonts change, so text widths change slightly) | Layout lock script (12.2) at 1440x900 and 1920x1080 |
+| C1 | **Main-screen arrangement is frozen.** Same controls, same order, same container and alignment group. The anchored edges of bars, panels, pop-ups, the unit drawer and windows move at most 4 px (a bottom-left panel keeps its left and bottom edges; content-sized widths and heights may change within their existing min/max limits). Controls inside the top and bottom bars keep their order and their row (vertical center within 4 px); icons may be added beside labels | Layout lock script (12.2) at 1440x900 and 1920x1080 |
 | C2 | **Smooth map.** During continuous pan/zoom at 1920x1080: average frame time ≤ 8 ms, p95 ≤ 12 ms; zero React re-renders of the map component | Pan/zoom benchmark (12.3) with the browser pane visible |
 | C3 | **No rule changes.** `src/game/` changes are limited to pure moves/extractions listed in 6.3 and display-only map-point data (11.2.4) | `npm run smoke`, `npm run balance-check` unchanged results; code review |
 | C4 | **Old saves load.** The `GameState` shape does not change | Load a save made on `legacy` |
@@ -492,9 +492,9 @@ Built entirely in the UI layer from the same log lines; engine text is not chang
 
 ### 11.3 Camera and interaction
 
-- **Camera:** `{ scale, offsetX, offsetY }`, the same meaning as today. `MIN_SCALE` 0.6 and
-  `MAX_SCALE` 26 stay. The default view fits all region points with 40 px padding, as today.
-  Zoom level for level-of-detail rules: `z = scale / defaultScale`.
+- **Camera:** `{ scale, offsetX, offsetY }`, where `scale` is screen pixels per world unit. The
+  default view fits all region points with 40 px padding, as today. Zoom level for level-of-detail
+  rules: `z = scale / defaultScale`. Zoom is limited to `0.6 ≤ z ≤ 24`, roughly today's range.
 - **Pan:** pointer drag past a 5 px threshold. Panning is clamped so at least 25% of the world
   stays on screen. While dragging, the cursor is `grabbing`.
 - **Zoom:**
@@ -535,9 +535,10 @@ constant on screen.
 3. **Background land:** non-scenario countries filled `#3a3f45`, with 1 px darker borders.
 4. **Region fills:**
    - Each region is filled with its **controller's** nation color.
-   - Regions alternate a ±6% lightness variant (`rgba(255,255,255,.06)` or `rgba(0,0,0,.07)`
-     overlay), assigned by a stable hash of the region id, so neighbors with the same owner stay
-     distinct.
+   - Each region gets one of four shade variants, drawn as an overlay:
+     `rgba(255,255,255,.06)`, none, `rgba(0,0,0,.07)` or `rgba(255,255,255,.03)`.
+   - Variants are assigned once, at geometry build time, by greedy coloring over neighboring
+     regions, so neighbors with the same owner stay distinct.
 5. **Occupation stripes:**
    - A region is occupied when its controller differs from its **pre-war controller**. The pre-war
      controller is the region's `controllerCountryId` in `state.scenario.regions`, which the rules

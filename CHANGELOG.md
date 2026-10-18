@@ -46,6 +46,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   split `App.tsx`/`styles.css`, style C ("painted strategy map") restyle with frozen main-screen
   layout, new start screen and turn report, Canvas 2D map with per-region controller colors,
   occupation stripes, front line, link lines, NATO counters and a ≤ 8 ms frame budget.
+- Round 1 implementation plan [`2026-10-18-visual-overhaul.md`](./docs/superpowers/plans/2026-10-18-visual-overhaul.md):
+  30 tasks in 6 phases (safety net, restructure, look, canvas map, start screen, wrap-up), each
+  with exact files, interfaces, tests and checks, ready for a Sonnet 5.5 implementation session.
+
+### Decision
+- Spec refinements made while planning: the layout lock compares bar controls by order and row (so
+  icons may be added beside labels) instead of exact x-positions; the zoom range is defined
+  relative to the default fit (0.6x-24x) because canvas scale differs from the old SVG viewBox
+  scale; region shade variants use greedy neighbor coloring instead of a hash so same-owner
+  neighbors never share a shade.
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
