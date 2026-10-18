@@ -16,20 +16,120 @@
   cursor: grabbing;
 }
 
+/* Hover tooltip: filled and positioned by MapController through a ref (no React render). */
 .map-tooltip {
   position: absolute;
+  left: 0;
+  top: 0;
   z-index: 6;
   display: none;
+  min-width: 170px;
+  max-width: 280px;
+  padding: 8px 10px 9px;
+  background: var(--surface-1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-window);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  line-height: 1.35;
   pointer-events: none;
+  will-change: transform;
 }
 
+.map-tooltip.is-visible {
+  display: block;
+}
+
+.map-tooltip__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.map-tooltip__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.map-tooltip__tag {
+  padding: 0 5px;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  color: var(--gold-bright);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.map-tooltip__row {
+  margin-top: 2px;
+  color: var(--text-dim);
+}
+
+.map-tooltip__controller {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+
+.map-tooltip__flag {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.map-tooltip__bloc {
+  padding: 0 5px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.map-tooltip__bloc--BRICS {
+  background: var(--brics-soft);
+  color: var(--brics-text);
+}
+
+.map-tooltip__bloc--EU_NATO {
+  background: var(--nato-soft);
+  color: var(--nato-text);
+}
+
+.map-tooltip__bloc--NEUTRAL {
+  background: var(--neutral-soft);
+  color: var(--neutral-text);
+}
+
+.map-tooltip__row--warn {
+  color: var(--warn);
+}
+
+/* Dev frame meter, toggled with F3. */
 .map-perf {
   position: absolute;
   left: 8px;
-  top: 8px;
+  top: 56px;
   z-index: 6;
   display: none;
+  padding: 4px 8px;
+  background: rgba(14, 17, 20, 0.86);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--good);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
   pointer-events: none;
+}
+
+.map-perf.is-visible {
+  display: block;
 }
 
 .map-controls {

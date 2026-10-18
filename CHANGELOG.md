@@ -244,8 +244,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   chips from z 3.5 in [`extras.ts`](./src/ui/map/render/layers/extras.ts), nation names with letter spacing, size by
   area and a fade between z 1.3 and 1.6, and collision-avoided city labels with forced labels for the selection and
   its links in [`labels.ts`](./src/ui/map/render/layers/labels.ts), 17 tests; `pills` slide apart along a shared
-  screen edge; nation names are anchored by the part of their largest region inside the default view); c (hover,
-  tooltip, F3 meter, benchmark) NOT started. Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
+  screen edge; nation names are anchored by the part of their largest region inside the default view); c DONE (hover
+  hit-tested once per frame inside the frame callback, a DOM tooltip with name, Capital / Key city tag, controller flag,
+  name and bloc, "Occupied, originally …", units by side, fort and stability in [`tooltip.ts`](./src/ui/map/tooltip.ts)
+  (11 tests) filled through a ref with escaped text and hidden while dragging, and the dev-only F3 frame meter in
+  [`MapController.ts`](./src/ui/map/MapController.ts) and [`MapView.css`](./src/ui/map/MapView.css)); c2 (split
+  `MapController.ts`, now over the 400-line guideline) NOT started. Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
   (plan 2026-10-18-visual-overhaul → Task 27)
 
 ### Decision
@@ -690,6 +694,20 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   1920x1080, three runs) gave average 5.9-6.5 ms, p95 15.8-18.2 ms and `mapRenders: 0`, against ~45 ms average on the
   SVG map in the same mode. This is NOT a C2 measurement (hidden pane, no paint); real numbers need the pane visible.
   (plan 2026-10-18-visual-overhaul → Task 26)
+- Task 27 (layers 10-16, tooltip, hover, F3): `npm test` 256/256, `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
+  `npm run build`. Browser checks of the canvas map at `?map=new` (dev build, MessageChannel stand-in for
+  `requestAnimationFrame`; canvas screenshots saved through a helper): at z 1 the link network, capital stars,
+  forced gold labels for the selection and its links, nation names (Russia's inside the view) and capital labels
+  show; at z 2.6 every city is labeled without collisions and the Moscow links' pills sit on the screen edge without
+  overlapping, clicking one pans the camera and keeps the selection; at z 5 the deposit chips with richness pips and
+  the grey DEPOT badge show above Tiraspol; counters, stacks (×N with a shadow card and a second-nation dot), the
+  gold and white edges, hold shield, supply dots (amber and red sampled at pixel level) and strength bars draw as
+  specified; all five order-arrow styles and the ×N badge draw; hovering a region, a city or a counter shows the
+  tooltip (14 px from the cursor), the sea and dragging hide it, F3 toggles the meter, and none of it re-renders
+  React (`__mapStats.renders` delta 0). Draw time (JS side only, 1920x1011, same gestures as `pan-zoom-bench.js`,
+  two runs): average 1.4-1.5 ms, p95 2.1-2.4 ms, 0 React renders. The real C2 numbers (rAF deltas) still need the
+  window in view: the pane was shown but `requestAnimationFrame` did not fire (Claude window not in front).
+  (plan 2026-10-18-visual-overhaul → Task 27)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

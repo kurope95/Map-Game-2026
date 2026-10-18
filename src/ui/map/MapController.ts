@@ -15,13 +15,18 @@ import { buildMapGeometry, type MapGeometry } from "./geometry/buildMapGeometry"
 import { WORLD } from "./geometry/projection";
 import { hitTest, type FrameHitData } from "./layout/hitTest";
 import type { MapViewProps } from "./MapView";
-import { recordFrame } from "./perf/frameStats";
+import { readStats, recordFrame } from "./perf/frameStats";
 import { drawFlatSea } from "./render/layers/sea";
 import { renderFrame } from "./render/renderFrame";
 import { clearTextCache } from "./render/text";
 import { getStartingControllers } from "./startingControllers";
+import { tooltipHtml, tooltipModel } from "./tooltip";
 
 const DRAG_THRESHOLD_PX = 5;
+/** The tooltip sits this far right of and below the cursor, and this far inside the map edges. */
+const TOOLTIP_OFFSET = 14;
+const TOOLTIP_MARGIN = 8;
+const PERF_REFRESH_MS = 500;
 const TWEEN_MS = 140;
 const WHEEL_SENSITIVITY = 1.0015;
 export const BUTTON_ZOOM = 1.6;
@@ -71,9 +76,23 @@ export class MapController {
   private rafId: number | null = null;
   private buildTimer: number | null = null;
   private destroyed = false;
+  /** Something other than the pointer changed since the last draw (camera, props, size, fonts). */
+  private drawPending = true;
+  private pointer: [number, number] | null = null;
+  private hoverKey = "off";
+  private hoverDirty = true;
+  private readonly tooltipEl: HTMLDivElement;
+  private tooltipRegionId: string | null = null;
+  private tooltipState: GameState | null = null;
+  private tooltipVisible = false;
+  private tooltipSize = { width: 0, height: 0 };
+  private readonly perfEl: HTMLDivElement;
+  private perfTimer: number | null = null;
 
   constructor(elements: { canvas: HTMLCanvasElement; tooltip: HTMLDivElement; perf: HTMLDivElement }) {
     this.canvas = elements.canvas;
+    this.tooltipEl = elements.tooltip;
+    this.perfEl = elements.perf;
     const ctx = this.canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas 2D is not available");
     this.ctx = ctx;
@@ -84,7 +103,9 @@ export class MapController {
     this.canvas.addEventListener("pointerup", this.onPointerUp, { signal });
     this.canvas.addEventListener("pointercancel", this.onPointerCancel, { signal });
     this.canvas.addEventListener("lostpointercapture", this.onLostPointerCapture, { signal });
+    this.canvas.addEventListener("pointerleave", this.onPointerLeave, { signal });
     this.canvas.addEventListener("wheel", this.onWheel, { signal, passive: false });
+    if (import.meta.env.DEV) window.addEventListener("keydown", this.onKeyDown, { signal });
 
     this.resizeObserver = new ResizeObserver(() => this.syncSize());
     this.resizeObserver.observe(this.canvas);
@@ -106,6 +127,7 @@ export class MapController {
   setProps(props: MapViewProps): void {
     this.props = props;
     this.refreshDerived();
+    this.hoverDirty = true;
     this.requestRender();
   }
 
@@ -152,8 +174,10 @@ export class MapController {
     this.resizeObserver.disconnect();
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
     if (this.buildTimer !== null) window.clearTimeout(this.buildTimer);
+    if (this.perfTimer !== null) window.clearInterval(this.perfTimer);
     this.rafId = null;
     this.buildTimer = null;
+    this.perfTimer = null;
   }
 
   // ---- geometry, size and camera ----
@@ -314,7 +338,14 @@ export class MapController {
 
   private onPointerMove = (event: PointerEvent): void => {
     const drag = this.drag;
-    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (!drag || drag.pointerId !== event.pointerId) {
+      // plain hover: remember the pointer; the next frame hit-tests it once
+      if (this.interactive) {
+        this.pointer = this.eventPoint(event);
+        this.scheduleFrame();
+      }
+      return;
+    }
     const [x, y] = this.eventPoint(event);
     const dx = x - drag.startX;
     const dy = y - drag.startY;
@@ -322,6 +353,8 @@ export class MapController {
       if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
       drag.active = true;
       this.tween = null;
+      this.pointer = null; // no hover or tooltip while dragging
+      this.hoverDirty = true;
       this.canvas.classList.add("is-dragging");
     }
     this.camera = clampCamera(
@@ -347,6 +380,12 @@ export class MapController {
       this.handleClick(x, y);
     }
   }
+
+  private onPointerLeave = (): void => {
+    this.pointer = null;
+    this.hoverDirty = true;
+    this.scheduleFrame();
+  };
 
   private onPointerUp = (event: PointerEvent): void => this.endDrag(event, true);
   private onPointerCancel = (event: PointerEvent): void => this.endDrag(event, false);
@@ -392,8 +431,13 @@ export class MapController {
 
   // ---- frame loop ----
 
-  /** Coalesces any number of requests into one animation frame. */
+  /** Marks the canvas dirty; any number of requests coalesce into one animation frame. */
   private requestRender(): void {
+    this.drawPending = true;
+    this.scheduleFrame();
+  }
+
+  private scheduleFrame(): void {
     if (this.rafId !== null || this.destroyed) return;
     this.rafId = requestAnimationFrame(this.frame);
   }
@@ -403,8 +447,16 @@ export class MapController {
     if (this.destroyed) return;
     if ((window.devicePixelRatio || 1) !== this.dpr) this.syncSize();
 
-    const started = performance.now();
+    const hadTween = this.tween !== null;
     const animating = this.stepTween(now);
+    if (hadTween) this.drawPending = true;
+    // hover is hit-tested here, once per frame, against the boxes of the last draw
+    const hoverChanged = this.updateHover(false);
+    if (!this.drawPending && !hoverChanged) return; // only the tooltip moved
+
+    const started = performance.now();
+    const movedUnderPointer = this.drawPending;
+    this.drawPending = false;
     const props = this.props;
     if (!this.geometry || !this.derived || !props || this.viewport.width === 0 || this.viewport.height === 0) {
       this.drawPreparing();
@@ -425,8 +477,79 @@ export class MapController {
       });
     }
     recordFrame(performance.now() - started);
+    // the camera, props or size changed what is under a still pointer: test again against the fresh boxes
+    if (movedUnderPointer && this.updateHover(true)) this.requestRender();
     if (animating) this.requestRender();
   };
+
+  // ---- hover, tooltip and the dev meter ----
+
+  /** Hit-tests the pointer; true when the hovered region changed (the outline then needs a draw). */
+  private updateHover(force: boolean): boolean {
+    const geometry = this.geometry;
+    if (!geometry || !this.interactive) return false;
+    const pointer = this.drag?.active ? null : this.pointer;
+    const camera = this.camera;
+    const key = pointer ? `${pointer[0]},${pointer[1]},${camera.scale},${camera.offsetX},${camera.offsetY}` : "off";
+    if (!force && !this.hoverDirty && key === this.hoverKey) return false;
+    this.hoverKey = key;
+    this.hoverDirty = false;
+
+    let regionId: string | null = null;
+    if (pointer) {
+      const hit = hitTest(pointer[0], pointer[1], this.frameHit, camera, geometry.lookup);
+      if (hit.kind !== "sea" && hit.kind !== "pill") regionId = hit.regionId;
+    }
+    this.updateTooltip(regionId, pointer);
+    if (regionId === this.hoverRegionId) return false;
+    this.hoverRegionId = regionId;
+    return true;
+  }
+
+  /** The tooltip is a DOM element updated through its ref: no React render (spec 11.3). */
+  private updateTooltip(regionId: string | null, pointer: [number, number] | null): void {
+    const element = this.tooltipEl;
+    const state = this.props?.state;
+    if (!regionId || !pointer || !state) {
+      if (this.tooltipVisible) element.classList.remove("is-visible");
+      this.tooltipVisible = false;
+      this.tooltipRegionId = null;
+      return;
+    }
+    if (!this.tooltipVisible) {
+      element.classList.add("is-visible");
+      this.tooltipVisible = true;
+    }
+    if (regionId !== this.tooltipRegionId || state !== this.tooltipState) {
+      const model = tooltipModel(state, regionId);
+      element.innerHTML = model ? tooltipHtml(model) : "";
+      this.tooltipRegionId = regionId;
+      this.tooltipState = state;
+      this.tooltipSize = { width: element.offsetWidth, height: element.offsetHeight };
+    }
+    const { width, height } = this.tooltipSize;
+    const x = Math.max(TOOLTIP_MARGIN, Math.min(pointer[0] + TOOLTIP_OFFSET, this.viewport.width - width - TOOLTIP_MARGIN));
+    const y = Math.max(TOOLTIP_MARGIN, Math.min(pointer[1] + TOOLTIP_OFFSET, this.viewport.height - height - TOOLTIP_MARGIN));
+    element.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  }
+
+  /** F3 (dev builds only) shows or hides the frame-time meter. */
+  private onKeyDown = (event: KeyboardEvent): void => {
+    if (event.key !== "F3") return;
+    event.preventDefault();
+    const visible = this.perfEl.classList.toggle("is-visible");
+    if (this.perfTimer !== null) window.clearInterval(this.perfTimer);
+    this.perfTimer = null;
+    if (visible) {
+      this.refreshPerf();
+      this.perfTimer = window.setInterval(() => this.refreshPerf(), PERF_REFRESH_MS);
+    }
+  };
+
+  private refreshPerf(): void {
+    const stats = readStats();
+    this.perfEl.textContent = `avg ${stats.avgFrameMs.toFixed(1)} ms · p95 ${stats.p95FrameMs.toFixed(1)} ms · renders ${stats.renders} · frames ${stats.frames}`;
+  }
 
   private drawPreparing(): void {
     const { ctx, dpr, viewport } = this;
