@@ -1597,7 +1597,7 @@ export function hitTest(sx: number, sy: number, frame: FrameHitData, camera: Cam
   5. otherwise `sea`.
 - **Units:** all boxes are CSS pixels. Nothing in these modules takes `devicePixelRatio`.
 
-- [ ] **Step 1: Write the failing tests**, including Review Focus 2, 3 and 4.
+- [x] **Step 1: Write the failing tests**, including Review Focus 2, 3 and 4.
   - **Labels:**
     - 20 random candidates (seeded) produce pairwise non-overlapping placed boxes;
     - a forced candidate whose four positions are all blocked is still placed;
@@ -1616,8 +1616,8 @@ export function hitTest(sx: number, sy: number, frame: FrameHitData, camera: Cam
     - a point on a counter returns `unit` even when a city lies within 9 px;
     - a point 5 px from a city with no counter returns `city`;
     - an empty sea point returns `sea`.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
-- [ ] **Step 3: Changelog, then commit** with the message `Add map label, counter, pill and hit-test layout`.
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
+- [x] **Step 3: Changelog, then commit** with the message `Add map label, counter, pill and hit-test layout`.
 
 ### Task 26: MapController skeleton behind `?map=new`
 

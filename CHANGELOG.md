@@ -203,6 +203,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the player supply overlay, all cached in a `WeakMap` keyed by `GameState` and `showSupply`.
   Covered by [`derive.test.ts`](./src/ui/map/derive.test.ts) (9 tests).
   (plan 2026-10-18-visual-overhaul → Task 24)
+- Screen-space map layout under [`src/ui/map/layout/`](./src/ui/map/layout/):
+  [`labels.ts`](./src/ui/map/layout/labels.ts) places label candidates greedily (forced first,
+  priority, then id; normal labels drop instead of overlapping, forced ones take the least-overlap
+  slot), [`counters.ts`](./src/ui/map/layout/counters.ts) sizes unit/stack counters and expands a
+  stack into rows of four, [`pills.ts`](./src/ui/map/layout/pills.ts) anchors off-screen link pills
+  with Liang-Barsky clipping and the 48/12/46/12 inset rect, and
+  [`hitTest.ts`](./src/ui/map/layout/hitTest.ts) resolves clicks in drawing order (counters, pills,
+  nearest city, region, sea). 18 tests in four files, including Review Focus 2 (CSS pixels, no DPR
+  input), 3 (8 expanded units never overlap) and 4 (pills stay clear of the bars in all eight
+  directions). (plan 2026-10-18-visual-overhaul → Task 25)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -582,6 +592,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and a hold lands in `holdUnitIds`; supply is null without the overlay and reaches the capital
   with it; repeated calls return the cached object.
   (plan 2026-10-18-visual-overhaul → Task 24)
+- Task 25: `npm test` 171/171 (18 new layout tests), `npx tsc -p tsconfig.app.json --noEmit`
+  0 errors, `npm run build` OK. Placed labels never overlap; blocked forced labels still appear;
+  priority claims the preferred side. Counters are 30x18 CSS px at z = 1 (city at 100,100 → box at
+  85,107), 30x1.35 at z = 4, and 8 expanded units form two non-overlapping rows. Pill anchors land
+  inside `[12,1428] × [48,854]` in all eight directions and are null for on-screen targets. A
+  counter beats a city within 9 px, pills beat regions, and empty sea returns `sea`.
+  (plan 2026-10-18-visual-overhaul → Task 25)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
