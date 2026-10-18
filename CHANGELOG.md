@@ -56,6 +56,15 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (plan 2026-10-18-visual-overhaul → Task 1)
   Files: [package.json](./package.json), [vite.config.ts](./vite.config.ts),
   [tsconfig.scripts.json](./tsconfig.scripts.json) (excludes `*.test.ts` from the harness compile)
+- Layout lock (constraint C1): browser snippet [`capture-layout.js`](./scripts/layout/capture-layout.js)
+  opens 20 probed containers through the UI and records their boxes plus the order and row of the
+  top-bar, bottom-bar and map controls; [`compareLayout.mjs`](./scripts/layout/compareLayout.mjs) and the
+  CLI [`compare-layout.mjs`](./scripts/layout/compare-layout.mjs) check two captures within 4 px and
+  print `Layout lock: PASS` / `FAIL`. Baselines captured on the untouched legacy UI:
+  [`layout-1440x900.json`](./docs/superpowers/baselines/layout-1440x900.json) and
+  [`layout-1920x1080.json`](./docs/superpowers/baselines/layout-1920x1080.json).
+  (plan 2026-10-18-visual-overhaul → Task 2)
+  Files: [compareLayout.test.mjs](./scripts/layout/compareLayout.test.mjs) (11 tests)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -75,6 +84,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Task 1: `npm test` 1/1 passed (scenario baseline holds, regions do change hands),
   `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm run smoke` passed.
   (plan 2026-10-18-visual-overhaul → Task 1)
+- Task 2: `npm test` 12/12 passed. Both legacy baselines have `missing: []` (20 probes) and pass
+  `node scripts/layout/compare-layout.mjs <baseline> <second capture>` with `Layout lock: PASS` at
+  1440x900 and 1920x1080; the legacy keys captured for the top bar, bottom bar and map controls equal
+  the `data-layout-key` lists planned for Task 8. (plan 2026-10-18-visual-overhaul → Task 2)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

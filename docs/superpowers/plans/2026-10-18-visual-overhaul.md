@@ -221,7 +221,7 @@ control with key X. "Again" means repeat the same click.
   Don't use `requestAnimationFrame` or `setTimeout`: both are throttled when the browser pane is
   hidden.
 
-- [ ] **Step 1: Write the failing tests** in `compareLayout.test.mjs`:
+- [x] **Step 1: Write the failing tests** in `compareLayout.test.mjs`:
 
 ```js
 import { describe, expect, it } from "vitest";
@@ -257,19 +257,19 @@ describe("compareLayout", () => {
 });
 ```
 
-- [ ] **Step 2: Run `npm test`.** Expect FAIL: module not found.
-- [ ] **Step 3: Implement `compareLayout.mjs` and the CLI.**
+- [x] **Step 2: Run `npm test`.** Expect FAIL: module not found.
+- [x] **Step 3: Implement `compareLayout.mjs` and the CLI.**
   - `PROBE_FIELDS` is the "Fields" column of the probe table above.
   - The failure format is `"<probe>.<field>: <base> -> <candidate>"` (rounded to integers),
     `"<probe>: missing"`, `"<probe>.items: <baseKeys> -> <candKeys>"` and
     `"<probe>.items[<key>].centerY: a -> b"`.
-- [ ] **Step 4: Run `npm test`.** Expect PASS.
-- [ ] **Step 5: Implement `capture-layout.js`** as described in the probe table, then capture the
+- [x] **Step 4: Run `npm test`.** Expect PASS.
+- [x] **Step 5: Implement `capture-layout.js`** as described in the probe table, then capture the
   baselines.
   - Follow the browser check recipe at 1440x900 and at 1920x1080.
   - Save the JSON outputs to the two baseline files. `missing` must be `[]`.
   - Compare each baseline against a second capture of itself. Expect `Layout lock: PASS`.
-- [ ] **Step 6: Changelog, then commit** with the message `Add layout lock capture and comparison`.
+- [x] **Step 6: Changelog, then commit** with the message `Add layout lock capture and comparison`.
 
 ### Task 3: Performance benchmark and legacy numbers
 
