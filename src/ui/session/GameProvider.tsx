@@ -20,9 +20,6 @@ function useGameValue() {
     currentOrders: session.currentOrders,
     addToast,
     setUnitDrawerOpen: ui.setUnitDrawerOpen,
-    setActiveTab: ui.setActiveTab,
-    setBottomOpen: ui.setBottomOpen,
-    setStockpileOpen: ui.setStockpileOpen,
   });
   const economy = useEconomyActions({
     gameState: session.gameState,

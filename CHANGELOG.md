@@ -545,6 +545,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (plan 2026-10-18-visual-overhaul → Task 26)
 
 ### Removed
+- Dead code from the old map and the un-restyled CSS: the seven alias custom properties in
+  [`tokens.css`](./src/ui/theme/tokens.css) (zero `var(--...)` uses) and the unused
+  `handleSelectFacilityFromMap` in [`useSelection.ts`](./src/ui/session/useSelection.ts), together with the
+  three setters only it consumed. The 12 remaining `style={{...}}` hits in `src/` are all runtime values
+  (sizes, percentages, `--unit-color`). (plan 2026-10-18-visual-overhaul → Task 30)
 - The old landing page: `src/ui/LandingPage.tsx` and `LandingPage.css`, replaced by the start screen;
   the `landingNations` list in `useGameSession` went with it. The `.nation-card` class is kept in
   `StartScreen.css` for the parity tooling. (plan 2026-10-18-visual-overhaul → Task 29)

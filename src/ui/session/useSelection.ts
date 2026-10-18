@@ -2,7 +2,7 @@ import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { clearOrders, getValidTargets, issueOrder } from "../../game/rules/orderResolution";
 import type { CountryId, GameState, Order, UnitDefinition } from "../../game/state/types";
 import type { AddToast } from "./useToasts";
-import type { BottomTab, ValidTargets } from "./types";
+import type { ValidTargets } from "./types";
 
 interface SelectionOptions {
   gameState: GameState;
@@ -12,9 +12,6 @@ interface SelectionOptions {
   currentOrders: Order[];
   addToast: AddToast;
   setUnitDrawerOpen: Dispatch<SetStateAction<boolean>>;
-  setActiveTab: Dispatch<SetStateAction<BottomTab>>;
-  setBottomOpen: Dispatch<SetStateAction<boolean>>;
-  setStockpileOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export function useSelection({
@@ -25,9 +22,6 @@ export function useSelection({
   currentOrders,
   addToast,
   setUnitDrawerOpen,
-  setActiveTab,
-  setBottomOpen,
-  setStockpileOpen,
 }: SelectionOptions) {
   const [selectedRegionId, setSelectedRegionId] = useState<string>(gameState.scenario.regions[0].id);
   const [selectedUnitIds, setSelectedUnitIds] = useState<Set<string>>(new Set());
@@ -162,14 +156,6 @@ export function useSelection({
     }
   }
 
-  function handleSelectFacilityFromMap(regionId: string, facilityId: string) {
-    setSelectedRegionId(regionId);
-    setSelectedFacilityId(facilityId);
-    setActiveTab("economy");
-    setBottomOpen(true);
-    setStockpileOpen(false);
-  }
-
   function handleHoldUnit(unitId: string) {
     const unit = gameState.units[unitId];
     if (!unit) return;
@@ -216,7 +202,6 @@ export function useSelection({
     handleSelectRegion,
     handleSelectUnit,
     handleSelectUnitFromMap,
-    handleSelectFacilityFromMap,
     handleHoldUnit,
     handleCancelOrder,
     handleClearAllOrders,

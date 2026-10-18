@@ -39,13 +39,3 @@
   --radius-md: 6px;
   --shadow-window: 0 12px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
-
-:root { /* aliases for CSS not yet restyled; unused ones are removed in Task 30 */
-  --bg: var(--bg-app);
-  --panel: var(--surface-1);
-  --panel-soft: var(--surface-2);
-  --border: var(--line-strong);
-  --muted: var(--text-dim);
-  --accent: var(--gold);
-  --eu: var(--nato);
-}
