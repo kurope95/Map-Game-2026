@@ -1312,7 +1312,7 @@ export function loadCountryShapes(): CountryShape[];                    // every
 3. Each hole goes to the smallest exterior that contains its first vertex. Orphan holes are
    dropped.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - **polygon.ts** on a 10x10 square with a 2x2 hole:
     - `pointInPolygon` gives true at (1,1) and false at (5,5) inside the hole;
     - `multiPolygonArea` is 96;
@@ -1324,8 +1324,8 @@ export function loadCountryShapes(): CountryShape[];                    // every
     - all coordinates are finite;
     - `projectGeoPoint({lon: 21.0122, lat: 52.2297})` is inside Poland's polygon;
     - Italy at `{lon: 12.5, lat: 42.5}` is inside a shape with `countryId === null`.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
-- [ ] **Step 3: Changelog, then commit** with the message
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
+- [x] **Step 3: Changelog, then commit** with the message
   `Add map geometry foundation: projection, country shapes, polygon utils`.
 
 ### Task 21: Region polygons and map-point fixes

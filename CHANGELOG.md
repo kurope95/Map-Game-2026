@@ -156,6 +156,18 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   only): all flags, unit symbols, button variants, badges, stats, progress bars, pips, tabs,
   resources, and a panel and a modal `Window`.
   (plan 2026-10-18-visual-overhaul → Task 14)
+- Map geometry foundation under [`src/ui/map/geometry/`](./src/ui/map/geometry/):
+  [`projection.ts`](./src/ui/map/geometry/projection.ts) reproduces the legacy Mercator fit
+  (`WORLD`, `WORLD_CLIP`, `projectGeoPoint`), [`polygon.ts`](./src/ui/map/geometry/polygon.ts) adds
+  signed ring area, point-in-polygon, polygon area/bbox, segment distance and `nestRings`, and
+  [`countryShapes.ts`](./src/ui/map/geometry/countryShapes.ts) carries the numeric-id tables
+  verbatim and builds clipped `CountryShape`s from world-atlas through d3-geo, nesting holes by
+  winding. Adds the `polygon-clipping` dependency for Task 21.
+  (plan 2026-10-18-visual-overhaul → Task 20)
+  Files: [types.ts](./src/ui/map/geometry/types.ts),
+  [polygon.test.ts](./src/ui/map/geometry/polygon.test.ts) (5 tests),
+  [countryShapes.test.ts](./src/ui/map/geometry/countryShapes.test.ts) (5 tests),
+  [package.json](./package.json)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -473,6 +485,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   report "Turn 2 report" and a backdrop click closed it. Every bottom panel, the all-units panel,
   diplomacy, doctrines and save/load were screenshotted with no console errors.
   (plan 2026-10-18-visual-overhaul → Task 19)
+- Task 20: `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm test` 119/119 (10 new geometry
+  tests), `npm run build` OK. The shape suite clipped every world-atlas feature to `WORLD_CLIP`:
+  all 23 theatre numeric ids map to their scenario country, Russia's bbox stays inside the clip,
+  all coordinates are finite, Warsaw falls inside Poland and Italy inside a background shape with
+  `countryId: null`. (plan 2026-10-18-visual-overhaul → Task 20)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
