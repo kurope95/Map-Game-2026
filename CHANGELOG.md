@@ -229,9 +229,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   occupation stripes ([`regions.ts`](./src/ui/map/render/layers/regions.ts),
   [`patterns.ts`](./src/ui/map/render/patterns.ts)), borders, the gold front line, the highlight stack (hover, links of
   the selection, selection, move and attack targets) and the supply overlay, orchestrated by
-  [`renderFrame.ts`](./src/ui/map/render/renderFrame.ts). **STATUS: PARTIAL (Task 27): part a done (layers 1-9);
-  part b (links, markers, arrows, counters, depot and deposits, labels, pills) and part c (tooltip, hover, F3 meter)
-  are NOT started; the temporary city dots in `layers/base.ts` stand in for the markers.**
+  [`renderFrame.ts`](./src/ui/map/render/renderFrame.ts). **STATUS: PARTIAL (Task 27), work is split into small packages, each its own commit:
+  a DONE (layers 1-9); b0 DONE (helpers: [`lod.ts`](./src/ui/map/render/lod.ts) with the spec 11.5 thresholds and tests,
+  [`text.ts`](./src/ui/map/render/text.ts), [`symbols.ts`](./src/ui/map/render/symbols.ts)); b1 (link network, selection links,
+  edge pills, city markers) NOT started; b2 (order arrows) NOT started; b3 (unit counters and stacks) NOT started;
+  b4 (depot badge, deposit chips, labels) NOT started; c (hover, tooltip, F3 meter, benchmark) NOT started.
+  Until b1 lands the temporary city dots in `layers/base.ts` stand in for the markers. Work-package details:
+  notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
   (plan 2026-10-18-visual-overhaul → Task 27)
 
 ### Decision
