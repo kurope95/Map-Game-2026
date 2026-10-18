@@ -223,37 +223,26 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   fills, city dots), a `Path2D` cache ([`paths.ts`](./src/ui/map/render/paths.ts)) and the dev frame meter
   [`frameStats.ts`](./src/ui/map/perf/frameStats.ts) (`window.__mapStats`).
   (plan 2026-10-18-visual-overhaul → Task 26)
-- Canvas map layers, part a of Task 27 (spec 11.4 layers 1-9): sea with vignette, noise and graticule
-  ([`sea.ts`](./src/ui/map/render/layers/sea.ts)), coast halo and background land
-  ([`land.ts`](./src/ui/map/render/layers/land.ts)), controller-colored region fills with shade variants and
-  occupation stripes ([`regions.ts`](./src/ui/map/render/layers/regions.ts),
-  [`patterns.ts`](./src/ui/map/render/patterns.ts)), borders, the gold front line, the highlight stack (hover, links of
-  the selection, selection, move and attack targets) and the supply overlay, orchestrated by
-  [`renderFrame.ts`](./src/ui/map/render/renderFrame.ts). **STATUS: PARTIAL (Task 27), work is split into small packages, each its own commit:
-  a DONE (layers 1-9); b0 DONE (helpers: [`lod.ts`](./src/ui/map/render/lod.ts) with the spec 11.5 thresholds and tests,
-  [`text.ts`](./src/ui/map/render/text.ts), [`symbols.ts`](./src/ui/map/render/symbols.ts)); b1 DONE (spec layers 10-12: faint link
-  network fading out by z 1.6, gold selection links with a faint hover preview, clickable edge pills that pan the
-  camera, and the capital / key / other city markers with selection and link rings, in
-  [`links.ts`](./src/ui/map/render/layers/links.ts) and [`cities.ts`](./src/ui/map/render/layers/cities.ts), 20
-  tests; the temporary `layers/base.ts` is gone); b2 DONE (spec layer 13: the player's pending orders as curved arrows
-  with dark underlay, per-type color and pattern, arrowheads, bombard burst and a ×N badge for merged orders, in
-  [`arrows.ts`](./src/ui/map/render/layers/arrows.ts), 9 tests); b3 DONE (spec layer 14: unit counters and stacks in
-  [`units.ts`](./src/ui/map/render/layers/units.ts), 8 tests, nation-colored cards with NATO symbol, strength, strength
-  bar, supply dot, veterancy chevrons, gold edge for pending orders, white edge for selected, hold shield and
-  shadow-card stacks with ×N and a second-nation dot; `derive.ts` gained `orderedUnitIds`); b4 DONE (spec layers 15-16: the DEPOT badge from z 1.5 and the resource deposit
-  chips from z 3.5 in [`extras.ts`](./src/ui/map/render/layers/extras.ts), nation names with letter spacing, size by
-  area and a fade between z 1.3 and 1.6, and collision-avoided city labels with forced labels for the selection and
-  its links in [`labels.ts`](./src/ui/map/render/layers/labels.ts), 17 tests; `pills` slide apart along a shared
-  screen edge; nation names are anchored by the part of their largest region inside the default view); c DONE (hover
-  hit-tested once per frame inside the frame callback, a DOM tooltip with name, Capital / Key city tag, controller flag,
-  name and bloc, "Occupied, originally …", units by side, fort and stability in [`tooltip.ts`](./src/ui/map/tooltip.ts)
-  (11 tests) filled through a ref with escaped text and hidden while dragging, and the dev-only F3 frame meter in
-  [`MapController.ts`](./src/ui/map/MapController.ts) and [`MapView.css`](./src/ui/map/MapView.css)); c2 (split
-  `MapController.ts`, which passed the 400-line guideline) in three steps: c2a DONE (pure helpers extracted with tests:
-  [`cameraTween.ts`](./src/ui/map/cameraTween.ts), `recenterOnResize` in [`camera.ts`](./src/ui/map/camera.ts), `clickOutcome` in
-  [`hitTest.ts`](./src/ui/map/layout/hitTest.ts) and `drawPreparingMap` in [`sea.ts`](./src/ui/map/render/layers/sea.ts); controller
-  565 -> 501 lines, behavior unchanged: `map-check.js` 18/18), c2b DONE ([`TooltipView.ts`](./src/ui/map/TooltipView.ts),
-  [`PerfMeter.ts`](./src/ui/map/perf/PerfMeter.ts) and the pure `tooltipPosition`, 3 tests; controller 453 lines), c2c NOT started (pointer input out of the controller). Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
+- Canvas map, all layers of spec 11.4 plus hover and the dev meter (Task 27; still opt-in at `?map=new` until Task 28
+  switches over). Layers 1-9: sea with vignette, noise and graticule ([`sea.ts`](./src/ui/map/render/layers/sea.ts)), coast
+  halo and background land ([`land.ts`](./src/ui/map/render/layers/land.ts)), controller-colored region fills with shade
+  variants and occupation stripes ([`regions.ts`](./src/ui/map/render/layers/regions.ts),
+  [`patterns.ts`](./src/ui/map/render/patterns.ts)), borders, the gold front line, the highlight stack and the supply
+  overlay. Layers 10-16: the faint link network and the gold selection and hover links with clickable edge pills that
+  slide apart along a shared edge ([`links.ts`](./src/ui/map/render/layers/links.ts)), city markers
+  ([`cities.ts`](./src/ui/map/render/layers/cities.ts)), order arrows ([`arrows.ts`](./src/ui/map/render/layers/arrows.ts)),
+  unit counters and stacks ([`units.ts`](./src/ui/map/render/layers/units.ts)), the DEPOT badge and deposit chips
+  ([`extras.ts`](./src/ui/map/render/layers/extras.ts)), and nation names and collision-avoided city labels
+  ([`labels.ts`](./src/ui/map/render/layers/labels.ts)), with the zoom thresholds of spec 11.5 in one place
+  ([`lod.ts`](./src/ui/map/render/lod.ts)). [`renderFrame.ts`](./src/ui/map/render/renderFrame.ts) draws them in order and
+  returns the clickable boxes. Interaction: hover is hit-tested once per frame; a DOM tooltip
+  ([`tooltip.ts`](./src/ui/map/tooltip.ts), [`TooltipView.ts`](./src/ui/map/TooltipView.ts)) shows the region, its
+  controller, occupation, units by side, fort and stability; F3 toggles a frame meter in dev builds
+  ([`PerfMeter.ts`](./src/ui/map/perf/PerfMeter.ts)). `MapController.ts` was split so that gestures
+  ([`MapPointerInput.ts`](./src/ui/map/MapPointerInput.ts)), easing ([`cameraTween.ts`](./src/ui/map/cameraTween.ts)), the
+  tooltip and the meter live in their own modules (565 -> 370 lines). `derive.ts` gained `orderedUnitIds`. 103 new
+  tests. **Not done in this task: the benchmark step with real requestAnimationFrame deltas (the pane did not draw
+  while the Claude window was not in front); it moves to Task 28 step 3.**
   (plan 2026-10-18-visual-overhaul → Task 27)
 
 ### Decision
@@ -698,7 +687,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   1920x1080, three runs) gave average 5.9-6.5 ms, p95 15.8-18.2 ms and `mapRenders: 0`, against ~45 ms average on the
   SVG map in the same mode. This is NOT a C2 measurement (hidden pane, no paint); real numbers need the pane visible.
   (plan 2026-10-18-visual-overhaul → Task 26)
-- Task 27 (layers 10-16, tooltip, hover, F3): `npm test` 256/256, `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
+- Task 27 (layers 10-16, tooltip, hover, F3, controller split): `npm test` 285/285, `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
   `npm run build`. Browser checks of the canvas map at `?map=new` (dev build, MessageChannel stand-in for
   `requestAnimationFrame`; canvas screenshots saved through a helper): at z 1 the link network, capital stars,
   forced gold labels for the selection and its links, nation names (Russia's inside the view) and capital labels

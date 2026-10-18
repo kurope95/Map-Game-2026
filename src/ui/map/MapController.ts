@@ -13,6 +13,7 @@ import { deriveMapData, type DerivedMapData } from "./derive";
 import { buildMapGeometry, type MapGeometry } from "./geometry/buildMapGeometry";
 import { WORLD } from "./geometry/projection";
 import { clickOutcome, hitTest, type FrameHitData } from "./layout/hitTest";
+import { MapPointerInput } from "./MapPointerInput";
 import type { MapViewProps } from "./MapView";
 import { recordFrame } from "./perf/frameStats";
 import { PerfMeter } from "./perf/PerfMeter";
@@ -22,19 +23,8 @@ import { clearTextCache } from "./render/text";
 import { getStartingControllers } from "./startingControllers";
 import { TooltipView } from "./TooltipView";
 
-const DRAG_THRESHOLD_PX = 5;
-const WHEEL_SENSITIVITY = 1.0015;
 export const BUTTON_ZOOM = 1.6;
 const FIT_PADDING = 40;
-
-interface DragState {
-  pointerId: number;
-  startX: number;
-  startY: number;
-  startOffsetX: number;
-  startOffsetY: number;
-  active: boolean;
-}
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -57,7 +47,6 @@ export class MapController {
   private dpr = 1;
   private fitScale = 1;
   private hasFit = false;
-  private drag: DragState | null = null;
   private tween: Tween | null = null;
   private expandedRegionId: string | null = null;
   private hoverRegionId: string | null = null;
@@ -68,9 +57,9 @@ export class MapController {
   private destroyed = false;
   /** Something other than the pointer changed since the last draw (camera, props, size, fonts). */
   private drawPending = true;
-  private pointer: [number, number] | null = null;
   private hoverKey = "off";
   private hoverDirty = true;
+  private readonly input: MapPointerInput;
   private readonly tooltip: TooltipView;
   private readonly perfMeter: PerfMeter;
 
@@ -83,13 +72,28 @@ export class MapController {
     this.ctx = ctx;
 
     const { signal } = this.abort;
-    this.canvas.addEventListener("pointerdown", this.onPointerDown, { signal });
-    this.canvas.addEventListener("pointermove", this.onPointerMove, { signal });
-    this.canvas.addEventListener("pointerup", this.onPointerUp, { signal });
-    this.canvas.addEventListener("pointercancel", this.onPointerCancel, { signal });
-    this.canvas.addEventListener("lostpointercapture", this.onLostPointerCapture, { signal });
-    this.canvas.addEventListener("pointerleave", this.onPointerLeave, { signal });
-    this.canvas.addEventListener("wheel", this.onWheel, { signal, passive: false });
+    this.input = new MapPointerInput(
+      this.canvas,
+      {
+        isInteractive: () => this.interactive,
+        getCamera: () => this.camera,
+        pan: (offsetX, offsetY) => {
+          this.camera = clampCamera({ scale: this.camera.scale, offsetX, offsetY }, this.viewport, WORLD);
+          this.requestRender();
+        },
+        dragStarted: () => {
+          this.tween = null;
+          this.hoverDirty = true;
+        },
+        click: (x, y) => this.handleClick(x, y),
+        wheel: (factor, x, y) => this.zoomTo(this.targetScale() * factor, x, y),
+        hoverChanged: () => {
+          this.hoverDirty = true;
+          this.scheduleFrame();
+        }
+      },
+      signal
+    );
     if (import.meta.env.DEV) window.addEventListener("keydown", this.onKeyDown, { signal });
 
     this.resizeObserver = new ResizeObserver(() => this.syncSize());
@@ -263,93 +267,6 @@ export class MapController {
     return this.props?.mode !== "showcase";
   }
 
-  private eventPoint(event: { clientX: number; clientY: number }): [number, number] {
-    const rect = this.canvas.getBoundingClientRect();
-    return [event.clientX - rect.left, event.clientY - rect.top];
-  }
-
-  private onPointerDown = (event: PointerEvent): void => {
-    if (!this.interactive) return;
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    const [x, y] = this.eventPoint(event);
-    this.drag = {
-      pointerId: event.pointerId,
-      startX: x,
-      startY: y,
-      startOffsetX: this.camera.offsetX,
-      startOffsetY: this.camera.offsetY,
-      active: false
-    };
-    try {
-      this.canvas.setPointerCapture(event.pointerId);
-    } catch {
-      // synthetic events (the benchmark) have no active pointer; dragging works without capture
-    }
-  };
-
-  private onPointerMove = (event: PointerEvent): void => {
-    const drag = this.drag;
-    if (!drag || drag.pointerId !== event.pointerId) {
-      // plain hover: remember the pointer; the next frame hit-tests it once
-      if (this.interactive) {
-        this.pointer = this.eventPoint(event);
-        this.scheduleFrame();
-      }
-      return;
-    }
-    const [x, y] = this.eventPoint(event);
-    const dx = x - drag.startX;
-    const dy = y - drag.startY;
-    if (!drag.active) {
-      if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
-      drag.active = true;
-      this.tween = null;
-      this.pointer = null; // no hover or tooltip while dragging
-      this.hoverDirty = true;
-      this.canvas.classList.add("is-dragging");
-    }
-    this.camera = clampCamera(
-      { scale: this.camera.scale, offsetX: drag.startOffsetX + dx, offsetY: drag.startOffsetY + dy },
-      this.viewport,
-      WORLD
-    );
-    this.requestRender();
-  };
-
-  private endDrag(event: PointerEvent, asClick: boolean): void {
-    const drag = this.drag;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    this.drag = null;
-    this.canvas.classList.remove("is-dragging");
-    try {
-      this.canvas.releasePointerCapture(event.pointerId);
-    } catch {
-      // not captured
-    }
-    if (asClick && !drag.active) {
-      const [x, y] = this.eventPoint(event);
-      this.handleClick(x, y);
-    }
-  }
-
-  private onPointerLeave = (): void => {
-    this.pointer = null;
-    this.hoverDirty = true;
-    this.scheduleFrame();
-  };
-
-  private onPointerUp = (event: PointerEvent): void => this.endDrag(event, true);
-  private onPointerCancel = (event: PointerEvent): void => this.endDrag(event, false);
-  private onLostPointerCapture = (event: PointerEvent): void => this.endDrag(event, false);
-
-  private onWheel = (event: WheelEvent): void => {
-    if (!this.interactive) return;
-    event.preventDefault();
-    const [x, y] = this.eventPoint(event);
-    const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaMode === 2 ? event.deltaY * 100 : event.deltaY;
-    this.zoomTo(this.targetScale() * WHEEL_SENSITIVITY ** -delta, x, y);
-  };
-
   /** Applies the click outcome of spec 11.3; any click that is not on a stack collapses the expanded stack. */
   private handleClick(x: number, y: number): void {
     const props = this.props;
@@ -422,7 +339,7 @@ export class MapController {
   private updateHover(force: boolean): boolean {
     const geometry = this.geometry;
     if (!geometry || !this.interactive) return false;
-    const pointer = this.drag?.active ? null : this.pointer;
+    const pointer = this.input.dragging ? null : this.input.pointer;
     const camera = this.camera;
     const key = pointer ? `${pointer[0]},${pointer[1]},${camera.scale},${camera.offsetX},${camera.offsetY}` : "off";
     if (!force && !this.hoverDirty && key === this.hoverKey) return false;

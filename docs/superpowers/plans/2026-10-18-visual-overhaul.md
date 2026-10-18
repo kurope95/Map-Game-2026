@@ -1770,11 +1770,11 @@ export function recordRender(): void;                // MapView calls this in it
 **F3 perf meter** (dev only): a `keydown` listener toggles `.map-perf`, which shows the average and
 p95 frame time and the render count, updated every 500 ms.
 
-- [ ] **Step 1: Implement layers 1-9.** Screenshot `?map=new` at the default view and zoomed into
+- [x] **Step 1: Implement layers 1-9.** Screenshot `?map=new` at the default view and zoomed into
   Poland. Check them against spec 11.4 #1-9: fills, shade variants, stripes (set Lublin to Russia
   through a crafted save, or use the dev console), the front line, and the highlights after
   selecting a region with units selected.
-- [ ] **Step 2: Implement layers 10-16, the tooltip and the perf meter.** Screenshot at `z ≈ 1`,
+- [x] **Step 2: Implement layers 10-16, the tooltip and the perf meter.** Screenshot at `z ≈ 1`,
   `z ≈ 2` and `z ≈ 4`, and check against the spec 11.5 level-of-detail table:
   - all 103 city markers visible;
   - selecting Warsaw shows gold link lines and forced labels for every linked region;
@@ -1785,7 +1785,7 @@ p95 frame time and the render count, updated every 500 ms.
   p95 ≤ 12 ms and `mapRenders: 0`. If it fails, profile which layer dominates and fix it before
   continuing (likely suspects: label measuring each frame, so cache `measureText` widths by text
   and font; pattern creation each frame).
-- [ ] **Step 4: Run the type check and build, update the changelog, then commit**
+- [x] **Step 4: Run the type check and build, update the changelog, then commit**
   `Draw all canvas map layers with tooltip and link pills`.
 
 ### Task 28: Switch over, parity, performance, cleanup
