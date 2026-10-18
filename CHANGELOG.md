@@ -231,11 +231,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the selection, selection, move and attack targets) and the supply overlay, orchestrated by
   [`renderFrame.ts`](./src/ui/map/render/renderFrame.ts). **STATUS: PARTIAL (Task 27), work is split into small packages, each its own commit:
   a DONE (layers 1-9); b0 DONE (helpers: [`lod.ts`](./src/ui/map/render/lod.ts) with the spec 11.5 thresholds and tests,
-  [`text.ts`](./src/ui/map/render/text.ts), [`symbols.ts`](./src/ui/map/render/symbols.ts)); b1 (link network, selection links,
-  edge pills, city markers) NOT started; b2 (order arrows) NOT started; b3 (unit counters and stacks) NOT started;
-  b4 (depot badge, deposit chips, labels) NOT started; c (hover, tooltip, F3 meter, benchmark) NOT started.
-  Until b1 lands the temporary city dots in `layers/base.ts` stand in for the markers. Work-package details:
-  notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
+  [`text.ts`](./src/ui/map/render/text.ts), [`symbols.ts`](./src/ui/map/render/symbols.ts)); b1 DONE (spec layers 10-12: faint link
+  network fading out by z 1.6, gold selection links with a faint hover preview, clickable edge pills that pan the
+  camera, and the capital / key / other city markers with selection and link rings, in
+  [`links.ts`](./src/ui/map/render/layers/links.ts) and [`cities.ts`](./src/ui/map/render/layers/cities.ts), 20
+  tests; the temporary `layers/base.ts` is gone); b2 (order arrows) NOT started; b3 (unit counters and stacks) NOT
+  started; b4 (depot badge, deposit chips, labels) NOT started; c (hover, tooltip, F3 meter, benchmark) NOT started.
+  Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
   (plan 2026-10-18-visual-overhaul → Task 27)
 
 ### Decision

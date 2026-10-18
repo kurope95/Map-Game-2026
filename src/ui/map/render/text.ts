@@ -7,6 +7,11 @@ export function font(weight: number, size: number): string {
 
 const widths = new Map<string, number>();
 
+/** Forget measured widths; call when the display font finishes loading (earlier numbers used the fallback font). */
+export function clearTextCache(): void {
+  widths.clear();
+}
+
 /** Width of `text` in `fontSpec` (cached by font and text). The caller must already have set ctx.font to it. */
 export function textWidth(ctx: CanvasRenderingContext2D, fontSpec: string, text: string): number {
   const key = `${fontSpec}|${text}`;

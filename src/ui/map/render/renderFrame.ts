@@ -5,11 +5,12 @@ import type { MapGeometry } from "../geometry/buildMapGeometry";
 import type { BBox } from "../geometry/types";
 import type { FrameHitData } from "../layout/hitTest";
 import type { MapViewProps } from "../MapView";
-import { cityScreenPoints, drawCityDots } from "./layers/base";
 import { drawBorders } from "./layers/borders";
+import { cityScreenPoints, drawCityMarkers } from "./layers/cities";
 import { drawFrontLine } from "./layers/front";
 import { drawHighlights } from "./layers/highlights";
 import { drawLand } from "./layers/land";
+import { drawLinkNetwork, drawSelectionLinks, linkPairs } from "./layers/links";
 import { drawSupplyOverlay } from "./layers/overlays";
 import { drawRegions } from "./layers/regions";
 import { drawSea } from "./layers/sea";
@@ -81,14 +82,28 @@ export function renderFrame(input: FrameInput): FrameHitData {
   );
   drawSupplyOverlay(ctx, geometry, derived, camera);
 
-  // screen space (Task 27 part b adds links, markers, arrows, counters, labels)
+  // screen space, layers 10-12 (Task 27 part b2-b4 add arrows, counters, depot and deposits, labels)
   setScreenTransform(ctx, dpr);
   const cities = cityScreenPoints(geometry, camera);
-  drawCityDots(ctx, cities, state, viewport);
+  drawLinkNetwork(ctx, linkPairs(state.regions), cities, input.z);
+  const pills = drawSelectionLinks(ctx, {
+    state,
+    cities,
+    viewport,
+    selectedRegionId,
+    hoverRegionId: input.hoverRegionId,
+    fontsReady: input.fontsReady
+  });
+  drawCityMarkers(ctx, cities, state, {
+    z: input.z,
+    viewport,
+    selectedRegionId,
+    linkedIds: toSet(selectedRegionId ? state.regions[selectedRegionId]?.adjacentRegionIds : undefined)
+  });
 
   return {
     counters: [],
     cities: [...cities].map(([regionId, [x, y]]) => ({ regionId, x, y })),
-    pills: []
+    pills
   };
 }

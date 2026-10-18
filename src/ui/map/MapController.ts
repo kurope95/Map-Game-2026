@@ -18,6 +18,7 @@ import type { MapViewProps } from "./MapView";
 import { recordFrame } from "./perf/frameStats";
 import { drawFlatSea } from "./render/layers/sea";
 import { renderFrame } from "./render/renderFrame";
+import { clearTextCache } from "./render/text";
 import { getStartingControllers } from "./startingControllers";
 
 const DRAG_THRESHOLD_PX = 5;
@@ -91,10 +92,13 @@ export class MapController {
 
     // Build the geometry after the first paint of "Preparing map…".
     this.buildTimer = window.setTimeout(() => this.buildGeometry(), 0);
-    void document.fonts?.load("500 12px Oswald").then(() => {
+    // A failed load only means the fallback font is used; labels must still appear.
+    const fontsLoaded = (): void => {
+      clearTextCache();
       this.fontsReady = true;
       this.requestRender();
-    });
+    };
+    void document.fonts?.load("500 12px Oswald").then(fontsLoaded, fontsLoaded);
     this.requestRender();
   }
 
