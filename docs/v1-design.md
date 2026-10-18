@@ -148,7 +148,7 @@ The first AI should be heuristic and explainable. Each move set should be backed
   - one major-power capital captured
 - Slovakia joins BRICS on turn 5
 - Hungary joins BRICS on turn 5
-- Czech Republic joins EU NATO if Poland loses one key city or its capital
+- Czech Republic joins EU NATO if Poland loses its capital or two key cities
 
 ## Immediate Open Decisions
 

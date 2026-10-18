@@ -29,21 +29,37 @@ function testBelarusEscalationViaMajorCapital() {
   assert(state.countryStates.BELARUS.atWar, "Belarus should enter the war after a major capital is captured.");
 }
 
-function testCzechEntryViaPolishKeyCityLoss() {
-  let state = evaluateWarEntryRules(createInitialState());
-  state = setRegionController(state, "gdansk", "RUSSIA");
-  state = advanceTurn(state);
-
+function testCzechEntryRule() {
+  let oneKeyCity = evaluateWarEntryRules(createInitialState());
+  oneKeyCity = setRegionController(oneKeyCity, "gdansk", "RUSSIA");
+  oneKeyCity = advanceTurn(oneKeyCity);
   assert(
-    state.countryStates.CZECH_REPUBLIC.atWar,
-    "Czech Republic should enter the war after Poland loses a key city."
+    !oneKeyCity.countryStates.CZECH_REPUBLIC.atWar,
+    "Czech Republic should NOT enter the war after Poland loses only one key city."
+  );
+
+  let twoKeyCities = evaluateWarEntryRules(createInitialState());
+  twoKeyCities = setRegionController(twoKeyCities, "gdansk", "RUSSIA");
+  twoKeyCities = setRegionController(twoKeyCities, "krakow", "RUSSIA");
+  twoKeyCities = advanceTurn(twoKeyCities);
+  assert(
+    twoKeyCities.countryStates.CZECH_REPUBLIC.atWar,
+    "Czech Republic should enter the war after Poland loses two key cities."
+  );
+
+  let polishCapital = evaluateWarEntryRules(createInitialState());
+  polishCapital = setRegionController(polishCapital, "warsaw", "RUSSIA");
+  polishCapital = advanceTurn(polishCapital);
+  assert(
+    polishCapital.countryStates.CZECH_REPUBLIC.atWar,
+    "Czech Republic should enter the war after Poland loses its capital."
   );
 }
 
 function main() {
   testScriptedTurnEntries();
   testBelarusEscalationViaMajorCapital();
-  testCzechEntryViaPolishKeyCityLoss();
+  testCzechEntryRule();
   console.log("War-entry simulation checks passed.");
 }
 

@@ -508,6 +508,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   inputs do not redraw it. The `?map=new` switch is gone. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Fixed
+- `npm run check-war-entry` expected one lost Polish key city for the Czech Republic to join, but the
+  shipped rule (unchanged since the original game) needs Poland's capital or two key cities, so the
+  check was red on `legacy` and `main`. The check now tests one city (no entry), two (entry) and the
+  capital (entry), and `docs/v1-design.md` says two. No rule or game code changed.
+  (housekeeping, found during the C3 rules-unchanged check)
 - Turn report relations: [`parseTurnReport.ts`](./src/ui/windows/turnReport/parseTurnReport.ts) treated the
   `NEUTRAL` bloc as a bloc of its own, so for a BRICS player every neutral nation (Austria, Serbia, ...) was
   tagged "enemy", for a neutral player other neutrals were tagged "ally", and a capture by a neutral nation
@@ -763,9 +768,8 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   powers (not after one); the Czech Republic after two Polish key cities or Warsaw (not after one); Finland when the Baltic Federation
   is overrun (not when only its capital falls); neutral nations start at 0/0 support, diplomacy actions move it, one action per
   target per turn, and fixed members and nations at war cannot be targeted. `npm run balance-check` printed the same table on both
-  trees. **Pre-existing mismatch, not touched:** `npm run check-war-entry` fails on `legacy` and on `main` alike (its Czech case
-  expects one lost Polish key city; the shipped rule and its description say two; `docs/v1-design.md` says one). Which is intended
-  is Marek's call.
+  trees. Pre-existing mismatch, now fixed (see Fixed): Marek kept the shipped rule, so the check and the design doc
+  were aligned to it.
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
