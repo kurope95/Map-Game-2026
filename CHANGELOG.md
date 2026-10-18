@@ -143,6 +143,19 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `BLOC_COLORS`, `SHADE_OVERLAYS`, `GEO_NEIGHBORS` and `rgbDistance`, covered by
   [`palette.test.ts`](./src/ui/theme/palette.test.ts) (2 tests: every nation has a color; every
   neighbor pair differs by RGB distance ≥ 40). (plan 2026-10-18-visual-overhaul → Task 13)
+- Style C kit under [`src/ui/kit/`](./src/ui/kit/): `Window`, `Button`, `Badge`, `StatRow`,
+  `ProgressBar`, `Pips`, `Tabs`, `ResourceIcon`, `ResourceAmount`, `Flag` and `UnitSymbol` with
+  their `Window.css`, `Button.css` and `kit.css`; data modules
+  [`resources.ts`](./src/ui/kit/resources.ts) (`RESOURCE_META` for all 19 stockpile keys,
+  `FACILITY_META` for all 13 facility types), [`flags.ts`](./src/ui/kit/flags.ts) (all 24 flags as
+  30x20 SVG, the single source of truth for the map tooltip) and
+  [`unitSymbols.ts`](./src/ui/kit/unitSymbols.ts) (NATO symbols in a 24x16 box, used by the map in
+  Task 27), covered by [`kit.test.ts`](./src/ui/kit/kit.test.ts) (4 tests).
+  (plan 2026-10-18-visual-overhaul → Task 14)
+- Dev gallery [`KitGallery.tsx`](./src/ui/dev/KitGallery.tsx) at `?kit` (`import.meta.env.DEV`
+  only): all flags, unit symbols, button variants, badges, stats, progress bars, pips, tabs,
+  resources, and a panel and a modal `Window`.
+  (plan 2026-10-18-visual-overhaul → Task 14)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -170,6 +183,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   diplomacy rules into that one owner file; splitting it now would be off-plan and would change CSS
   order. Task 30's file-size check will need to account for stylesheets.
   (plan 2026-10-18-visual-overhaul → Task 12)
+- Every icon name in the spec exists in the installed `lucide-react`; no close-match swaps were
+  needed. The gallery renders its modal `Window` in normal page flow through a gallery-scoped rule
+  (`.kit-gallery__modal-flow .win-backdrop { position: static; ... }`) so both window variants are
+  visible on one page; the kit itself keeps the fixed backdrop.
+  (plan 2026-10-18-visual-overhaul → Task 14)
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
@@ -253,6 +271,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and Inter (400/500/600) faces before `tokens.css` and `base.css`. Dependencies added:
   `@fontsource/oswald`, `@fontsource/inter` and `lucide-react` (used from Task 14).
   (plan 2026-10-18-visual-overhaul → Task 13)
+- [`App.tsx`](./src/app/App.tsx) renders `KitGallery` when the URL has `?kit` in dev; the normal
+  screen and its providers are unchanged. Added [`vite-env.d.ts`](./src/vite-env.d.ts) so the type
+  check knows `import.meta.env`.
+  (plan 2026-10-18-visual-overhaul → Task 14)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -343,6 +365,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Oswald and Inter faces are registered and load on use (Inter on the page, Oswald when an element
   first uses it). Typography per element is applied in Tasks 15-18.
   (plan 2026-10-18-visual-overhaul → Task 13)
+- Task 14: `npm test` 99/99 (4 new kit tests), `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
+  `npm run build` OK. `http://127.0.0.1:4173/?kit` renders 24 flags, 7 unit symbols, 19 resources,
+  8 buttons, 8 badges, 6 stat rows, 4 progress bars, 2 pips groups, a tab strip, and the panel and
+  modal windows, with the title in Oswald and no console errors. The normal game still loads and
+  the layout lock passes at 1440x900 after the `App.tsx` change.
+  (plan 2026-10-18-visual-overhaul → Task 14)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

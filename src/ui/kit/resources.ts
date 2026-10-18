@@ -1,0 +1,67 @@
+import {
+  Bomb,
+  Car,
+  Coins,
+  Cpu,
+  Crosshair,
+  Diamond,
+  Droplet,
+  Factory,
+  Flame,
+  FlaskConical,
+  Fuel,
+  Gem,
+  Hammer,
+  Leaf,
+  Mountain,
+  Pickaxe,
+  Pill,
+  Plane,
+  Shirt,
+  Sprout,
+  Tent,
+  Tractor,
+  Truck,
+  Wheat,
+  Zap,
+  type LucideIcon
+} from "lucide-react";
+import type { FacilityType, StockpileKey } from "../../game/state/types";
+
+export const RESOURCE_META: Record<StockpileKey, { label: string; Icon: LucideIcon; color: string }> = {
+  oil: { label: "Oil", Icon: Droplet, color: "#c9a227" },
+  coal: { label: "Coal", Icon: Mountain, color: "#6b6f75" },
+  iron: { label: "Iron", Icon: Pickaxe, color: "#9aa7b0" },
+  tungsten: { label: "Tungsten", Icon: Diamond, color: "#b89d5e" },
+  food: { label: "Food", Icon: Wheat, color: "#8fbf5a" },
+  chemicals: { label: "Chemicals", Icon: FlaskConical, color: "#9b7fd1" },
+  steel: { label: "Steel", Icon: Hammer, color: "#b6c2cc" },
+  fuel: { label: "Fuel", Icon: Fuel, color: "#e0a040" },
+  explosives: { label: "Explosives", Icon: Bomb, color: "#e0605a" },
+  fertilizer: { label: "Fertilizer", Icon: Sprout, color: "#7cc47c" },
+  munitions: { label: "Munitions", Icon: Crosshair, color: "#d4a537" },
+  energy: { label: "Energy", Icon: Zap, color: "#f0d050" },
+  textiles: { label: "Textiles", Icon: Shirt, color: "#c08fb0" },
+  electronics: { label: "Electronics", Icon: Cpu, color: "#6ec1d8" },
+  vehicles: { label: "Vehicles", Icon: Car, color: "#8fa3c9" },
+  pharmaceuticals: { label: "Pharma", Icon: Pill, color: "#e08fa0" },
+  luxuryGoods: { label: "Luxury", Icon: Gem, color: "#c7a2e0" },
+  weed: { label: "Weed", Icon: Leaf, color: "#6fbf73" },
+  tradePoints: { label: "Trade", Icon: Coins, color: "#f0c75e" }
+};
+
+export const FACILITY_META: Record<FacilityType, { label: string; Icon: LucideIcon }> = {
+  mine: { label: "Mine", Icon: Pickaxe },
+  oilWell: { label: "Oil well", Icon: Droplet },
+  farm: { label: "Farm", Icon: Tractor },
+  chemicalPlant: { label: "Chemical plant", Icon: FlaskConical },
+  powerPlant: { label: "Power plant", Icon: Zap },
+  smelter: { label: "Smelter", Icon: Flame },
+  refinery: { label: "Refinery", Icon: Fuel },
+  syntheticRefinery: { label: "Synthetic refinery", Icon: Fuel },
+  barracks: { label: "Barracks", Icon: Tent },
+  armorFactory: { label: "Armor factory", Icon: Truck },
+  airFactory: { label: "Air factory", Icon: Plane },
+  munitionsPlant: { label: "Munitions plant", Icon: Bomb },
+  civilianFactory: { label: "Civilian factory", Icon: Factory }
+};

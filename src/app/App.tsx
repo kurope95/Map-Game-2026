@@ -1,4 +1,5 @@
 import { LandingPage } from "../ui/LandingPage";
+import { KitGallery } from "../ui/dev/KitGallery";
 import { GameScreen } from "../ui/screens/game/GameScreen";
 import { GameProvider, useGame } from "../ui/session/GameProvider";
 
@@ -17,6 +18,9 @@ function AppScreens() {
 }
 
 export function App() {
+  if (import.meta.env.DEV && new URLSearchParams(window.location.search).has("kit")) {
+    return <KitGallery />;
+  }
   return (
     <GameProvider>
       <AppScreens />

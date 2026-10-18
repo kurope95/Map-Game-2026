@@ -968,15 +968,15 @@ and `v` means vertical bands hoist to fly.
 | tacticalMissile | arrow (5,13)→(19,3) |
 | strategicMissile | two parallel arrows, offset 3 units |
 
-- [ ] **Step 1: Write `kit.test.ts`.**
+- [x] **Step 1: Write `kit.test.ts`.**
   - `flagSvgMarkup` returns a string starting with `<svg` for every `CountryId`.
   - `RESOURCE_META` has every key of a real `CountryStockpile`, each with a defined `Icon`.
   - `FACILITY_META` has every `FacilityType` that appears in `FACILITY_BUILD_COSTS`.
   - `unitSymbolPaths` works for every `UnitType` in `MAX_UNIT_STRENGTH`.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Implement the data modules and components. If a
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Implement the data modules and components. If a
   Lucide name doesn't exist, the type check fails: pick the closest icon and note it under
   `Decision` in the changelog. Expect PASS.
-- [ ] **Step 3: Build `KitGallery`.** It shows:
+- [x] **Step 3: Build `KitGallery`.** It shows:
   - all 24 flags with names;
   - all unit symbols;
   - Button variants and sizes;
@@ -985,7 +985,7 @@ and `v` means vertical bands hoist to fly.
   - a static panel `Window` and a modal `Window`, rendered in normal page flow.
 
   Check `http://127.0.0.1:4173/?kit` against spec 7.
-- [ ] **Step 4: Run the type check and build, update the changelog, then commit**
+- [x] **Step 4: Run the type check and build, update the changelog, then commit**
   `Add style C kit components, flags and unit symbols`.
 
 ### Task 15: Restyle the HUD
