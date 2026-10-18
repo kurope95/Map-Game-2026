@@ -1873,7 +1873,7 @@ export function parseAutosave(raw: string | null): { state: GameState; countryId
 and nation labels at every zoom. With `highlightCountryId`, regions whose starting controller is that
 nation get a 2 px `#f6e7b0` outline, and the others get a `rgba(0,0,0,.35)` fill.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - **Russia:** `status` "At war", `difficulty` "Easy", `difficultyPips` 1, `capitalName`
     "Moscow"; the unit counts add up to the number of Russian units in the state;
     `warEntryText` is "At war from turn 1.".
@@ -1882,14 +1882,14 @@ nation get a 2 px `#f6e7b0` outline, and the others get a `rgba(0,0,0,.35)` fill
   - **parseAutosave:**
     - a valid state JSON gives `{ countryId, turn }` matching the state;
     - `null`, `"{bad"` and `'{"turn":3}'` give `null` (Review Focus 1).
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
-- [ ] **Step 3: Build the screen and showcase mode.** Browser check at 1440x900 and 1920x1080:
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
+- [x] **Step 3: Build the screen and showcase mode.** Browser check at 1440x900 and 1920x1080:
   - hovering a card highlights that nation on the map;
   - Start works;
   - Continue appears after playing one turn and reloading, and resumes on the same turn;
   - Load game opens the window, and loading a slot starts the game.
-- [ ] **Step 4: Run the C7 phase-end checks and the layout compare at both sizes.** Expect PASS.
-- [ ] **Step 5: Changelog, commit** `Add start screen with showcase map, Continue and Load game`,
+- [x] **Step 4: Run the C7 phase-end checks and the layout compare at both sizes.** Expect PASS.
+- [x] **Step 5: Changelog, commit** `Add start screen with showcase map, Continue and Load game`,
   then `git push origin main`.
 
 ---
