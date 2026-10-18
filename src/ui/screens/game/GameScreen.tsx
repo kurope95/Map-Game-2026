@@ -6,6 +6,8 @@ import { FACILITY_BUILD_COSTS, UNIT_RECRUITMENT_COSTS, PROCESSING_RECIPES, CHEMI
 import { DOCTRINE_DEFINITIONS } from "../../../game/content/doctrines";
 import type { DiplomacyActionType } from "../../../game/state/types";
 import "./GameScreen.css";
+import "../../panels/FloatPanel.css";
+import "../../panels/EconomyPanels.css";
 import { BottomBar } from "../../hud/BottomBar";
 import { SupplyToggle } from "../../hud/SupplyToggle";
 import { ToastStack } from "../../hud/ToastStack";

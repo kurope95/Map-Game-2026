@@ -152,6 +152,15 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `.toast-stack` / `.toast--info|success|warning|danger` with identical values. (The `@media (max-width: 1100px)`
   block holds only landing-page rules, so it has no shell part to move.)
   (plan 2026-10-18-visual-overhaul → Task 8)
+- **Task 9 STATUS: PARTIAL (part a of 2 done, part b NOT started).** Part a: the `.float-panel*`, `.panel-grid`,
+  `.panel-card`, `.war-dot` and `.region-strip` rules ([`FloatPanel.css`](./src/ui/panels/FloatPanel.css), 190
+  lines) and the `.economy-*`, `.deposit-*`, `.facility-item*`/`.facility-list`, `.build-*` and `.capture-*`
+  rules ([`EconomyPanels.css`](./src/ui/panels/EconomyPanels.css), 262 lines) moved verbatim out of
+  [`styles.css`](./src/ui/styles.css) (445 lines; a chunk-level check against git found nothing lost or added);
+  `GameScreen.tsx` imports both files for now. Part b (extract `RegionPanel`, `EconomyPanel`,
+  `RecruitmentPanel`, `OrdersPanel`, `AiIntelPanel`, `WarStatusPanel`, `EventLogPanel` into `src/ui/panels/`
+  with `data-layout="panel-*"`) is NOT started. Browser verification of part a (style fingerprint, layout lock)
+  was not run before the session hit its usage limit. (plan 2026-10-18-visual-overhaul → Task 9)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
