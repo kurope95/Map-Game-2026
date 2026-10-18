@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState } from "../../game/state/createInitialState";
 import type { GameState } from "../../game/state/types";
-import { tooltipHtml, tooltipModel, type TooltipModel } from "./tooltip";
+import { tooltipHtml, tooltipModel, tooltipPosition, type TooltipModel } from "./tooltip";
 
 const state = createInitialState("RUSSIA");
 
@@ -114,5 +114,22 @@ describe("tooltipHtml", () => {
     expect(html).not.toContain("<img");
     expect(html).not.toContain("<b>");
     expect(html).toContain("&lt;img src=x onerror=&quot;a&quot;&gt;&amp;");
+  });
+});
+
+describe("tooltipPosition", () => {
+  const viewport = { width: 1000, height: 700 };
+  const size = { width: 200, height: 100 };
+
+  it("sits 14 px right of and below the pointer", () => {
+    expect(tooltipPosition([300, 200], size, viewport)).toEqual({ x: 314, y: 214 });
+  });
+
+  it("is pushed back inside the map, 8 px from the edge, near the right and bottom edges", () => {
+    expect(tooltipPosition([950, 650], size, viewport)).toEqual({ x: 1000 - 200 - 8, y: 700 - 100 - 8 });
+  });
+
+  it("keeps the 8 px margin at the top left", () => {
+    expect(tooltipPosition([-20, -30], size, viewport)).toEqual({ x: 8, y: 8 });
   });
 });

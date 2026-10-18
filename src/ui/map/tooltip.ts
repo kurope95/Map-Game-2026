@@ -84,3 +84,18 @@ export function tooltipHtml(model: TooltipModel): string {
   }
   return rows.join("");
 }
+
+/** The tooltip sits this far right of and below the pointer, and never closer than this to the map edges. */
+export const TOOLTIP_OFFSET = 14;
+export const TOOLTIP_MARGIN = 8;
+
+/** Top-left of the tooltip box for a pointer position, kept inside the map. */
+export function tooltipPosition(
+  pointer: readonly [number, number],
+  size: { width: number; height: number },
+  viewport: { width: number; height: number }
+): { x: number; y: number } {
+  const place = (value: number, extent: number, available: number) =>
+    Math.max(TOOLTIP_MARGIN, Math.min(value + TOOLTIP_OFFSET, available - extent - TOOLTIP_MARGIN));
+  return { x: place(pointer[0], size.width, viewport.width), y: place(pointer[1], size.height, viewport.height) };
+}

@@ -14,18 +14,15 @@ import { buildMapGeometry, type MapGeometry } from "./geometry/buildMapGeometry"
 import { WORLD } from "./geometry/projection";
 import { clickOutcome, hitTest, type FrameHitData } from "./layout/hitTest";
 import type { MapViewProps } from "./MapView";
-import { readStats, recordFrame } from "./perf/frameStats";
+import { recordFrame } from "./perf/frameStats";
+import { PerfMeter } from "./perf/PerfMeter";
 import { drawPreparingMap } from "./render/layers/sea";
 import { renderFrame } from "./render/renderFrame";
 import { clearTextCache } from "./render/text";
 import { getStartingControllers } from "./startingControllers";
-import { tooltipHtml, tooltipModel } from "./tooltip";
+import { TooltipView } from "./TooltipView";
 
 const DRAG_THRESHOLD_PX = 5;
-/** The tooltip sits this far right of and below the cursor, and this far inside the map edges. */
-const TOOLTIP_OFFSET = 14;
-const TOOLTIP_MARGIN = 8;
-const PERF_REFRESH_MS = 500;
 const WHEEL_SENSITIVITY = 1.0015;
 export const BUTTON_ZOOM = 1.6;
 const FIT_PADDING = 40;
@@ -74,18 +71,13 @@ export class MapController {
   private pointer: [number, number] | null = null;
   private hoverKey = "off";
   private hoverDirty = true;
-  private readonly tooltipEl: HTMLDivElement;
-  private tooltipRegionId: string | null = null;
-  private tooltipState: GameState | null = null;
-  private tooltipVisible = false;
-  private tooltipSize = { width: 0, height: 0 };
-  private readonly perfEl: HTMLDivElement;
-  private perfTimer: number | null = null;
+  private readonly tooltip: TooltipView;
+  private readonly perfMeter: PerfMeter;
 
   constructor(elements: { canvas: HTMLCanvasElement; tooltip: HTMLDivElement; perf: HTMLDivElement }) {
     this.canvas = elements.canvas;
-    this.tooltipEl = elements.tooltip;
-    this.perfEl = elements.perf;
+    this.tooltip = new TooltipView(elements.tooltip);
+    this.perfMeter = new PerfMeter(elements.perf);
     const ctx = this.canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas 2D is not available");
     this.ctx = ctx;
@@ -167,10 +159,9 @@ export class MapController {
     this.resizeObserver.disconnect();
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
     if (this.buildTimer !== null) window.clearTimeout(this.buildTimer);
-    if (this.perfTimer !== null) window.clearInterval(this.perfTimer);
+    this.perfMeter.destroy();
     this.rafId = null;
     this.buildTimer = null;
-    this.perfTimer = null;
   }
 
   // ---- geometry, size and camera ----
@@ -443,56 +434,18 @@ export class MapController {
       const hit = hitTest(pointer[0], pointer[1], this.frameHit, camera, geometry.lookup);
       if (hit.kind !== "sea" && hit.kind !== "pill") regionId = hit.regionId;
     }
-    this.updateTooltip(regionId, pointer);
+    this.tooltip.update(this.props?.state, regionId, pointer, this.viewport);
     if (regionId === this.hoverRegionId) return false;
     this.hoverRegionId = regionId;
     return true;
-  }
-
-  /** The tooltip is a DOM element updated through its ref: no React render (spec 11.3). */
-  private updateTooltip(regionId: string | null, pointer: [number, number] | null): void {
-    const element = this.tooltipEl;
-    const state = this.props?.state;
-    if (!regionId || !pointer || !state) {
-      if (this.tooltipVisible) element.classList.remove("is-visible");
-      this.tooltipVisible = false;
-      this.tooltipRegionId = null;
-      return;
-    }
-    if (!this.tooltipVisible) {
-      element.classList.add("is-visible");
-      this.tooltipVisible = true;
-    }
-    if (regionId !== this.tooltipRegionId || state !== this.tooltipState) {
-      const model = tooltipModel(state, regionId);
-      element.innerHTML = model ? tooltipHtml(model) : "";
-      this.tooltipRegionId = regionId;
-      this.tooltipState = state;
-      this.tooltipSize = { width: element.offsetWidth, height: element.offsetHeight };
-    }
-    const { width, height } = this.tooltipSize;
-    const x = Math.max(TOOLTIP_MARGIN, Math.min(pointer[0] + TOOLTIP_OFFSET, this.viewport.width - width - TOOLTIP_MARGIN));
-    const y = Math.max(TOOLTIP_MARGIN, Math.min(pointer[1] + TOOLTIP_OFFSET, this.viewport.height - height - TOOLTIP_MARGIN));
-    element.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
   }
 
   /** F3 (dev builds only) shows or hides the frame-time meter. */
   private onKeyDown = (event: KeyboardEvent): void => {
     if (event.key !== "F3") return;
     event.preventDefault();
-    const visible = this.perfEl.classList.toggle("is-visible");
-    if (this.perfTimer !== null) window.clearInterval(this.perfTimer);
-    this.perfTimer = null;
-    if (visible) {
-      this.refreshPerf();
-      this.perfTimer = window.setInterval(() => this.refreshPerf(), PERF_REFRESH_MS);
-    }
+    this.perfMeter.toggle();
   };
-
-  private refreshPerf(): void {
-    const stats = readStats();
-    this.perfEl.textContent = `avg ${stats.avgFrameMs.toFixed(1)} ms · p95 ${stats.p95FrameMs.toFixed(1)} ms · renders ${stats.renders} · frames ${stats.frames}`;
-  }
 
   private drawPreparing(): void {
     drawPreparingMap(this.ctx, this.viewport, this.dpr);

@@ -252,8 +252,8 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `MapController.ts`, which passed the 400-line guideline) in three steps: c2a DONE (pure helpers extracted with tests:
   [`cameraTween.ts`](./src/ui/map/cameraTween.ts), `recenterOnResize` in [`camera.ts`](./src/ui/map/camera.ts), `clickOutcome` in
   [`hitTest.ts`](./src/ui/map/layout/hitTest.ts) and `drawPreparingMap` in [`sea.ts`](./src/ui/map/render/layers/sea.ts); controller
-  565 -> 501 lines, behavior unchanged: `map-check.js` 18/18), c2b NOT started (`TooltipView` and `PerfMeter` out of the
-  controller), c2c NOT started (pointer input out of the controller). Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
+  565 -> 501 lines, behavior unchanged: `map-check.js` 18/18), c2b DONE ([`TooltipView.ts`](./src/ui/map/TooltipView.ts),
+  [`PerfMeter.ts`](./src/ui/map/perf/PerfMeter.ts) and the pure `tooltipPosition`, 3 tests; controller 453 lines), c2c NOT started (pointer input out of the controller). Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
   (plan 2026-10-18-visual-overhaul → Task 27)
 
 ### Decision
