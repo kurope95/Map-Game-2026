@@ -159,8 +159,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`styles.css`](./src/ui/styles.css) (445 lines; a chunk-level check against git found nothing lost or added);
   `GameScreen.tsx` imports both files for now. Part b (extract `RegionPanel`, `EconomyPanel`,
   `RecruitmentPanel`, `OrdersPanel`, `AiIntelPanel`, `WarStatusPanel`, `EventLogPanel` into `src/ui/panels/`
-  with `data-layout="panel-*"`) is NOT started. Browser verification of part a (style fingerprint, layout lock)
-  was not run before the session hit its usage limit. (plan 2026-10-18-visual-overhaul → Task 9)
+  with `data-layout="panel-*"`) is NOT started. Part a is verified in the browser: the computed-style and box
+  fingerprint of 18 UI states (3,392 elements) is identical to before the move; the layout lock and the walk-
+  through were not rerun for part a. The session hit its usage limit here.
+  (plan 2026-10-18-visual-overhaul → Task 9)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
