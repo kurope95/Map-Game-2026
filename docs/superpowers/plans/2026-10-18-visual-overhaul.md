@@ -1439,7 +1439,7 @@ its largest starting region; `area` is the sum of its starting regions' areas.
 
 **Graticule:** project `geoGraticule10()` with the same collector approach (lines only).
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - **Lookup:**
     - `lookup.regionAt(shape.point)` equals the region id for every region;
     - `regionAt(projectGeoPoint({lon: 19.5, lat: 55.6}))` (Baltic Sea) is null and `landAt` is
@@ -1457,8 +1457,8 @@ its largest starting region; `area` is the sum of its starting regions' areas.
     nation's starting regions.
   - **`palette.geometry.test.ts`:** every pair of different starting controllers across
     `internal`/`national` edges has `rgbDistance ≥ 40`.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
-- [ ] **Step 3: Changelog, then commit** with the message
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
+- [x] **Step 3: Changelog, then commit** with the message
   `Add region lookup, boundary edges, shades and label points`.
 
 ### Task 23: Camera math

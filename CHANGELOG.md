@@ -178,6 +178,19 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Files: [regionShapes.test.ts](./src/ui/map/geometry/regionShapes.test.ts),
   [countryShapes.ts](./src/ui/map/geometry/countryShapes.ts),
   [regionGeo.ts](./src/game/content/regionGeo.ts)
+- Map hit-testing and boundary geometry for the canvas map: [`regionLookup.ts`](./src/ui/map/geometry/regionLookup.ts)
+  answers `regionAt`/`landAt` through banded even-odd point indexes,
+  [`boundaries.ts`](./src/ui/map/geometry/boundaries.ts) walks each region ring once into typed
+  border polylines (`internal`/`national`/`coast`/`foreign`, deduplicated per shared border) and
+  derives neighbors plus a proper four-variant shade coloring, [`labelPoints.ts`](./src/ui/map/geometry/labelPoints.ts)
+  picks an interior label point per region and per starting nation,
+  [`startingControllers.ts`](./src/ui/map/startingControllers.ts) exposes the pre-war controller map,
+  and [`buildMapGeometry.ts`](./src/ui/map/geometry/buildMapGeometry.ts) assembles all of it
+  (shapes, edges, shades, labels, graticule, bounds) in one memoized build.
+  (plan 2026-10-18-visual-overhaul → Task 22)
+  Files: [regionLookup.test.ts](./src/ui/map/geometry/regionLookup.test.ts) (3 tests),
+  [boundaries.test.ts](./src/ui/map/geometry/boundaries.test.ts) (7 tests),
+  [palette.geometry.test.ts](./src/ui/theme/palette.geometry.test.ts) (1 test)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -225,6 +238,21 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   generated Baltic regions to their real countries (`riga-north` → 428, `tallinn-east` → 233)
   because the country fallback resolves `BALTIC_FEDERATION` to Lithuania's 440.
   (plan 2026-10-18-visual-overhaul → Task 21)
+- Task 22 boundary probing decides inside/outside from ring winding (the exterior ring encloses on
+  its winding side, a hole on the opposite side) instead of a `pointInMultiPolygon` call per probe.
+  It is equivalent for valid polygons and cut the edge walk from ~1.4 s to ~34 ms; degenerate
+  zero-area rings fall back to point-in-polygon. [`regionLookup.ts`](./src/ui/map/geometry/regionLookup.ts)
+  likewise uses latitude-banded even-odd indexes: equivalence to `pointInMultiPolygon` was checked
+  on 4000 deterministic random points over the whole theatre with 0 mismatches for both `regionAt`
+  and `landAt`. (plan 2026-10-18-visual-overhaul → Task 22)
+- Sorted greedy shade coloring left Voronezh sharing variant 0 with Bryansk (its neighbors already
+  used all four variants), which would fail the plan's own "neighbors differ" test. `computeShadeVariants`
+  now falls back to DSATUR-ordered backtracking, which finds a conflict-free four-coloring (105
+  steps on the shipped map) before ever giving up. (plan 2026-10-18-visual-overhaul → Task 22)
+- `buildMapGeometry` measures ~563-610 ms in Node/Vitest (shapes ~146 ms, region shapes ~344 ms,
+  edges ~34 ms, labels ~43 ms), above the spec's ≤300 ms browser budget. The budget check belongs
+  to Task 26, where the build is timed in the browser; the 4-color fallback and label sampling are
+  the likely levers if it misses. (plan 2026-10-18-visual-overhaul → Task 22)
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
@@ -521,6 +549,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   returns a positive-area polygon for all 103 runtime regions, no city point falls outside its own
   polygon, no shape needs the bbox fallback, and every clip group sums to its country area within
   1%. (plan 2026-10-18-visual-overhaul → Task 21)
+- Task 22: `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm test` 135/135 (11 new tests),
+  `npm run build` OK (CSS 66.84 kB, JS 1,243.86 kB), `npm run check:layers` "Layering: PASS".
+  The lookup returns the right region at every city point (Baltic Sea → `sea`, Italy → `foreign`);
+  neighbor sets are symmetric, every region has a neighbor or coast edge, Pridnestrovie touches
+  Chisinau, Gdansk has a coast edge, every edge holds ≥2 points, no same-controller neighbors share
+  a shade variant, all 24 nation labels sit inside one of that nation's starting regions, and every
+  geometrically adjacent pair of starting controllers has `rgbDistance ≥ 40`.
+  (plan 2026-10-18-visual-overhaul → Task 22)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
