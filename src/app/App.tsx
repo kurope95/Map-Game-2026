@@ -2,8 +2,27 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createInitialState } from "../game/state/createInitialState";
 import { advanceTurn, evaluateWarEntryRules } from "../game/rules/turnEngine";
 import { getPridnestrovieDepotStatus } from "../game/rules/strategicDepot";
+import {
+  canAfford as stockpileCanAfford,
+  cancelBuildOrder,
+  demolishFacility,
+  getBestOperationalFacility as findBestOperationalFacility,
+  getMissingResources as getStockpileShortfall,
+  getOperationalFacilities as findOperationalFacilities,
+  purchaseDoctrine,
+  queueFacilityBuild,
+  queueFacilityRepair,
+  queueFacilityUpgrade,
+  queueFortificationBuild,
+  queueFortificationRepair,
+  queueFortificationUpgrade,
+  queueUnitRecruit,
+  queueUnitReplenish,
+  toggleChemicalMode,
+  type ActionResult,
+} from "../game/rules/playerActions";
 import { CountryId, GameState, GameToast, UnitDefinition, VictoryStatus } from "../game/state/types";
-import type { FacilityType, StockpileKey, EconomyBuildOrder } from "../game/state/types";
+import type { FacilityType, StockpileKey, UnitType } from "../game/state/types";
 import { TheaterMap } from "../ui/TheaterMap";
 import { LandingPage } from "../ui/LandingPage";
 import { EconomyLogicMap } from "../ui/EconomyLogicMap";
@@ -550,97 +569,11 @@ export function App() {
   }
 
   function handleReplenishUnit(unitId: string) {
-    const unit = gameState.units[unitId];
-    if (!unit || unit.countryId !== playerCountryId) return;
-    const recruitRecipe = getUnitRecruitmentRecipe(unit.type);
-    if (!recruitRecipe) return;
-    const sourceFacility = getBestOperationalFacility(unit.regionId, recruitRecipe.requiredFacility);
-    const replenish = getReplenishmentCost(unit.type, unit.strength, sourceFacility?.level ?? 1);
-    if (!replenish) { addToast("Unit is already at full strength", "info"); return; }
-
-    // Check required facility in the unit's current region
-    if (!sourceFacility) {
-      addToast(`Requires a ${replenish.requiredFacility} in ${gameState.regions[unit.regionId]?.name}`, "warning");
-      return;
-    }
-
-    // Check affordability
-    const stockpile = gameState.countryStockpiles[playerCountryId];
-    for (const [key, amount] of Object.entries(replenish.cost)) {
-      if ((stockpile[key as StockpileKey] ?? 0) < (amount ?? 0)) {
-        addToast(`Not enough ${key} (need ${amount}, have ${stockpile[key as StockpileKey] ?? 0})`, "warning");
-        return;
-      }
-    }
-
-    // Check not already being replenished
-    const existingOrders = gameState.economyBuildOrders[playerCountryId] ?? [];
-    if (existingOrders.some((o) => o.type === "replenishUnit" && o.unitId === unitId)) {
-      addToast("This unit is already being replenished", "info");
-      return;
-    }
-
-    setGameState((s) => {
-      const sp = { ...s.countryStockpiles[playerCountryId] };
-      for (const [key, amount] of Object.entries(replenish.cost)) {
-        sp[key as StockpileKey] -= amount ?? 0;
-      }
-      const order: EconomyBuildOrder = {
-        id: `replenish-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        countryId: playerCountryId,
-        regionId: unit.regionId,
-        type: "replenishUnit",
-        unitId,
-        unitType: unit.type,
-        turnsRemaining: replenish.turns,
-        totalTurns: replenish.turns,
-        committed: { ...replenish.cost },
-      };
-      return {
-        ...s,
-        countryStockpiles: { ...s.countryStockpiles, [playerCountryId]: sp },
-        economyBuildOrders: { ...s.economyBuildOrders, [playerCountryId]: [...(s.economyBuildOrders[playerCountryId] ?? []), order] },
-      };
-    });
-
-    const costStr = Object.entries(replenish.cost).map(([k, v]) => `${v} ${k}`).join(", ");
-    addToast(`Replenishing ${unit.type} (${replenish.turns} turns, cost: ${costStr})`, "success");
+    applyAction(queueUnitReplenish(gameState, playerCountryId, unitId));
   }
 
   function handlePurchaseDoctrine(docId: DoctrineUpgradeId) {
-    const def = DOCTRINE_DEFINITIONS.find((d) => d.id === docId);
-    if (!def) return;
-
-    const owned = gameState.doctrineUpgrades?.[playerCountryId] ?? [];
-    if (owned.includes(docId)) { addToast("Doctrine already unlocked", "info"); return; }
-
-    // Check prerequisites
-    for (const req of def.requires ?? []) {
-      if (!owned.includes(req)) {
-        const reqDef = DOCTRINE_DEFINITIONS.find((d) => d.id === req);
-        addToast(`Requires: ${reqDef?.name ?? req}`, "warning");
-        return;
-      }
-    }
-
-    const tradePoints = gameState.countryStockpiles[playerCountryId].tradePoints;
-    if (tradePoints < def.cost) {
-      addToast(`Insufficient trade points (need ${def.cost}, have ${Math.floor(tradePoints)})`, "warning");
-      return;
-    }
-
-    setGameState((s) => ({
-      ...s,
-      countryStockpiles: {
-        ...s.countryStockpiles,
-        [playerCountryId]: { ...s.countryStockpiles[playerCountryId], tradePoints: s.countryStockpiles[playerCountryId].tradePoints - def.cost },
-      },
-      doctrineUpgrades: {
-        ...s.doctrineUpgrades,
-        [playerCountryId]: [...(s.doctrineUpgrades?.[playerCountryId] ?? []), docId],
-      },
-    }));
-    addToast(`Doctrine unlocked: ${def.name}`, "success");
+    applyAction(purchaseDoctrine(gameState, playerCountryId, docId));
   }
 
   function handleAdvanceTurn() {
@@ -723,37 +656,25 @@ export function App() {
 
   // ── Economy build handlers ──
 
+  function applyAction(result: ActionResult) {
+    if (result.ok) setGameState(result.state);
+    if (result.toast) addToast(result.toast.message, result.toast.tone);
+  }
+
   function canAfford(cost: Partial<Record<StockpileKey, number>>): boolean {
-    const stockpile = gameState.countryStockpiles[playerCountryId];
-    if (!stockpile) return false;
-    for (const [key, amount] of Object.entries(cost)) {
-      if ((stockpile[key as StockpileKey] ?? 0) < (amount ?? 0)) return false;
-    }
-    return true;
+    return stockpileCanAfford(gameState.countryStockpiles[playerCountryId], cost);
   }
 
   function getMissingResources(cost: Partial<Record<StockpileKey, number>>): string[] {
-    const stockpile = gameState.countryStockpiles[playerCountryId];
-    if (!stockpile) return Object.keys(cost);
-    const missing: string[] = [];
-    for (const [key, amount] of Object.entries(cost)) {
-      const have = stockpile[key as StockpileKey] ?? 0;
-      const need = amount ?? 0;
-      if (have < need) {
-        missing.push(`${need - have} ${key}`);
-      }
-    }
-    return missing;
+    return getStockpileShortfall(gameState.countryStockpiles[playerCountryId], cost);
   }
 
   function getOperationalFacilities(regionId: string, facilityType: FacilityType) {
-    return (gameState.regionEconomies[regionId]?.facilities ?? [])
-      .filter((facility) => facility.type === facilityType && !facility.damaged)
-      .sort((left, right) => right.level - left.level);
+    return findOperationalFacilities(gameState, regionId, facilityType);
   }
 
   function getBestOperationalFacility(regionId: string, facilityType: FacilityType) {
-    return getOperationalFacilities(regionId, facilityType)[0] ?? null;
+    return findBestOperationalFacility(gameState, regionId, facilityType);
   }
 
   function handleDiplomacyAction(targetCountryId: CountryId, actionType: DiplomacyActionType) {
@@ -762,286 +683,43 @@ export function App() {
   }
 
   function handleBuildFacility(regionId: string, facilityType: FacilityType) {
-    if (!playerTurnActive) return;
-    if (gameState.regions[regionId]?.controllerCountryId !== playerCountryId) return;
-    const recipe = FACILITY_BUILD_COSTS.find((r) => r.facilityType === facilityType);
-    if (!recipe) return;
-    const economy = gameState.regionEconomies[regionId];
-    if (!economy) return;
-    // Check building slot availability
-    const usedSlots = economy.facilities.length;
-    const pendingSlots = (gameState.economyBuildOrders[playerCountryId] ?? []).filter(
-      (o) => o.regionId === regionId && o.type === "buildFacility"
-    ).length;
-    if (usedSlots + pendingSlots >= economy.buildingSlots) return;
-    // Check we can afford it
-    if (!canAfford(recipe.cost)) return;
-
-    setGameState((s) => {
-      const stockpile = { ...s.countryStockpiles[playerCountryId] };
-      for (const [key, amount] of Object.entries(recipe.cost)) {
-        stockpile[key as StockpileKey] -= amount ?? 0;
-      }
-      const order: EconomyBuildOrder = {
-        id: `build-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        countryId: playerCountryId,
-        regionId,
-        type: "buildFacility",
-        facilityType,
-        turnsRemaining: recipe.turns,
-        totalTurns: recipe.turns,
-        committed: { ...recipe.cost },
-      };
-      return {
-        ...s,
-        countryStockpiles: { ...s.countryStockpiles, [playerCountryId]: stockpile },
-        economyBuildOrders: { ...s.economyBuildOrders, [playerCountryId]: [...(s.economyBuildOrders[playerCountryId] ?? []), order] },
-      };
-    });
+    applyAction(queueFacilityBuild(gameState, playerCountryId, regionId, facilityType));
   }
 
   function handleUpgradeFacility(facilityId: string, regionId: string) {
-    if (!playerTurnActive) return;
-    if (gameState.regions[regionId]?.controllerCountryId !== playerCountryId) return;
-    const economy = gameState.regionEconomies[regionId];
-    if (!economy) return;
-    const facility = economy.facilities.find((f) => f.id === facilityId);
-    if (!facility || facility.damaged || facility.level >= 3) return;
-    const recipe = getFacilityBuildRecipe(facility.type);
-    const upgradeCost = getFacilityUpgradeCost(facility.type, facility.level);
-    if (!recipe || !upgradeCost) return;
-    if ((gameState.economyBuildOrders[playerCountryId] ?? []).some((o) => o.type === "upgradeFacility" && o.facilityId === facilityId)) return;
-    if (!canAfford(upgradeCost)) return;
-
-    setGameState((s) => {
-      const stockpile = { ...s.countryStockpiles[playerCountryId] };
-      for (const [key, amount] of Object.entries(upgradeCost)) {
-        stockpile[key as StockpileKey] -= amount ?? 0;
-      }
-      const order: EconomyBuildOrder = {
-        id: `upgrade-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        countryId: playerCountryId,
-        regionId,
-        type: "upgradeFacility",
-        facilityId,
-        turnsRemaining: recipe.turns,
-        totalTurns: recipe.turns,
-        committed: { ...upgradeCost },
-      };
-      return {
-        ...s,
-        countryStockpiles: { ...s.countryStockpiles, [playerCountryId]: stockpile },
-        economyBuildOrders: { ...s.economyBuildOrders, [playerCountryId]: [...(s.economyBuildOrders[playerCountryId] ?? []), order] },
-      };
-    });
+    applyAction(queueFacilityUpgrade(gameState, playerCountryId, regionId, facilityId));
   }
 
   function handleRepairFacility(facilityId: string, regionId: string) {
-    if (!playerTurnActive) return;
-    if (gameState.regions[regionId]?.controllerCountryId !== playerCountryId) return;
-    const economy = gameState.regionEconomies[regionId];
-    if (!economy) return;
-    const facility = economy.facilities.find((f) => f.id === facilityId);
-    if (!facility || !facility.damaged) return;
-    if ((gameState.economyBuildOrders[playerCountryId] ?? []).some((o) => o.type === "repairFacility" && o.facilityId === facilityId)) return;
-
-    const repairProfile = getFacilityRepairProfile(facility.type, facility.level);
-    if (!repairProfile) return;
-    if (!canAfford(repairProfile.cost)) return;
-
-    setGameState((s) => {
-      const stockpile = { ...s.countryStockpiles[playerCountryId] };
-      for (const [key, amount] of Object.entries(repairProfile.cost)) {
-        stockpile[key as StockpileKey] -= amount ?? 0;
-      }
-      const order: EconomyBuildOrder = {
-        id: `repair-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        countryId: playerCountryId,
-        regionId,
-        type: "repairFacility",
-        facilityId,
-        turnsRemaining: repairProfile.turns,
-        totalTurns: repairProfile.turns,
-        committed: { ...repairProfile.cost },
-      };
-      return {
-        ...s,
-        countryStockpiles: { ...s.countryStockpiles, [playerCountryId]: stockpile },
-        economyBuildOrders: { ...s.economyBuildOrders, [playerCountryId]: [...(s.economyBuildOrders[playerCountryId] ?? []), order] },
-      };
-    });
+    applyAction(queueFacilityRepair(gameState, playerCountryId, regionId, facilityId));
   }
 
   function handleBuildFortification(regionId: string) {
-    if (!playerTurnActive) return;
-    if (gameState.regions[regionId]?.controllerCountryId !== playerCountryId) return;
-    const economy = gameState.regionEconomies[regionId];
-    if (!economy || economy.fortification) return;
-    if ((gameState.economyBuildOrders[playerCountryId] ?? []).some((o) => o.regionId === regionId && o.type === "buildFortification")) return;
-    const buildProfile = getFortificationBuildProfile(1);
-    if (!buildProfile || !canAfford(buildProfile.cost)) return;
-
-    setGameState((s) => {
-      const stockpile = { ...s.countryStockpiles[playerCountryId] };
-      for (const [key, amount] of Object.entries(buildProfile.cost)) {
-        stockpile[key as StockpileKey] -= amount ?? 0;
-      }
-      const order: EconomyBuildOrder = {
-        id: `fort-build-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        countryId: playerCountryId,
-        regionId,
-        type: "buildFortification",
-        turnsRemaining: buildProfile.turns,
-        totalTurns: buildProfile.turns,
-        committed: { ...buildProfile.cost },
-      };
-      return {
-        ...s,
-        countryStockpiles: { ...s.countryStockpiles, [playerCountryId]: stockpile },
-        economyBuildOrders: { ...s.economyBuildOrders, [playerCountryId]: [...(s.economyBuildOrders[playerCountryId] ?? []), order] },
-      };
-    });
+    applyAction(queueFortificationBuild(gameState, playerCountryId, regionId));
   }
 
   function handleUpgradeFortification(regionId: string) {
-    if (!playerTurnActive) return;
-    if (gameState.regions[regionId]?.controllerCountryId !== playerCountryId) return;
-    const economy = gameState.regionEconomies[regionId];
-    const fort = economy?.fortification;
-    if (!economy || !fort || fort.level >= FORTIFICATION_MAX_LEVEL) return;
-    if ((gameState.economyBuildOrders[playerCountryId] ?? []).some((o) => o.regionId === regionId && o.type === "upgradeFortification")) return;
-    const buildProfile = getFortificationBuildProfile(fort.level + 1);
-    if (!buildProfile || !canAfford(buildProfile.cost)) return;
-
-    setGameState((s) => {
-      const stockpile = { ...s.countryStockpiles[playerCountryId] };
-      for (const [key, amount] of Object.entries(buildProfile.cost)) {
-        stockpile[key as StockpileKey] -= amount ?? 0;
-      }
-      const order: EconomyBuildOrder = {
-        id: `fort-upgrade-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        countryId: playerCountryId,
-        regionId,
-        type: "upgradeFortification",
-        turnsRemaining: buildProfile.turns,
-        totalTurns: buildProfile.turns,
-        committed: { ...buildProfile.cost },
-      };
-      return {
-        ...s,
-        countryStockpiles: { ...s.countryStockpiles, [playerCountryId]: stockpile },
-        economyBuildOrders: { ...s.economyBuildOrders, [playerCountryId]: [...(s.economyBuildOrders[playerCountryId] ?? []), order] },
-      };
-    });
+    applyAction(queueFortificationUpgrade(gameState, playerCountryId, regionId));
   }
 
   function handleRepairFortification(regionId: string) {
-    if (!playerTurnActive) return;
-    if (gameState.regions[regionId]?.controllerCountryId !== playerCountryId) return;
-    const economy = gameState.regionEconomies[regionId];
-    const fort = economy?.fortification;
-    if (!economy || !fort || fort.health >= fort.maxHealth) return;
-    if ((gameState.economyBuildOrders[playerCountryId] ?? []).some((o) => o.regionId === regionId && o.type === "repairFortification")) return;
-    const repairProfile = getFortificationRepairProfile(fort.level, fort.health, fort.maxHealth);
-    if (!repairProfile || !canAfford(repairProfile.cost)) return;
-
-    setGameState((s) => {
-      const stockpile = { ...s.countryStockpiles[playerCountryId] };
-      for (const [key, amount] of Object.entries(repairProfile.cost)) {
-        stockpile[key as StockpileKey] -= amount ?? 0;
-      }
-      const order: EconomyBuildOrder = {
-        id: `fort-repair-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        countryId: playerCountryId,
-        regionId,
-        type: "repairFortification",
-        turnsRemaining: repairProfile.turns,
-        totalTurns: repairProfile.turns,
-        committed: { ...repairProfile.cost },
-      };
-      return {
-        ...s,
-        countryStockpiles: { ...s.countryStockpiles, [playerCountryId]: stockpile },
-        economyBuildOrders: { ...s.economyBuildOrders, [playerCountryId]: [...(s.economyBuildOrders[playerCountryId] ?? []), order] },
-      };
-    });
+    applyAction(queueFortificationRepair(gameState, playerCountryId, regionId));
   }
 
   function handleRemoveFacility(regionId: string, facilityId: string) {
-    if (!playerTurnActive) return;
-    if (gameState.regions[regionId]?.controllerCountryId !== playerCountryId) return;
-
-    setGameState((s) => {
-      const regionEcon = s.regionEconomies[regionId];
-      if (!regionEcon) return s;
-
-      const facilityIndex = regionEcon.facilities.findIndex((f) => f.id === facilityId);
-      if (facilityIndex === -1) return s;
-
-      const newFacilities = [...regionEcon.facilities];
-      newFacilities.splice(facilityIndex, 1);
-
-      return {
-        ...s,
-        regionEconomies: {
-          ...s.regionEconomies,
-          [regionId]: {
-            ...regionEcon,
-            facilities: newFacilities
-          }
-        }
-      };
-    });
+    applyAction(demolishFacility(gameState, playerCountryId, regionId, facilityId));
   }
 
   function handleRecruitUnit(regionId: string, unitType: string) {
-    if (!playerTurnActive) return;
-    if (gameState.regions[regionId]?.controllerCountryId !== playerCountryId) return;
-    const recipe = UNIT_RECRUITMENT_COSTS.find((r) => r.unitType === unitType);
-    if (!recipe) return;
-    const sourceFacility = getBestOperationalFacility(regionId, recipe.requiredFacility);
-    if (!sourceFacility) return;
-    if (!canAfford(recipe.cost)) return;
-
-    setGameState((s) => {
-      const stockpile = { ...s.countryStockpiles[playerCountryId] };
-      for (const [key, amount] of Object.entries(recipe.cost)) {
-        stockpile[key as StockpileKey] -= amount ?? 0;
-      }
-      const order: EconomyBuildOrder = {
-        id: `recruit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        countryId: playerCountryId,
-        regionId,
-        type: "recruitUnit",
-        unitType: unitType as EconomyBuildOrder["unitType"],
-        turnsRemaining: getMilitaryProductionTurns(recipe.turns, sourceFacility.level),
-        totalTurns: getMilitaryProductionTurns(recipe.turns, sourceFacility.level),
-        committed: { ...recipe.cost },
-      };
-      return {
-        ...s,
-        countryStockpiles: { ...s.countryStockpiles, [playerCountryId]: stockpile },
-        economyBuildOrders: { ...s.economyBuildOrders, [playerCountryId]: [...(s.economyBuildOrders[playerCountryId] ?? []), order] },
-      };
-    });
+    applyAction(queueUnitRecruit(gameState, playerCountryId, regionId, unitType as UnitType));
   }
 
   function handleCancelBuildOrder(orderId: string) {
-    setGameState((s) => {
-      const orders = s.economyBuildOrders[playerCountryId] ?? [];
-      const order = orders.find((o) => o.id === orderId);
-      if (!order) return s;
-      // Refund committed resources
-      const stockpile = { ...s.countryStockpiles[order.countryId] };
-      for (const [key, amount] of Object.entries(order.committed)) {
-        stockpile[key as StockpileKey] += amount ?? 0;
-      }
-      return {
-        ...s,
-        countryStockpiles: { ...s.countryStockpiles, [order.countryId]: stockpile },
-        economyBuildOrders: { ...s.economyBuildOrders, [playerCountryId]: orders.filter((o) => o.id !== orderId) },
-      };
-    });
+    applyAction(cancelBuildOrder(gameState, playerCountryId, orderId));
+  }
+
+  function handleToggleChemicalMode(regionId: string, facilityId: string) {
+    applyAction(toggleChemicalMode(gameState, regionId, facilityId));
   }
 
   // Pending build orders for current region
@@ -1755,13 +1433,7 @@ export function App() {
                         <span>In: {Object.entries(cRecipe.inputs).map(([k, v]) => `${v} ${k}`).join(" + ")}</span>
                         <span className="facility-popup__prod-yield">→ {Object.entries(cRecipe.outputs).map(([k, v]) => `${(v ?? 0) * facility.level} ${k}`).join(" + ")}</span>
                       </div>
-                      <button className="build-btn" style={{ marginTop: 4 }} onClick={() => {
-                        setGameState((s) => {
-                          const eco = { ...s.regionEconomies[selectedRegionId] };
-                          eco.facilities = eco.facilities.map((f) => f.id === facility.id ? { ...f, chemicalMode: f.chemicalMode === "explosives" ? "fertilizer" : "explosives" } : f);
-                          return { ...s, regionEconomies: { ...s.regionEconomies, [selectedRegionId]: eco } };
-                        });
-                      }}>
+                      <button className="build-btn" style={{ marginTop: 4 }} onClick={() => handleToggleChemicalMode(selectedRegionId, facility.id)}>
                         Switch to {mode === "explosives" ? "fertilizer" : "explosives"}
                       </button>
                     </div>

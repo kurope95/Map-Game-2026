@@ -492,7 +492,7 @@ export function toggleChemicalMode(state: GameState, regionId: string, facilityI
     - **toggleChemicalMode:** an undefined mode becomes `"explosives"`, and toggling again gives
       `"fertilizer"`.
 - [x] **Step 2: Run `npm test`.** Expect FAIL.
-- [ ] **Step 3: Implement `playerActions.ts`**, then rewire the App handlers.
+- [x] **Step 3: Implement `playerActions.ts`**, then rewire the App handlers.
   - Add a local helper in App:
     `const applyAction = (r: ActionResult) => { if (r.ok) setGameState(r.state); if (r.toast) addToast(r.toast.message, r.toast.tone); };`
   - Example rewire:

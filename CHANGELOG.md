@@ -89,8 +89,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `getBestOperationalFacility`); guards, order shapes and toast texts are moved verbatim from the
   `App.tsx` handlers, silent failures stay silent. 41 tests in
   [`playerActions.test.ts`](./src/game/rules/playerActions.test.ts).
-  **STATUS: PARTIAL (Task 6, part 1 of 2): module and tests are done; the `App.tsx` handlers are NOT
-  rewired yet and still use their own copies.** (plan 2026-10-18-visual-overhaul → Task 6)
+  (plan 2026-10-18-visual-overhaul → Task 6)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -119,6 +118,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`App.tsx`](./src/app/App.tsx), [`TheaterMap.tsx`](./src/ui/TheaterMap.tsx)) now imports the one copy in
   `strategicDepot.ts`; behavior is unchanged (the map's copy only differed in label wording, and the map
   reads just `.tone`). (plan 2026-10-18-visual-overhaul → Task 5)
+- [`App.tsx`](./src/app/App.tsx): the build, upgrade, repair, fortification, demolish, recruit, replenish,
+  cancel, doctrine and chemical-mode handlers now call the pure actions in `playerActions.ts` through one
+  `applyAction` helper (set state, then show the action's toast); `canAfford`, `getMissingResources` and the
+  facility lookups are thin wrappers that pass `gameState`. The facility pop-up's inline chemical-mode toggle
+  calls the new `handleToggleChemicalMode`. **STATUS: PARTIAL (Task 6, part 2 of 2): code rewired, type check,
+  build, tests, smoke, balance and layers check pass; the browser walk-through and the layout compare are still
+  to do.** (plan 2026-10-18-visual-overhaul → Task 6)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
