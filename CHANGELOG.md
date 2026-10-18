@@ -345,10 +345,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ids and areas with the unfiltered run); `nestRings` no longer builds a string set per point and prefilters
   holes by box ([`polygon.ts`](./src/ui/map/geometry/polygon.ts)); the nation label sampler scores a thinned
   copy of long rings ([`labelPoints.ts`](./src/ui/map/geometry/labelPoints.ts), tested in
-  `labelPoints.test.ts`). Result: ~270 ms cold in Node (three runs: 271, 267, 274), ~600-710 ms in the hidden
-  dev browser (unminified, background pane), and the production build draws the first map frame within ~115 ms of
-  pressing Start. The dev-browser number should be re-read with the pane visible.
-  (plan 2026-10-18-visual-overhaul → Task 26)
+  `labelPoints.test.ts`). Result: ~270 ms cold in Node (three runs: 271, 267, 274) and 188-230 ms in the
+  unthrottled dev browser (headless Chrome with `document.visibilityState === "visible"`, 1440x900, three
+  page loads; the earlier ~600-710 ms came from a hidden pane, where background throttling inflates the
+  build). Both are within the 300 ms budget; the production build draws the first map frame within ~115 ms of
+  pressing Start. (plan 2026-10-18-visual-overhaul → Task 26)
 - **Benchmark run headless (Task 30).** The visible-window run still cannot be made from this
   environment: `pan-zoom-bench.js` needs the Claude window in front for about a minute, a hidden pane
   returns `{ error }`, and a stand-in `requestAnimationFrame` measures no presentation at all. The C2
