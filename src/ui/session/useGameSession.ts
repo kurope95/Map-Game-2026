@@ -6,6 +6,7 @@ import type { CountryId, GameState, VictoryStatus } from "../../game/state/types
 import { executeCountryTurn, planCountryTurn, type BotDecision } from "../../game/ai/heuristicBot";
 import { isPlayerEliminated, runUntilPlayerTurn } from "../../game/sim/autoPlay";
 import type { TurnReportData } from "../windows/turnReport/parseTurnReport";
+import { AUTOSAVE_KEY } from "./autosave";
 import type { BottomTab } from "./types";
 
 export function createSessionState(playerCountryId: CountryId = "RUSSIA") {
@@ -57,7 +58,7 @@ export function useGameSession({ activeTab, clearSelection }: GameSessionOptions
   // Auto-save to localStorage each turn
   useEffect(() => {
     if (gameStarted) {
-      try { localStorage.setItem("mapgame_autosave", JSON.stringify(gameState)); } catch { /* silently fail */ }
+      try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(gameState)); } catch { /* silently fail */ }
     }
   }, [gameState.turn, gameStarted]);
 

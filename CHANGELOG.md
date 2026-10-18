@@ -255,6 +255,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and key-city counts, units by type and war-entry text from the game state; `getStartingStatus` and
   `getDifficulty` moved out of `LandingPage.tsx` unchanged. 4 tests.
   (plan 2026-10-18-visual-overhaul → Task 29)
+- Autosave parsing ([`autosave.ts`](./src/ui/session/autosave.ts)): `AUTOSAVE_KEY` and `parseAutosave`
+  validate the stored JSON (turn, playerCountryId, regions, units) before the start screen offers
+  Continue; `useGameSession` writes through the same constant. 4 tests.
+  (plan 2026-10-18-visual-overhaul → Task 29)
 
 ### Decision
 - Task 27 (map labels and extras), choices where the spec or plan left room (plan 2026-10-18-visual-overhaul → Task 27):
