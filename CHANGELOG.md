@@ -122,9 +122,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   cancel, doctrine and chemical-mode handlers now call the pure actions in `playerActions.ts` through one
   `applyAction` helper (set state, then show the action's toast); `canAfford`, `getMissingResources` and the
   facility lookups are thin wrappers that pass `gameState`. The facility pop-up's inline chemical-mode toggle
-  calls the new `handleToggleChemicalMode`. **STATUS: PARTIAL (Task 6, part 2 of 2): code rewired, type check,
-  build, tests, smoke, balance and layers check pass; the browser walk-through and the layout compare are still
-  to do.** (plan 2026-10-18-visual-overhaul → Task 6)
+  calls the new `handleToggleChemicalMode`. (plan 2026-10-18-visual-overhaul → Task 6)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -152,6 +150,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   browser walk-through (start, move order, End Turn and report, all 8 tabs, no console errors) passed and
   the Region panel for Tiraspol still shows `Depot: Locked` with its detail text.
   (plan 2026-10-18-visual-overhaul → Task 5)
+- Task 6: `npm test` 81/81 (41 new in `playerActions.test.ts`), `npx tsc -p tsconfig.app.json --noEmit` 0
+  errors, `npm run build`, `npm run check:layers`, `npm run smoke` and `npm run balance-check` passed; layout
+  lock PASS at 1440x900; browser walk-through passed (19 steps) and the economy flow passed through the
+  rewired handlers (smelter queued: iron and coal -2; cancel refunds both; farm queue and cancel; infantry
+  recruit costs steel). The "already at full strength" replenish toast is unit-tested only, because the UI
+  hides the Replenish button at full strength. (plan 2026-10-18-visual-overhaul → Task 6)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

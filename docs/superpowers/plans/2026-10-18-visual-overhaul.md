@@ -499,12 +499,12 @@ export function toggleChemicalMode(state: GameState, regionId: string, facilityI
     `function handleBuildFacility(regionId, type) { applyAction(queueFacilityBuild(gameState, playerCountryId, regionId, type)); }`
   - `canAfford`, `getMissingResources` and `getBestOperationalFacility` in App become thin wrappers
     that pass `gameState`.
-- [ ] **Step 4: Run** `npm test`, `npm run smoke` and `npm run balance-check`. Expect all to pass.
+- [x] **Step 4: Run** `npm test`, `npm run smoke` and `npm run balance-check`. Expect all to pass.
   Then in the browser:
   - build a farm in Moscow, then cancel it (the stockpile is refunded);
   - recruit infantry;
   - check the replenish toast at full strength.
-- [ ] **Step 5: Run the layout compare.** Expect PASS. Then changelog, then commit
+- [x] **Step 5: Run the layout compare.** Expect PASS. Then changelog, then commit
   `Extract player economy and doctrine actions as pure functions`.
 
 ### Task 7: GameProvider, moving App's state and handlers verbatim
