@@ -49,6 +49,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Round 1 implementation plan [`2026-10-18-visual-overhaul.md`](./docs/superpowers/plans/2026-10-18-visual-overhaul.md):
   30 tasks in 6 phases (safety net, restructure, look, canvas map, start screen, wrap-up), each
   with exact files, interfaces, tests and checks, ready for a Sonnet 5.5 implementation session.
+- `npm test` (Vitest 3.2, Node environment, tests live next to the code as `*.test.ts`) and the
+  characterization test [`scenarioBaseline.test.ts`](./src/game/state/scenarioBaseline.test.ts): after
+  10 auto-played turns `state.scenario.regions` still holds the pre-war controllers while regions
+  have changed hands, so the occupation stripes can use it as their baseline.
+  (plan 2026-10-18-visual-overhaul → Task 1)
+  Files: [package.json](./package.json), [vite.config.ts](./vite.config.ts),
+  [tsconfig.scripts.json](./tsconfig.scripts.json) (excludes `*.test.ts` from the harness compile)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -65,6 +72,9 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
   `npm run build` OK (1.2 MB JS bundle), `npm run smoke` passed, `npm run balance-check` passed
   for all 24 nations.
+- Task 1: `npm test` 1/1 passed (scenario baseline holds, regions do change hands),
+  `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm run smoke` passed.
+  (plan 2026-10-18-visual-overhaul → Task 1)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

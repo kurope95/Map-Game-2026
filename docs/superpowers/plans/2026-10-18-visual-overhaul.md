@@ -111,9 +111,9 @@ section numbers like "spec 11.4" refer to it).
 **Interfaces:**
 - Produces: `npm test`. Tests live next to code as `*.test.ts` and run in a Node environment.
 
-- [ ] **Step 1: Install and configure.** Run `npm install -D vitest@^3.2`, then apply the three file
+- [x] **Step 1: Install and configure.** Run `npm install -D vitest@^3.2`, then apply the three file
   changes above.
-- [ ] **Step 2: Write the characterization test** (spec 11.4 #5 relies on it):
+- [x] **Step 2: Write the characterization test** (spec 11.4 #5 relies on it):
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -137,12 +137,12 @@ describe("scenario baseline", () => {
 });
 ```
 
-- [ ] **Step 3: Run `npm test`.** Expect PASS.
+- [x] **Step 3: Run `npm test`.** Expect PASS.
   - If the controllers assertion fails, `scenario.regions` is being mutated somewhere. STOP and report
     to Marek, because the occupation-stripe design depends on it.
   - If `changed.length` is 0, raise the turn count to 20.
-- [ ] **Step 4: Run** `npx tsc -p tsconfig.app.json --noEmit` and `npm run smoke`. Expect both to pass.
-- [ ] **Step 5: Changelog, then commit** with the message `Add vitest and scenario baseline test`.
+- [x] **Step 4: Run** `npx tsc -p tsconfig.app.json --noEmit` and `npm run smoke`. Expect both to pass.
+- [x] **Step 5: Changelog, then commit** with the message `Add vitest and scenario baseline test`.
 
 ### Task 2: Layout lock tooling and legacy baseline
 

@@ -15,5 +15,6 @@
     "scripts/smokeTest.ts",
     "scripts/lib/autoPlay.ts",
     "src/game/**/*.ts"
-  ]
+  ],
+  "exclude": ["**/*.test.ts"]
 }

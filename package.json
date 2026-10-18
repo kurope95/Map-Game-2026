@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "validate-map": "node scripts/validate-map.mjs",
     "check-war-entry": "tsc -p tsconfig.scripts.json && node scripts/run-war-entry-check.cjs",
     "balance-check": "tsc -p tsconfig.scripts.json && node scripts/run-balance-check.cjs",
@@ -28,6 +30,7 @@
     "@types/topojson-client": "^3.1.5",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.7.2",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "vitest": "^3.2.7"
   }
 }
