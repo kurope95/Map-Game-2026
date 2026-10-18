@@ -583,12 +583,12 @@ export function App(): JSX.Element; // <GameProvider><AppScreens /></GameProvide
 - Bottom-tab `data-layout-key` values: `region`, `stockpile`, `economy`, `recruitment`, `orders`,
   `aiintel`, `warstatus`, `eventlog`.
 
-- [ ] **Step 1: Extract the components and move their CSS.**
-- [ ] **Step 2: Run** `npx tsc -p tsconfig.app.json --noEmit` and `npm run build`, then the manual
+- [x] **Step 1: Extract the components and move their CSS.**
+- [x] **Step 2: Run** `npx tsc -p tsconfig.app.json --noEmit` and `npm run build`, then the manual
   run and the layout compare. Expect PASS.
-- [ ] **Step 3: Check visuals.** Screenshot the main screen; it must look identical to the
+- [x] **Step 3: Check visuals.** Screenshot the main screen; it must look identical to the
   pre-task screenshot.
-- [ ] **Step 4: Changelog, then commit** with the message `Split HUD components out of GameScreen`.
+- [x] **Step 4: Changelog, then commit** with the message `Split HUD components out of GameScreen`.
 
 ### Task 9: Split the bottom-tab panels
 

@@ -31,19 +31,6 @@ select {
   font: inherit;
 }
 
-/* ═══════════════════════════════════════════════
-   HOI4-LITE LAYOUT: fullscreen map + thin bars
-   ═══════════════════════════════════════════════ */
-
-.game-shell {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  overflow: hidden;
-}
-
 .landing-shell {
   height: 100vh;
   padding: 14px 16px 12px;
@@ -242,103 +229,6 @@ select {
   }
 }
 
-/* ─── TOP BAR: single thin strip ─── */
-
-.top-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: linear-gradient(180deg, rgba(17, 25, 32, 0.98), rgba(11, 18, 24, 0.96));
-  border-bottom: 1px solid rgba(49, 74, 99, 0.5);
-  height: 36px;
-  z-index: 10;
-  user-select: none;
-}
-
-.top-bar__brand {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  margin-right: 10px;
-  white-space: nowrap;
-}
-
-.top-bar__divider {
-  width: 1px;
-  height: 18px;
-  background: var(--border);
-  margin: 0 4px;
-}
-
-.top-bar__stat {
-  font-size: 0.74rem;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.top-bar__stat strong {
-  color: var(--text);
-  margin-left: 3px;
-}
-
-.top-bar__spacer {
-  flex: 1;
-}
-
-.top-bar__btn {
-  padding: 3px 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.top-bar__btn--primary {
-  background: var(--accent);
-  color: #172110;
-  border-color: var(--accent);
-}
-
-.top-bar__btn--secondary {
-  background: rgba(10, 17, 24, 0.7);
-  color: var(--text);
-}
-
-.top-bar__btn--secondary:hover {
-  background: rgba(20, 32, 44, 0.9);
-}
-
-.top-bar__btn--active {
-  background: rgba(32, 48, 65, 0.9);
-  border-color: rgba(201, 216, 108, 0.35);
-  color: var(--accent);
-}
-
-.top-bar__select {
-  padding: 2px 6px;
-  font-size: 0.72rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: rgba(10, 17, 24, 0.7);
-  color: var(--text);
-  max-width: 150px;
-}
-
-/* ─── MAP STAGE: fills remaining space ─── */
-
-.map-stage {
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 30% 40%, rgba(11, 20, 26, 1), transparent 70%),
-    linear-gradient(180deg, #090f14 0%, #0d151c 100%);
-}
-
 .theater-map-shell {
   width: 100%;
   height: 100%;
@@ -378,66 +268,6 @@ select {
 
 .map-control-button:hover {
   background: rgba(20, 32, 44, 0.9);
-}
-
-/* ─── BOTTOM BAR: expandable shelf ─── */
-
-.bottom-bar {
-  border-top: 1px solid rgba(49, 74, 99, 0.5);
-  background: linear-gradient(180deg, rgba(11, 18, 24, 0.96), rgba(8, 13, 18, 0.98));
-  z-index: 10;
-  user-select: none;
-}
-
-.bottom-bar__tab-row {
-  display: flex;
-  align-items: center;
-  height: 32px;
-  padding: 0 10px;
-  gap: 2px;
-}
-
-.bottom-bar__tab {
-  padding: 4px 12px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  border: none;
-  border-radius: 6px 6px 0 0;
-  cursor: pointer;
-  background: transparent;
-  color: var(--muted);
-  transition: background 0.15s, color 0.15s;
-}
-
-.bottom-bar__tab:hover {
-  background: rgba(32, 48, 65, 0.5);
-  color: var(--text);
-}
-
-.bottom-bar__tab--active {
-  background: rgba(32, 48, 65, 0.7);
-  color: var(--accent);
-}
-
-.bottom-bar__tab-spacer {
-  flex: 1;
-}
-
-.bottom-bar__toggle {
-  padding: 3px 10px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  background: transparent;
-  color: var(--muted);
-  border: 1px solid rgba(49, 74, 99, 0.3);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.bottom-bar__toggle:hover {
-  color: var(--text);
 }
 
 /* panel removed — all content is now in floating windows */
@@ -595,21 +425,6 @@ select {
 /* ═══════════════════════════════════
    GLOBAL UNITS PANEL (dropdown from top bar)
    ═══════════════════════════════════ */
-
-.top-bar__stat--clickable {
-  cursor: pointer;
-  border-radius: 4px;
-  padding: 2px 6px;
-  transition: background 0.15s;
-}
-
-.top-bar__stat--clickable:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.top-bar__stat--active {
-  background: rgba(201, 216, 108, 0.15);
-}
 
 .global-units-panel {
   position: absolute;
@@ -2206,20 +2021,6 @@ select {
   fill: rgba(14, 18, 23, 0.92);
   pointer-events: none;
   user-select: none;
-}
-
-/* Scrollbar styling */
-.bottom-bar__panel::-webkit-scrollbar {
-  width: 5px;
-}
-
-.bottom-bar__panel::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.bottom-bar__panel::-webkit-scrollbar-thumb {
-  background: rgba(49, 74, 99, 0.4);
-  border-radius: 3px;
 }
 
 /* ──────────────────────────────────

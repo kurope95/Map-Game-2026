@@ -5,29 +5,32 @@ import { canBlocUseTransit, getCountryDualTiltLabel, getCountryLeanBloc, getCoun
 import { FACILITY_BUILD_COSTS, UNIT_RECRUITMENT_COSTS, PROCESSING_RECIPES, CHEMICAL_PLANT_RECIPES, MUNITIONS_PLANT_RECIPE, EXTRACTION_FACILITY_RESOURCES, CIVILIAN_GOOD_RECIPES, getFacilityBuildRecipe, getFacilityRepairProfile, getFacilityUpgradeCost, getFortificationBuildProfile, getFortificationRepairProfile, getMilitaryProductionTurns, getReplenishmentCost, getUnitRecruitmentRecipe, MAX_UNIT_STRENGTH, FORTIFICATION_MAX_LEVEL } from "../../../game/content/economyRecipes";
 import { DOCTRINE_DEFINITIONS } from "../../../game/content/doctrines";
 import type { DiplomacyActionType } from "../../../game/state/types";
+import "./GameScreen.css";
+import { BottomBar } from "../../hud/BottomBar";
+import { SupplyToggle } from "../../hud/SupplyToggle";
+import { ToastStack } from "../../hud/ToastStack";
+import { TopBar } from "../../hud/TopBar";
 import { useGame } from "../../session/GameProvider";
 
 export function GameScreen() {
   const {
     gameState, setGameStarted, playerCountryId, selectedRegionId, setSelectedRegionId, selectedUnitIds,
-    setSelectedUnitIds, combatReportOpen, setCombatReportOpen, lastEventLogSnapshot, lastBotDecision, bottomOpen,
-    setBottomOpen, activeTab, setActiveTab, unitDrawerOpen, setUnitDrawerOpen, globalUnitsOpen,
-    setGlobalUnitsOpen, stockpileOpen, setStockpileOpen, diplomacyOpen, setDiplomacyOpen, diplomacyTab,
-    setDiplomacyTab, selectedDiplomacyCountryId, setSelectedDiplomacyCountryId, diplomacyIntensity, setDiplomacyIntensity, selectedFacilityId,
-    setSelectedFacilityId, dismissedDefeatAnnouncement, setDismissedDefeatAnnouncement, logicMapOpen, setLogicMapOpen, doctrineOpen,
-    setDoctrineOpen, showSupplyOverlay, setShowSupplyOverlay, saveLoadOpen, setSaveLoadOpen, saveLoadMode,
-    saveSlots, selectedSaveSlotName, setSelectedSaveSlotName, saveSlotInput, setSaveSlotInput, playerCountry,
-    playerBlocId, playerTurnActive, selectedRegion, selectedCountry, controllerCountry, pridnestrovieDepotStatus,
-    playerCountryUnits, allPlayerUnits, unitsInRegion, validTargets, toasts, addToast,
-    victoryStatus, currentOrders, currentRecommendation, latestDefeatAnnouncement, quickJumpRegions, diplomacyTargets,
+    combatReportOpen, setCombatReportOpen, lastEventLogSnapshot, lastBotDecision, bottomOpen, setBottomOpen,
+    activeTab, unitDrawerOpen, setUnitDrawerOpen, globalUnitsOpen, setGlobalUnitsOpen, stockpileOpen,
+    setStockpileOpen, diplomacyOpen, setDiplomacyOpen, diplomacyTab, setDiplomacyTab, selectedDiplomacyCountryId,
+    setSelectedDiplomacyCountryId, diplomacyIntensity, setDiplomacyIntensity, selectedFacilityId, setSelectedFacilityId, dismissedDefeatAnnouncement,
+    setDismissedDefeatAnnouncement, logicMapOpen, setLogicMapOpen, doctrineOpen, setDoctrineOpen, showSupplyOverlay,
+    saveLoadOpen, setSaveLoadOpen, saveLoadMode, saveSlots, selectedSaveSlotName, setSelectedSaveSlotName,
+    saveSlotInput, setSaveSlotInput, playerCountry, playerBlocId, playerTurnActive, selectedRegion,
+    selectedCountry, controllerCountry, pridnestrovieDepotStatus, allPlayerUnits, unitsInRegion, validTargets,
+    addToast, victoryStatus, currentOrders, currentRecommendation, latestDefeatAnnouncement, diplomacyTargets,
     diplomacyAlliesTargets, diplomacyEnemyTargets, diplomacyNeutralTargets, visibleDiplomacyTargets, diplomacySnapshot, selectedDiplomacyCountry,
-    selectedDiplomacyState, selectedSaveSlot, saveToSlot, handleSaveGame, handleLoadGame, handleLoadSelectedSlot,
-    handleLoadLegacyQuickSave, handleDeleteSelectedSlot, handleSelectRegion, handleSelectUnit, handleSelectUnitFromMap, handleSelectFacilityFromMap,
-    handleHoldUnit, handleCancelOrder, handleClearAllOrders, handleReplenishUnit, handlePurchaseDoctrine, handleAdvanceTurn,
-    handleRunAiTurn, handleAutoPlay, canAfford, getMissingResources, getBestOperationalFacility, handleDiplomacyAction,
-    handleBuildFacility, handleUpgradeFacility, handleRepairFacility, handleBuildFortification, handleUpgradeFortification, handleRepairFortification,
-    handleRemoveFacility, handleRecruitUnit, handleCancelBuildOrder, handleToggleChemicalMode, regionBuildOrders, tabs,
-    getUnitOrder,
+    selectedDiplomacyState, selectedSaveSlot, saveToSlot, handleLoadGame, handleLoadSelectedSlot, handleLoadLegacyQuickSave,
+    handleDeleteSelectedSlot, handleSelectRegion, handleSelectUnit, handleSelectUnitFromMap, handleSelectFacilityFromMap, handleHoldUnit,
+    handleCancelOrder, handleClearAllOrders, handleReplenishUnit, handlePurchaseDoctrine, canAfford, getMissingResources,
+    getBestOperationalFacility, handleDiplomacyAction, handleBuildFacility, handleUpgradeFacility, handleRepairFacility, handleBuildFortification,
+    handleUpgradeFortification, handleRepairFortification, handleRemoveFacility, handleRecruitUnit, handleCancelBuildOrder, handleToggleChemicalMode,
+    regionBuildOrders, getUnitOrder,
   } = useGame();
 
   function renderDiplomacyBar(channel: string, value: number) {
@@ -108,52 +111,7 @@ export function GameScreen() {
 
   return (
     <div className="game-shell">
-      {/* TOP BAR */}
-      <div className="top-bar">
-        <span className="top-bar__brand">Map Game</span>
-        <span className="top-bar__divider" />
-        <span className="top-bar__stat">Nation<strong>{playerCountry.name}</strong></span>
-        <span className="top-bar__divider" />
-        <span className="top-bar__stat">Turn<strong>{gameState.turn}</strong></span>
-        <span className="top-bar__divider" />
-        <span className="top-bar__stat">Bloc<strong>{playerBlocId === "BRICS" ? "BRICS" : playerBlocId === "EU_NATO" ? "EU NATO" : "Neutral"}</strong></span>
-        <span className="top-bar__divider" />
-        <span className="top-bar__stat">Active<strong>{gameState.countries[gameState.currentActorId].name}</strong></span>
-        <span className="top-bar__divider" />
-        <span className="top-bar__stat">National Units<strong>{playerCountryUnits.length}</strong></span>
-        <span className="top-bar__divider" />
-        <span className="top-bar__stat">Trade<strong>{gameState.countryStockpiles[playerCountryId].tradePoints}</strong></span>
-        <span className="top-bar__divider" />
-        <span
-          className={`top-bar__stat top-bar__stat--clickable ${globalUnitsOpen ? "top-bar__stat--active" : ""}`}
-          onClick={() => setGlobalUnitsOpen((o) => !o)}
-          title="Click to view all your units"
-        >
-          Units<strong>{allPlayerUnits.length}</strong>
-        </span>
-        <span className="top-bar__divider" />
-
-        <select
-          className="top-bar__select"
-          value={selectedRegionId}
-          onChange={(e) => { setSelectedRegionId(e.target.value); setSelectedUnitIds(new Set()); }}
-        >
-          {quickJumpRegions.map((r) => (
-            <option key={r.id} value={r.id}>{r.name}</option>
-          ))}
-        </select>
-
-        <span className="top-bar__spacer" />
-
-        <button className="top-bar__btn top-bar__btn--primary" onClick={handleAdvanceTurn}>End Turn</button>
-        <button className="top-bar__btn top-bar__btn--secondary" onClick={handleRunAiTurn}>Run AI</button>
-        <button className="top-bar__btn top-bar__btn--secondary" onClick={() => handleAutoPlay(6)}>Auto x6</button>
-        <button className={`top-bar__btn top-bar__btn--secondary ${diplomacyOpen ? "top-bar__btn--active" : ""}`} onClick={() => setDiplomacyOpen((open) => !open)}>Diplomacy</button>
-        <button className={`top-bar__btn top-bar__btn--secondary ${doctrineOpen ? "top-bar__btn--active" : ""}`} onClick={() => setDoctrineOpen((open) => !open)}>🎓 Doctrines</button>
-        <span className="top-bar__divider" />
-        <button className="top-bar__btn top-bar__btn--secondary" onClick={handleSaveGame} title="Save game">💾</button>
-        <button className="top-bar__btn top-bar__btn--secondary" onClick={handleLoadGame} title="Load game">📂</button>
-      </div>
+      <TopBar />
 
       {saveLoadOpen && (
         <div className="save-modal-overlay" onClick={() => setSaveLoadOpen(false)}>
@@ -443,7 +401,7 @@ export function GameScreen() {
       )}
 
       {/* MAP */}
-      <div className="map-stage">
+      <div className="map-stage" data-layout="map-stage">
         <TheaterMap
           state={gameState}
           selectedRegionId={selectedRegionId}
@@ -1266,34 +1224,7 @@ export function GameScreen() {
         </div>
       )}
 
-      {/* BOTTOM BAR — just the tab row, never expands */}
-      <div className="bottom-bar">
-        <div className="bottom-bar__tab-row">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              className={`bottom-bar__tab ${tab.id === "stockpile" ? (stockpileOpen ? "bottom-bar__tab--active" : "") : (bottomOpen && activeTab === tab.id) ? "bottom-bar__tab--active" : ""}`}
-              onClick={() => {
-                if (tab.id === "stockpile") {
-                  setStockpileOpen((o) => !o);
-                  setBottomOpen(false);
-                } else {
-                  if (activeTab === tab.id && bottomOpen) {
-                    setBottomOpen(false);
-                  } else {
-                    setActiveTab(tab.id);
-                    setBottomOpen(true);
-                  }
-                  setStockpileOpen(false);
-                  setSelectedFacilityId(null);
-                }
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <BottomBar />
 
       {latestDefeatAnnouncement && dismissedDefeatAnnouncement !== latestDefeatAnnouncement && (
         <div
@@ -1396,40 +1327,7 @@ export function GameScreen() {
         </div>
       )}
 
-      {/* TOAST NOTIFICATIONS */}
-      {toasts.length > 0 && (
-        <div style={{
-          position: "fixed",
-          top: 60,
-          right: 16,
-          zIndex: 100,
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          pointerEvents: "none",
-        }}>
-          {toasts.map((toast) => {
-            const bgMap = { info: "#1e3a5f", success: "#1e4d2e", warning: "#4d3b1e", danger: "#4d1e1e" };
-            const borderMap = { info: "#3b82f6", success: "#22c55e", warning: "#f59e0b", danger: "#ef4444" };
-            return (
-              <div key={toast.id} style={{
-                background: bgMap[toast.type],
-                border: `1px solid ${borderMap[toast.type]}`,
-                borderRadius: 8,
-                padding: "10px 16px",
-                color: "#e2e8f0",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-                animation: "fadeIn 0.3s ease",
-                maxWidth: 320,
-              }}>
-                {toast.message}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <ToastStack />
 
       {/* VICTORY / DEFEAT OVERLAY */}
       {victoryStatus !== "ongoing" && (
@@ -1487,30 +1385,7 @@ export function GameScreen() {
         <EconomyLogicMap onClose={() => setLogicMapOpen(false)} />
       )}
 
-      {/* SUPPLY OVERLAY BUTTON (map controls companion) */}
-      <button
-        onClick={() => setShowSupplyOverlay(o => !o)}
-        style={{
-          position: "fixed",
-          top: 50,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 60,
-          padding: "5px 18px",
-          borderRadius: 20,
-          border: `1px solid ${showSupplyOverlay ? "rgba(100,200,255,0.7)" : "rgba(100,150,200,0.3)"}`,
-          background: showSupplyOverlay ? "rgba(30,80,140,0.85)" : "rgba(10,20,40,0.6)",
-          color: showSupplyOverlay ? "#90d4ff" : "#8aa0c0",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          cursor: "pointer",
-          backdropFilter: "blur(6px)",
-          letterSpacing: "0.06em",
-          transition: "all 0.2s",
-        }}
-      >
-        📡 SUPPLY LINES {showSupplyOverlay ? "[ON]" : "[OFF]"}
-      </button>
+      <SupplyToggle />
 
       {/* DOCTRINES PANEL */}
       {doctrineOpen && (

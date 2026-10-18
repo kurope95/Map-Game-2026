@@ -94,6 +94,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   "useGame must be used inside GameProvider" outside a provider), tested by
   [`GameProvider.test.ts`](./src/ui/session/GameProvider.test.ts) (2 tests, server-side render).
   (plan 2026-10-18-visual-overhaul → Task 7)
+- HUD components [`TopBar`](./src/ui/hud/TopBar.tsx), [`BottomBar`](./src/ui/hud/BottomBar.tsx),
+  [`SupplyToggle`](./src/ui/hud/SupplyToggle.tsx) and [`ToastStack`](./src/ui/hud/ToastStack.tsx) (prop-less,
+  they read `useGame()`), each with its own CSS file, plus
+  [`GameScreen.css`](./src/ui/screens/game/GameScreen.css). They carry the layout-lock attributes
+  `data-layout` (`top-bar`, `bottom-bar`, `map-stage`, `supply-toggle`) and `data-layout-key` on every top-bar
+  and bottom-tab control, with the exact keys the legacy capture produced.
+  (plan 2026-10-18-visual-overhaul → Task 8)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -138,6 +145,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`GameScreen.tsx`](./src/ui/screens/game/GameScreen.tsx), which starts with `const { ... } = useGame();`.
   [`App.tsx`](./src/app/App.tsx) is now 25 lines: `GameProvider` around `AppScreens`, which shows `GameScreen`
   or the landing page. Behavior is unchanged. (plan 2026-10-18-visual-overhaul → Task 7)
+- [`GameScreen.tsx`](./src/ui/screens/game/GameScreen.tsx) now composes `TopBar`, `BottomBar`, `SupplyToggle` and
+  `ToastStack`; their JSX moved verbatim. The `.top-bar*`, `.bottom-bar*`, `.game-shell` and `.map-stage` CSS
+  (199 lines) moved verbatim out of [`styles.css`](./src/ui/styles.css) into the component CSS files, and the
+  inline styles of the supply toggle and the toasts became the classes `.supply-toggle(--on)` and
+  `.toast-stack` / `.toast--info|success|warning|danger` with identical values. (The `@media (max-width: 1100px)`
+  block holds only landing-page rules, so it has no shell part to move.)
+  (plan 2026-10-18-visual-overhaul → Task 8)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -176,6 +190,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   steps), economy flow (12 steps) and layout lock at 1440x900 all pass after each of the three commits.
   A mutation check (removing the throw in `useGame`) made the `GameProvider` test fail, as it should.
   (plan 2026-10-18-visual-overhaul → Task 7)
+- Task 8: `npm test` 88/88, `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm run build` and
+  `npm run check:layers` pass; layout lock PASS at 1440x900 (top-bar keys `mapgame … loadgame` and bottom-tab
+  keys `region … eventlog` as planned); browser walk-through (19 steps) and economy flow (12 steps) pass. A
+  computed-style and box fingerprint of 18 UI states (3,392 elements, taken before and after) is identical; the
+  only differences are the 20 class renames of the supply toggle and the toast. (The fingerprint tool lives in
+  the session notes folder, not in the repo.) (plan 2026-10-18-visual-overhaul → Task 8)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

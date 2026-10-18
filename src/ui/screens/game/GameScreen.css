@@ -1,0 +1,22 @@
+/* ═══════════════════════════════════════════════
+   HOI4-LITE LAYOUT: fullscreen map + thin bars
+   ═══════════════════════════════════════════════ */
+
+.game-shell {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+}
+
+/* ─── MAP STAGE: fills remaining space ─── */
+
+.map-stage {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(11, 20, 26, 1), transparent 70%),
+    linear-gradient(180deg, #090f14 0%, #0d151c 100%);
+}
