@@ -539,13 +539,13 @@ export function App(): JSX.Element; // <GameProvider><AppScreens /></GameProvide
 //   onSelectCountry={setPlayerCountryId} onStartGame={handleStartGame} />
 ```
 
-- [ ] **Step 1: Write `unitStatus.test.ts`.**
+- [x] **Step 1: Write `unitStatus.test.ts`.**
   - A fighter gives `{ tone: "air", label: "Not affected" }`.
   - Infantry with supply 0, 1, 2 and 3 gives `cutoff`/"Cut off", `critical`/"Critical", `low`/"Low"
     and `good`/"Supplied".
   - `getVeterancyLevel({ battlesWon: 5 })` is 3.
   - `getEntrenchmentBonus({ entrenchmentTurns: 9 })` is 25.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Create `unitStatus.ts`, then run again and expect PASS.
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Create `unitStatus.ts`, then run again and expect PASS.
 - [ ] **Step 3: Do the verbatim move.**
   - GameScreen JSX must stay character-for-character identical apart from where values come from.
   - The type checker finds any name you forgot to return.

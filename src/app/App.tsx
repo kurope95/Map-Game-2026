@@ -21,6 +21,7 @@ import {
   toggleChemicalMode,
   type ActionResult,
 } from "../game/rules/playerActions";
+import { getEntrenchmentBonus, getSupplyStatus, getVeterancyLevel } from "../ui/format/unitStatus";
 import { CountryId, GameState, GameToast, UnitDefinition, VictoryStatus } from "../game/state/types";
 import type { FacilityType, StockpileKey, UnitType } from "../game/state/types";
 import { TheaterMap } from "../ui/TheaterMap";
@@ -82,30 +83,6 @@ interface SaveSlotEntry {
 
 type BottomTab = "region" | "stockpile" | "economy" | "military" | "orders" | "ai" | "war" | "log";
 type DiplomacyTab = "allies" | "enemies" | "neutral";
-
-function getSupplyStatus(unit: UnitDefinition) {
-  if (unit.type !== "infantry" && unit.type !== "armor") {
-    return { tone: "air", label: "Not affected" };
-  }
-  if (unit.supplyTurnsRemaining <= 0) {
-    return { tone: "cutoff", label: "Cut off" };
-  }
-  if (unit.supplyTurnsRemaining === 1) {
-    return { tone: "critical", label: "Critical" };
-  }
-  if (unit.supplyTurnsRemaining === 2) {
-    return { tone: "low", label: "Low" };
-  }
-  return { tone: "good", label: "Supplied" };
-}
-
-function getVeterancyLevel(unit: UnitDefinition) {
-  return Math.min(unit.battlesWon ?? 0, 3);
-}
-
-function getEntrenchmentBonus(unit: UnitDefinition) {
-  return Math.min((unit.entrenchmentTurns ?? 0) * 5, 25);
-}
 
 export function App() {
   const [gameState, setGameState] = useState<GameState>(() => createSessionState());

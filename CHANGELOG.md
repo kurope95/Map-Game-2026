@@ -123,6 +123,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `applyAction` helper (set state, then show the action's toast); `canAfford`, `getMissingResources` and the
   facility lookups are thin wrappers that pass `gameState`. The facility pop-up's inline chemical-mode toggle
   calls the new `handleToggleChemicalMode`. (plan 2026-10-18-visual-overhaul → Task 6)
+- [`unitStatus.ts`](./src/ui/format/unitStatus.ts): `getSupplyStatus`, `getVeterancyLevel` and
+  `getEntrenchmentBonus` moved verbatim out of `App.tsx`, covered by
+  [`unitStatus.test.ts`](./src/ui/format/unitStatus.test.ts) (5 tests).
+  (plan 2026-10-18-visual-overhaul → Task 7)
+- **Task 7 STATUS: PARTIAL.** Part a (unit status helpers extracted) is done. Part b1 (all `App.tsx` state and
+  handlers moved verbatim into `src/ui/session/useGameController.ts`) and part b2 (`GameProvider` and
+  `useGame`, the JSX moved into `src/ui/screens/game/GameScreen.tsx`, `App.tsx` down to about 30 lines) are
+  NOT started; `App.tsx` still holds everything else. (plan 2026-10-18-visual-overhaul → Task 7)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -156,6 +164,8 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   rewired handlers (smelter queued: iron and coal -2; cancel refunds both; farm queue and cancel; infantry
   recruit costs steel). The "already at full strength" replenish toast is unit-tested only, because the UI
   hides the Replenish button at full strength. (plan 2026-10-18-visual-overhaul → Task 6)
+- Task 7 (partial, see its STATUS bullet under Changed): `npm test` 86/86 and `npx tsc -p tsconfig.app.json
+  --noEmit` 0 errors after extracting the unit status helpers. (plan 2026-10-18-visual-overhaul → Task 7)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
