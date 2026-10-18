@@ -115,6 +115,19 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and read `useGame()`, except `UnitCard`, which takes `{ unit: UnitDefinition }`; their roots carry
   `data-layout` `unit-drawer`, `global-units`, `stockpile` and `facility`.
   (plan 2026-10-18-visual-overhaul → Task 10)
+- Modal window components [`DiplomacyWindow`](./src/ui/windows/diplomacy/DiplomacyWindow.tsx) (with
+  [`DiplomacyBar`](./src/ui/windows/diplomacy/DiplomacyBar.tsx),
+  [`DiplomacyListCard`](./src/ui/windows/diplomacy/DiplomacyListCard.tsx) and
+  [`DiplomacyActions`](./src/ui/windows/diplomacy/DiplomacyActions.tsx)),
+  [`DoctrineWindow`](./src/ui/windows/DoctrineWindow.tsx),
+  [`SaveLoadWindow`](./src/ui/windows/SaveLoadWindow.tsx),
+  [`BattleReportWindow`](./src/ui/windows/BattleReportWindow.tsx),
+  [`DefeatNotice`](./src/ui/windows/DefeatNotice.tsx) and
+  [`VictoryOverlay`](./src/ui/windows/VictoryOverlay.tsx). All are prop-less and read `useGame()`;
+  their roots carry `data-layout` `diplomacy`, `doctrines`, `save-load`, `battle-report`,
+  `defeat-notice` and `victory`, and the closing backdrops carry `doctrines-backdrop`,
+  `save-load-backdrop` and `logic-map-backdrop`.
+  (plan 2026-10-18-visual-overhaul → Task 11)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -130,6 +143,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   by path and broke when the file moved (the plan did not list it). It now reads only the
   `theaterMapLayout` block of `regionGeo.ts`, so the `MAP_POINT_OVERRIDES` entries added in Task 21
   are not mistaken for orphan layout ids. (plan 2026-10-18-visual-overhaul → Task 4)
+- `styles.css` held no scrollbar rules and no shared `@keyframes`; the two target-pulse animations
+  are map-specific, so they moved to [`TheaterMap.css`](./src/ui/TheaterMap.css) and
+  [`base.css`](./src/ui/theme/base.css) holds only the resets, `body` and `button`/`select`.
+  (plan 2026-10-18-visual-overhaul → Task 11)
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
@@ -184,6 +201,19 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   comparison of all five blocks against the removed code found no differences apart from indentation and
   the new `data-layout` attributes. `FacilityPopup` is 211 lines, below the 400-line split threshold, so
   the planned production/recruit split was not needed. (plan 2026-10-18-visual-overhaul → Task 10)
+- Task 11 retired [`styles.css`](./src/ui/styles.css): its 1,267 lines moved verbatim into
+  [`theme/base.css`](./src/ui/theme/base.css) (32), [`LandingPage.css`](./src/ui/LandingPage.css) (197),
+  [`TheaterMap.css`](./src/ui/TheaterMap.css) (216), [`diplomacy.css`](./src/ui/windows/diplomacy/diplomacy.css)
+  (528), [`EconomyLogicMap.css`](./src/ui/windows/EconomyLogicMap.css) (123) and
+  [`SaveLoadWindow.css`](./src/ui/windows/SaveLoadWindow.css) (164), each imported by its owner;
+  [`main.tsx`](./src/app/main.tsx) now imports `theme/base.css`. `GameScreen.tsx` fell from 651 to
+  102 lines and only composes components. The inline styles of the defeat notice, battle report,
+  victory overlay and doctrine window became classes in [`windows.css`](./src/ui/windows/windows.css),
+  and the diplomacy panel's inline placement became `.diplomacy-window` with the specified
+  `top: 52px; bottom: auto; left: 50%; transform: translateX(-50%)`, `min(1380px, calc(100vw - 20px))`,
+  `max-width: 1380px`, `min-width: 980px`, `z-index: 42`, `max-height: 84vh` and a 80vh body.
+  [`EconomyLogicMap.tsx`](./src/ui/windows/EconomyLogicMap.tsx) moved into `windows/`.
+  (plan 2026-10-18-visual-overhaul → Task 11)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -244,6 +274,17 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   opened the stockpile pop-up (19 items, Logic Map button) and a Moscow facility pop-up (`powerPlant —
   Lv.1`), closing both; the only console error was the pre-existing `favicon.ico` 404.
   (plan 2026-10-18-visual-overhaul → Task 10)
+- Task 11: `npm test` 88/88, `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm run build`
+  (CSS 44.54 kB / JS 1,207.15 kB) and `npm run check:layers` pass. Layout lock PASS at 1440x900 and
+  1920x1080 (20 probes, `missing: []` at both sizes). A headless-Chrome walk-through opened Diplomacy
+  (Neutral tab: 11 cards, 3 of 5 action tiles enabled; one action left the "already used a diplomacy
+  action" note and no enabled tiles), opened Doctrines (after Auto x6, 22 TP; bought Infantry Drill for
+  20 TP → 1 owned and the toast `Doctrine unlocked: Infantry Drill`), saved and loaded a slot
+  (`Saved to slot: verify-task11`, `Loaded slot: verify-task11`), opened the logic map from the
+  stockpile pop-up (5 flows, 45 nodes) and closed it through `logic-map-backdrop`, and ended the turn
+  (1 → 2) with the battle report showing 42 events and dismissing cleanly. A fresh load with a cleared
+  cache requests only the new CSS files and fails only on the pre-existing `favicon.ico` 404.
+  (plan 2026-10-18-visual-overhaul → Task 11)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

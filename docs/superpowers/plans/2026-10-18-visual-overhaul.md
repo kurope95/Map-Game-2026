@@ -661,11 +661,11 @@ export function App(): JSX.Element; // <GameProvider><AppScreens /></GameProvide
   - `z-index: 42; max-height: 84vh;`
   - body `max-height: 80vh`.
 
-- [ ] **Step 1: Extract, move and delete as listed.** `GameScreen.tsx` should now only compose
+- [x] **Step 1: Extract, move and delete as listed.** `GameScreen.tsx` should now only compose
   components (≤ 150 lines).
-- [ ] **Step 2: Run the type check, build, manual run** (Diplomacy action, Doctrines, Save and
+- [x] **Step 2: Run the type check, build, manual run** (Diplomacy action, Doctrines, Save and
   Load, logic map, End Turn report) **and the layout compare at both sizes.** Expect PASS.
-- [ ] **Step 3: Changelog, then commit** with the message `Split modal windows and retire styles.css`.
+- [x] **Step 3: Changelog, then commit** with the message `Split modal windows and retire styles.css`.
 
 ### Task 12: Carve the controller into focused hooks
 

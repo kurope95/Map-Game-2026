@@ -1,0 +1,164 @@
+.save-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  background: rgba(2, 8, 14, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+.save-modal {
+  width: min(980px, calc(100vw - 20px));
+  max-height: min(86vh, 760px);
+  background: linear-gradient(180deg, rgba(17, 25, 35, 0.98), rgba(12, 18, 26, 0.98));
+  border: 1px solid rgba(86, 118, 149, 0.45);
+  border-radius: 14px;
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.save-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(86, 118, 149, 0.35);
+}
+
+.save-modal__header h3 {
+  margin: 0 0 2px;
+  font-size: 1rem;
+  color: #d8e5f3;
+}
+
+.save-modal__header p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #8ea4bc;
+}
+
+.save-modal__body {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(360px, 1.2fr);
+  gap: 14px;
+  padding: 14px 16px 16px;
+  min-height: 0;
+}
+
+.save-modal__list {
+  min-height: 240px;
+  max-height: 62vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.save-slot {
+  text-align: left;
+  border: 1px solid rgba(86, 118, 149, 0.35);
+  border-radius: 9px;
+  background: rgba(7, 14, 22, 0.7);
+  color: #c6d6e8;
+  cursor: pointer;
+  padding: 9px 10px;
+}
+
+.save-slot:hover {
+  border-color: rgba(138, 175, 210, 0.6);
+  background: rgba(12, 22, 34, 0.9);
+}
+
+.save-slot--active {
+  border-color: rgba(201, 216, 108, 0.8);
+  background: rgba(39, 48, 24, 0.82);
+  box-shadow: 0 0 0 1px rgba(201, 216, 108, 0.25) inset;
+}
+
+.save-slot--empty {
+  cursor: default;
+  background: rgba(10, 18, 28, 0.62);
+  color: #7f93a7;
+}
+
+.save-slot__title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.save-slot__name {
+  font-weight: 700;
+  color: #e0ebf7;
+  font-size: 0.84rem;
+}
+
+.save-slot__turn {
+  font-size: 0.74rem;
+  color: #c4d6ea;
+}
+
+.save-slot__meta {
+  font-size: 0.72rem;
+  color: #95abc2;
+  line-height: 1.35;
+}
+
+.save-modal__actions {
+  border: 1px solid rgba(86, 118, 149, 0.35);
+  border-radius: 10px;
+  background: rgba(10, 18, 28, 0.58);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.save-modal__label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #97acc3;
+  font-weight: 700;
+}
+
+.save-modal__input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(86, 118, 149, 0.45);
+  background: rgba(5, 11, 18, 0.85);
+  color: #d9e8f7;
+  font-size: 0.82rem;
+}
+
+.save-modal__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.save-modal__selected {
+  font-size: 0.76rem;
+  color: #9db1c8;
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .save-modal__body {
+    grid-template-columns: 1fr;
+  }
+
+  .save-modal__list {
+    max-height: 34vh;
+  }
+}

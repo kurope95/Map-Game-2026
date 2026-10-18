@@ -1,4 +1,5 @@
 import type { CountryDefinition, CountryId, CountryState } from "../game/state/types";
+import "./LandingPage.css";
 
 interface NationCard {
   country: CountryDefinition;

@@ -1,4 +1,5 @@
 import React from "react";
+import "./EconomyLogicMap.css";
 
 interface EconomyLogicMapProps {
   onClose: () => void;
@@ -6,8 +7,8 @@ interface EconomyLogicMapProps {
 
 export function EconomyLogicMap({ onClose }: EconomyLogicMapProps) {
   return (
-    <div className="logic-map-overlay" onClick={onClose}>
-      <div className="logic-map-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="logic-map-overlay" data-layout="logic-map-backdrop" onClick={onClose}>
+      <div className="logic-map-modal" data-layout="logic-map" onClick={(e) => e.stopPropagation()}>
         <div className="logic-map-header">
           <h2>Economy Logic Map</h2>
           <button className="build-btn build-btn--cancel" onClick={onClose}>✕ Close</button>

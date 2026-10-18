@@ -1,0 +1,32 @@
+:root {
+  color-scheme: dark;
+  --bg: #111920;
+  --panel: #17222d;
+  --panel-soft: #203041;
+  --border: #314a63;
+  --text: #eef4f8;
+  --muted: #9db1c5;
+  --accent: #c9d86c;
+  --brics: #c65d62;
+  --eu: #5e90ea;
+  --neutral: #7d8793;
+  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  background: #0b1117;
+  color: var(--text);
+  overflow: hidden;
+}
+
+button,
+select {
+  font: inherit;
+}

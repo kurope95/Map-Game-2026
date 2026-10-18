@@ -6,6 +6,7 @@ import countries50m from "world-atlas/countries-50m.json";
 import { CountryId, GameState, UnitDefinition } from "../game/state/types";
 import { europeCountryIds, theaterMapLayout, theaterMapSize } from "../game/content/regionGeo";
 import { getPridnestrovieDepotStatus } from "../game/rules/strategicDepot";
+import "./TheaterMap.css";
 
 interface TheaterMapProps {
   state: GameState;

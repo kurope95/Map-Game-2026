@@ -1,0 +1,373 @@
+/* Classes that replace the inline styles of the modal windows. */
+
+.window-close {
+  background: none;
+  border: none;
+  color: #8a9bb0;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* ─── Defeat notice ─── */
+
+.defeat-notice-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 18, 0.58);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+}
+
+.defeat-notice {
+  width: min(540px, calc(100vw - 32px));
+  border: 1px solid rgba(255, 215, 120, 0.35);
+  background: linear-gradient(180deg, rgba(23, 30, 40, 0.98), rgba(13, 18, 26, 0.98));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.defeat-notice__header {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f2d36b;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.defeat-notice__body {
+  padding: 18px;
+  color: #dbe6f2;
+  line-height: 1.5;
+}
+
+.defeat-notice__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.defeat-notice__message {
+  font-size: 0.92rem;
+  color: #b7c4d3;
+}
+
+.defeat-notice__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 18px 18px;
+}
+
+/* ─── Battle report ─── */
+
+.battle-report-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 18, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+}
+
+.battle-report {
+  width: min(620px, calc(100vw - 40px));
+  max-height: 80vh;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 180, 80, 0.35);
+  background: linear-gradient(180deg, rgba(23, 30, 40, 0.98), rgba(13, 18, 26, 0.98));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border-radius: 14px;
+}
+
+.battle-report__header {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f2d36b;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.battle-report__body {
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.battle-report__event {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+}
+
+.battle-report__event--defeat {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+.battle-report__event--victory {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: #86efac;
+}
+
+.battle-report__event--combat {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.battle-report__footer {
+  display: flex;
+  justify-content: center;
+  padding: 12px 18px 18px;
+}
+
+/* ─── Victory / defeat overlay ─── */
+
+.victory-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+}
+
+.victory-overlay--victory {
+  background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.15), rgba(5, 10, 18, 0.85));
+}
+
+.victory-overlay--defeat {
+  background: radial-gradient(ellipse at center, rgba(239, 68, 68, 0.15), rgba(5, 10, 18, 0.85));
+}
+
+.victory-overlay__panel {
+  width: min(520px, calc(100vw - 40px));
+  background: linear-gradient(180deg, rgba(23, 30, 40, 0.98), rgba(13, 18, 26, 0.98));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  border-radius: 16px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.victory-overlay__panel--victory {
+  border: 2px solid rgba(34, 197, 94, 0.5);
+}
+
+.victory-overlay__panel--defeat {
+  border: 2px solid rgba(239, 68, 68, 0.5);
+}
+
+.victory-overlay__header {
+  padding: 24px;
+}
+
+.victory-overlay__header--victory {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.15), transparent);
+}
+
+.victory-overlay__header--defeat {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.15), transparent);
+}
+
+.victory-overlay__title {
+  font-size: 2rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.victory-overlay__title--victory {
+  color: #22c55e;
+}
+
+.victory-overlay__title--defeat {
+  color: #ef4444;
+}
+
+.victory-overlay__message {
+  font-size: 1.1rem;
+  color: #b7c4d3;
+  line-height: 1.6;
+}
+
+.victory-overlay__meta {
+  font-size: 0.9rem;
+  color: #8a9bb0;
+  margin-top: 12px;
+}
+
+.victory-overlay__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 0 24px 24px;
+}
+
+/* ─── Doctrine window ─── */
+
+.doctrine-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doctrine-window {
+  width: min(680px, calc(100vw - 40px));
+  max-height: 80vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(15, 22, 35, 0.99), rgba(8, 13, 22, 0.99));
+  border: 1px solid rgba(100, 150, 220, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.doctrine-window__header {
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.doctrine-window__title {
+  color: #90cdf4;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.doctrine-window__tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.doctrine-window__trade {
+  color: #f2d36b;
+  font-size: 0.85rem;
+}
+
+.doctrine-window__grid {
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.doctrine-card {
+  padding: 12px 14px;
+  border-radius: 10px;
+  opacity: 1;
+}
+
+.doctrine-card--owned {
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.doctrine-card--available {
+  border: 1px solid rgba(100, 150, 220, 0.3);
+  background: rgba(30, 60, 120, 0.3);
+}
+
+.doctrine-card--unavailable {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  opacity: 0.5;
+}
+
+.doctrine-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.doctrine-card__name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #e2e8f0;
+}
+
+.doctrine-card__name--owned {
+  color: #86efac;
+}
+
+.doctrine-card__category {
+  font-size: 0.7rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+  margin-left: 8px;
+  border: 1px solid;
+}
+
+.doctrine-card__category--military {
+  color: #f87171;
+  border-color: #f8717144;
+}
+
+.doctrine-card__category--logistics {
+  color: #fb923c;
+  border-color: #fb923c44;
+}
+
+.doctrine-card__category--economy {
+  color: #4ade80;
+  border-color: #4ade8044;
+}
+
+.doctrine-card__description {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.doctrine-card__requires {
+  font-size: 0.7rem;
+  color: #f59e0b;
+  margin-bottom: 8px;
+}
+
+.doctrine-card__buy {
+  width: 100%;
+  padding: 6px 0;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.doctrine-card__buy--ready {
+  background: rgba(94, 144, 234, 0.25);
+  color: #90cdf4;
+  cursor: pointer;
+}
+
+.doctrine-card__buy--poor {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f87171;
+  cursor: not-allowed;
+}
+
+.doctrine-card__buy--locked {
+  background: rgba(255, 255, 255, 0.05);
+  color: #4a5568;
+  cursor: not-allowed;
+}
