@@ -170,6 +170,7 @@
 }
 
 .diplo-bar__marker--center {
+  left: 50%;
   background: rgba(228, 232, 236, 0.35);
 }
 

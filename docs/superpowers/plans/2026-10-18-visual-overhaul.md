@@ -1906,8 +1906,8 @@ nation get a 2 px `#f6e7b0` outline, and the others get a `rgba(0,0,0,.35)` fill
   scripts.
 - Modify: `CHANGELOG.md`.
 
-- [ ] **Step 1: Remove unused aliases** and run the type check and build.
-- [ ] **Step 2: Run the full verification.**
+- [x] **Step 1: Remove unused aliases** and run the type check and build.
+- [x] **Step 2: Run the full verification.**
   - The C7 checks.
   - The 400-line check (Task 12 step 4 command), which must print nothing.
   - Search `src/` for `style={{`. Every remaining hit must be a runtime-dynamic value (Phase 3
@@ -1916,7 +1916,8 @@ nation get a 2 px `#f6e7b0` outline, and the others get a `rgba(0,0,0,.35)` fill
   - The benchmark (C2) with the pane visible.
   - The full spec 12.4 parity checklist.
   - Screenshots of the start screen, the main screen and every panel and window, at both sizes.
-- [ ] **Step 3: Update `CLAUDE.md` and `CHANGELOG.md`.** `Verified` gets the final numbers; also
+- [x] **Step 3: Update `CLAUDE.md` and `CHANGELOG.md`.** `Verified` gets the final numbers; also
   list any deviations under `Decision`.
-- [ ] **Step 4: Commit and push.** Commit `Finish round 1 visual overhaul: docs and verification`,
-  then `git push origin main`.
+- [x] **Step 4: Commit and push.** Commit `Finish round 1 visual overhaul: docs and verification`,
+  then `git push origin main`. (Commit made; the `git push origin main` is withheld: Marek
+  instructed on 2026-10-18 not to push unless he says so.)

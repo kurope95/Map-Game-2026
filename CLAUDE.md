@@ -29,6 +29,18 @@ Eastern Europe. Marek plays it alone on his Windows PC.
 | `npm run balance-check` | 10-turn AI auto-play for all 24 nations; must end with "Balance check passed" |
 | `npm run check-war-entry` | Scripted war-entry checks |
 | `npm run validate-map` | Map adjacency and layout validation |
+| `npm test` | Vitest suite; tests live next to the code as `*.test.ts` |
+| `npm run check:layers` | Fails when anything under `src/game/` imports `ui`/`app` code or React |
+
+Two checks run in the browser rather than in Node:
+
+- **Layout lock (C1):** `scripts/layout/capture-layout.js` is evaluated in the page (it opens the
+  panels through the UI and records 20 probed containers); the result is diffed against
+  `docs/superpowers/baselines/layout-<width>x<height>.json` with
+  `node scripts/layout/compare-layout.mjs <baseline> <capture>`, which must print `Layout lock: PASS`.
+- **Pan/zoom benchmark (C2):** `scripts/perf/pan-zoom-bench.js` is evaluated in the page, drives 180
+  scripted pointer frames plus 20 wheel steps and returns frame times, React map renders and the idle
+  frame interval. It only measures while the browser pane is visible.
 
 Before every commit, the type check and build must pass. After any change under `src/game/`,
 `npm run smoke` and `npm run balance-check` must pass too. UI changes get checked in the browser.
@@ -39,15 +51,29 @@ The project path contains spaces (`Marek - Harddisk`), so quote paths in shell c
 
 ```
 src/
-  app/       main.tsx, App.tsx (top-level screen and state)
+  app/       main.tsx, App.tsx (switches start screen / game screen, hosts SaveLoadWindow)
   game/      Pure rules engine. No React or DOM imports: the scripts run it in Node.
     state/     types.ts (GameState and friends), createInitialState.ts
-    content/   Scenario data: countries, regions, units, economy, recipes, doctrines, AI goals
-    rules/     turnEngine, orderResolution (combat), economyEngine, diplomacy
+    content/   Scenario data: countries, regions (and regionGeo.ts map points), units,
+               economy, recipes, doctrines, AI goals
+    rules/     turnEngine, orderResolution (combat), economyEngine, diplomacy,
+               strategicDepot (Pridnestrovie), playerActions
     ai/        heuristicBot (per-nation AI), allyCoordination
     sim/       autoPlay helpers shared by the UI and the harnesses
-  ui/        React components: TheaterMap (map), LandingPage, EconomyLogicMap, mapLayout, styles.css
+  ui/        React components and styles:
+    session/   GameProvider (useGame) and hooks for turns, selection, UI state, actions, saves
+    screens/   game/GameScreen (main screen) and start/StartScreen (+ cards, briefing)
+    hud/       TopBar, BottomBar, SupplyToggle, ToastStack
+    panels/    the seven bottom-tab panels
+    windows/   floating windows and modals (diplomacy, turn report, save/load, facility, stockpile, ...)
+    map/       Canvas map: MapView (memo shell) + MapController (imperative),
+               render/ (layers), geometry/, layout/ (labels, counters, hit tests), perf/
+    kit/       shared UI kit (Window, Button, Badge, Tabs, Pips, Flag, StatRow, ...)
+    theme/     tokens.css (design tokens: colors, fonts, sizes, radii)
+    format/    formatting helpers such as unitStatus
+    dev/       dev-only UI such as the kit gallery
 scripts/     Node harnesses, compiled by tsconfig.scripts.json into .tmp-check/
+             (layout lock in layout/, benchmark in perf/)
 docs/        v1-design.md (original vision), balance-report.md, superpowers/specs and plans
 ```
 

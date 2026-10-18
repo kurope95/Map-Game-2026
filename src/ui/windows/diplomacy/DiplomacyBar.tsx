@@ -16,7 +16,7 @@ export function DiplomacyBar({ channel, value }: { channel: string; value: numbe
       <div className="diplo-bar__track">
         <div className="diplo-bar__half diplo-bar__half--brics" />
         <div className="diplo-bar__half diplo-bar__half--nato" />
-        <div className="diplo-bar__marker diplo-bar__marker--center" style={{ left: "50%" }} />
+        <div className="diplo-bar__marker diplo-bar__marker--center" />
         <div className="diplo-bar__marker diplo-bar__marker--lean" style={{ left: `${leaningLeft}%` }} />
         <div className="diplo-bar__marker diplo-bar__marker--lean" style={{ left: `${leaningRight}%` }} />
         <div className="diplo-bar__marker diplo-bar__marker--transit" style={{ left: `${transitLeft}%` }} />

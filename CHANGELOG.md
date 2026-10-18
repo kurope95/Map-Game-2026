@@ -35,12 +35,6 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-> **Work in progress: visual overhaul (plan `2026-10-18-visual-overhaul`).** Tasks 1-29 are done (the Task 29
-> commits are local, not pushed yet). **Next:** Task 30 (final verification and docs). **Partial:** the benchmark
-> with real frame deltas for Tasks 3 and 28 (needs the Claude window in front of every other window; see the
-> Task 28 entry under Verified). Step-by-step packages, the ledger and the check scripts live outside the repo
-> (notes folder: `HANDOVER.md`, `task-29-30-workpackages.md`). Remove this banner in Task 30.
-
 ### Added
 - Standalone git repo pushed to https://github.com/kurope95/Map-Game-2026: `legacy` branch freezes
   the pre-improvement game, `main` carries all improvements. Added [`.gitignore`](./.gitignore)
@@ -355,6 +349,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   dev browser (unminified, background pane), and the production build draws the first map frame within ~115 ms of
   pressing Start. The dev-browser number should be re-read with the pane visible.
   (plan 2026-10-18-visual-overhaul → Task 26)
+- **Benchmark run headless (Task 30).** The visible-window run still cannot be made from this
+  environment: `pan-zoom-bench.js` needs the Claude window in front for about a minute, a hidden pane
+  returns `{ error }`, and a stand-in `requestAnimationFrame` measures no presentation at all. The C2
+  numbers were therefore taken in a GPU-enabled headless Chrome, where real frames arrive at 120 Hz,
+  and the same environment was used for the legacy build, so the comparison is like-for-like; the
+  absolute budget check (`average <= idle + 1 ms`, provisional for 120 Hz) stays open for Marek's
+  visible-window run. Cost if wrong: the recorded table is a relative result, not a pass/fail at 8 ms.
+  (plan 2026-10-18-visual-overhaul → Task 30)
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
@@ -796,6 +798,29 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   target per turn, and fixed members and nations at war cannot be targeted. `npm run balance-check` printed the same table on both
   trees. Pre-existing mismatch, now fixed (see Fixed): Marek kept the shipped rule, so the check and the design doc
   were aligned to it.
+- Task 30 (final verification and docs): `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm test`
+  301/301 (40 files), `npm run build` OK (CSS 66.67 kB, JS 1,311.18 kB), `npm run check:layers`
+  "Layering: PASS", `npm run validate-map` (63 regions), `npm run check-war-entry`, `npm run smoke`
+  (RUSSIA, ROMANIA, AUSTRIA) and `npm run balance-check` ("Balance check passed"). The 400-line check
+  prints nothing; the 11 remaining `style={{` hits in `src/` all carry runtime values (a flag's size,
+  a progress width, a unit color variable and the diplomacy marker positions). The CSS split of Task
+  30a is lossless (68 chunks, none lost or added) and its styleprint is IDENTICAL (17 states, 6,234
+  elements); a final pass over the `style={{` audit moved the one static value (`left: 50%` on the
+  diplomacy center marker) into its CSS class, and the styleprint stayed IDENTICAL.
+  Layout lock: PASS at 1440x900 and at 1920x1080.
+  (plan 2026-10-18-visual-overhaul → Task 30)
+- Task 30 parity checklist (spec 12.4), every script run in the browser on the default map: walk 20/20,
+  economy 12/12, map-check 18/18, parity 23/23, save-load 12/12, windows 9/9 and 3/3. Screenshots of
+  the start screen, the main screen, the eight tabs, the stockpile popup, the facility popup, the logic
+  map, global units, Diplomacy, Doctrines, Save/Load, the turn report, victory and defeat were taken at
+  1440x900 and 1920x1080 and reviewed.
+  (plan 2026-10-18-visual-overhaul → Task 30)
+- Task 30 benchmark (C2), the same GPU-enabled headless Chrome for both builds
+  ([perf-legacy.md](./docs/superpowers/baselines/perf-legacy.md)): three runs each with real
+  `requestAnimationFrame` at 120 Hz (idle 8.3-8.4 ms). Canvas map 42.75 ms average / 50.10 ms p95,
+  legacy SVG 71.71 ms / 91.60 ms, `mapRenders` 0 in every canvas run (1.7x faster average, 1.8x lower
+  p95). The absolute C2 verdict still needs one visible-window run (see Decision).
+  (plan 2026-10-18-visual-overhaul → Task 30)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
