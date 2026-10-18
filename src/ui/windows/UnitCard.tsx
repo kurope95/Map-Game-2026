@@ -1,8 +1,31 @@
 import "./UnitCard.css";
+import type { CSSProperties } from "react";
 import { getReplenishmentCost, getUnitRecruitmentRecipe, MAX_UNIT_STRENGTH } from "../../game/content/economyRecipes";
 import type { UnitDefinition } from "../../game/state/types";
 import { getEntrenchmentBonus, getSupplyStatus, getVeterancyLevel } from "../format/unitStatus";
+import { Badge, type BadgeTone } from "../kit/Badge";
+import { Button } from "../kit/Button";
+import { ProgressBar } from "../kit/ProgressBar";
+import { UnitSymbol } from "../kit/UnitSymbol";
+import { UNIT_TYPE_LABELS } from "../kit/unitSymbols";
+import { NATION_COLORS } from "../theme/palette";
 import { useGame } from "../session/GameProvider";
+
+const SUPPLY_TONES: Record<string, BadgeTone> = {
+  good: "good",
+  low: "warn",
+  critical: "warn",
+  cutoff: "bad",
+  air: "info"
+};
+
+const ORDER_LABELS: Record<string, string> = {
+  attack: "Attack",
+  move: "Move",
+  airSupport: "Air support",
+  bombardment: "Bombard",
+  hold: "Hold"
+};
 
 export function UnitCard({ unit }: { unit: UnitDefinition }) {
   const {
@@ -20,53 +43,69 @@ export function UnitCard({ unit }: { unit: UnitDefinition }) {
   const isAllied = unit.blocId === playerBlocId && !isOwnNation;
   const isEnemy = unit.blocId !== playerBlocId;
   const supplyStatus = getSupplyStatus(unit);
+  const maxStrength = MAX_UNIT_STRENGTH[unit.type] ?? 8;
+  const strengthRatio = unit.strength / maxStrength;
+  const strengthTone = strengthRatio > 0.66 ? "good" : strengthRatio > 0.33 ? "warn" : "bad";
+  const nationColor = NATION_COLORS[unit.countryId];
 
   return (
     <div
-      className={`unit-card ${isSelected ? "unit-card--selected" : ""} ${isOwn ? "unit-card--own" : ""} ${isAllied ? "unit-card--ally" : ""} ${isEnemy ? "unit-card--enemy" : ""} ${isBrics ? "unit-card--brics" : isNeutral ? "unit-card--neutral" : "unit-card--nato"} unit-card--supply-${supplyStatus.tone}`}
+      className={`unit-card ${isSelected ? "unit-card--selected" : ""} ${isOwn ? "unit-card--own" : ""} ${isAllied ? "unit-card--ally" : ""} ${isEnemy ? "unit-card--enemy" : ""} unit-card--supply-${supplyStatus.tone}`}
+      style={{ "--unit-color": nationColor } as CSSProperties}
       onClick={() => isOwn && handleSelectUnit(unit)}
     >
-      <div className="unit-card__icon">
-        {unit.type === "infantry" ? "\u2694" : unit.type === "armor" ? "\u{1F6E1}" : unit.type === "fighter" ? "\u2708" : unit.type === "bomber" ? "\u{1F4A3}" : "\u{1F3AF}"}
+      <div className="unit-card__top">
+        <UnitSymbol type={unit.type} size={22} color={nationColor} />
+        <span className="unit-card__type">{UNIT_TYPE_LABELS[unit.type]}</span>
+        <Badge tone={isBrics ? "brics" : isNeutral ? "neutral" : "nato"}>
+          {isBrics ? "BRICS" : isNeutral ? "Neutral" : "NATO"}
+        </Badge>
       </div>
-      <div className="unit-card__info">
-        <div className="unit-card__type">{unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}</div>
-        <div className="unit-card__stats">
-          <span className="unit-card__strength">STR {unit.strength}</span>
-          <span className={`unit-card__supply unit-card__supply--${supplyStatus.tone}`}>SUP {unit.supplyTurnsRemaining}</span>
-          <span className="unit-card__strength">VET {getVeterancyLevel(unit)}</span>
-          <span className="unit-card__strength">ENT {getEntrenchmentBonus(unit)}%</span>
-        </div>
+      <ProgressBar value={strengthRatio} tone={strengthTone} />
+      <div className="unit-card__badges">
+        <Badge tone={SUPPLY_TONES[supplyStatus.tone] ?? "plain"}>{supplyStatus.label}</Badge>
+        <Badge tone="plain">Vet {getVeterancyLevel(unit)}</Badge>
+        <Badge tone="plain">Ent {getEntrenchmentBonus(unit)}%</Badge>
+        {isAllied && <Badge tone="good">Ally</Badge>}
+        {isEnemy && <Badge tone="bad">Enemy</Badge>}
       </div>
-      <div className={`unit-card__supply-badge unit-card__supply-badge--${supplyStatus.tone}`}>{supplyStatus.label}</div>
-      <div className="unit-card__bloc">{isBrics ? "BRICS" : isNeutral ? "NEUTRAL" : "NATO"}</div>
-      {isAllied && <div className="unit-card__ally-label">ALLY</div>}
-      {isEnemy && <div className="unit-card__enemy-label">ENEMY</div>}
       {order && (
-        <div className={`unit-card__order unit-card__order--${order.type}`}>
-          {order.type === "attack" ? "\u2192 ATK " : order.type === "move" ? "\u2192 MOV " : "HOLD"}
-          {order.type !== "hold" && gameState.regions[order.targetRegionId]?.name}
-        </div>
+        <span className={`unit-card__order unit-card__order--${order.type}`}>
+          {ORDER_LABELS[order.type] ?? order.type}
+          {order.type !== "hold" && gameState.regions[order.targetRegionId] ? ` → ${gameState.regions[order.targetRegionId].name}` : ""}
+        </span>
       )}
       {isSelected && isOwn && (
         <div className="unit-card__actions">
-          <button className="unit-card__btn" onClick={(e) => { e.stopPropagation(); handleHoldUnit(unit.id); }}>Hold</button>
-          {unit.strength < (MAX_UNIT_STRENGTH[unit.type] ?? 8) && (() => {
+          <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); handleHoldUnit(unit.id); }}>Hold</Button>
+          {unit.strength < maxStrength && (() => {
             const recruitRecipe = getUnitRecruitmentRecipe(unit.type);
             const sourceFacility = recruitRecipe ? getBestOperationalFacility(unit.regionId, recruitRecipe.requiredFacility) : null;
             const repInfo = getReplenishmentCost(unit.type, unit.strength, sourceFacility?.level ?? 1);
             const alreadyReplenishing = (gameState.economyBuildOrders[playerCountryId] ?? []).some((o) => o.type === "replenishUnit" && o.unitId === unit.id);
-            if (alreadyReplenishing) return <span className="unit-card__btn" style={{ opacity: 0.5, cursor: "default" }}>Replenishing...</span>;
+            if (alreadyReplenishing) return <Button variant="secondary" size="sm" disabled>Replenishing…</Button>;
             if (!repInfo) return null;
-            const costStr = Object.entries(repInfo.cost).map(([k, v]) => `${v}${k.slice(0,3)}`).join("+");
+            const costStr = Object.entries(repInfo.cost).map(([k, v]) => `${v}${k.slice(0, 3)}`).join("+");
             return (
-              <button className="unit-card__btn unit-card__btn--replenish" onClick={(e) => { e.stopPropagation(); handleReplenishUnit(unit.id); }} title={`Restore to full strength (${repInfo.turns}T, ${costStr})`}>
-                🔧 Replenish ({costStr})
-              </button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); handleReplenishUnit(unit.id); }}
+                title={`Restore to full strength (${repInfo.turns}T, ${costStr})`}
+              >
+                Replenish ({costStr})
+              </Button>
             );
           })()}
           {order && (
-            <button className="unit-card__btn unit-card__btn--cancel" onClick={(e) => { e.stopPropagation(); handleCancelOrder(unit.id); }}>Cancel</button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="unit-card__cancel"
+              onClick={(e) => { e.stopPropagation(); handleCancelOrder(unit.id); }}
+            >
+              Cancel
+            </Button>
           )}
         </div>
       )}

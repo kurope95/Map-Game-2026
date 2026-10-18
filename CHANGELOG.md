@@ -298,6 +298,18 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`EconomyPanels.css`](./src/ui/panels/EconomyPanels.css) drops the unused stat, capture and old
   queue-bar rules. No control moved or changed behavior.
   (plan 2026-10-18-visual-overhaul → Task 16)
+- Unit drawer and map-side pop-ups restyled in style C: [`UnitCard`](./src/ui/windows/UnitCard.tsx)
+  now shows a `UnitSymbol`, a 3 px nation-color edge, a strength `ProgressBar` toned at 66%/33% of
+  the type maximum, and `Badge`s for supply, veterancy, entrenchment, Ally and Enemy; the order
+  chip and the Hold/Replenish/Cancel buttons are unchanged. [`UnitDrawer`](./src/ui/windows/UnitDrawer.tsx)
+  gained a gold Oswald toggle label with a chevron. The all-units panel
+  ([`GlobalUnitsPanel`](./src/ui/windows/GlobalUnitsPanel.tsx)) uses the same unit line with a
+  strength bar and stat badges, [`StockpilePopup`](./src/ui/windows/StockpilePopup.tsx) groups its
+  19 resources into four `ResourceAmount` sections behind a secondary Logic Map button (the weed
+  line keeps its text), and [`FacilityPopup`](./src/ui/windows/FacilityPopup.tsx) is a
+  `Window variant="popup"` whose production rows use `ResourceIcon` and whose recruit/upgrade/repair
+  `Button`s keep every original `title`. All frozen geometry is unchanged.
+  (plan 2026-10-18-visual-overhaul → Task 17)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -409,6 +421,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   produced one chip (16 px `UnitSymbol`, `--surface-2` fill, `--line` border) whose cancel cleared
   it, and the facility rows right-align `Lv.n` and Demolish after the layout fix.
   (plan 2026-10-18-visual-overhaul → Task 16)
+- Task 17: `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm test` 99/99, `npm run build`
+  OK (CSS 69.63 kB). Layout lock PASS at 1440x900 and 1920x1080 (20 probes, `missing: []`). In
+  headless Chrome at 1440x900 the drawer sits at right 12 / bottom 867 / width 220 with cards
+  showing symbols, badges and strength bars; the all-units panel spans left 0 / top 36 / bottom 900 /
+  width 240 with 9 unit rows; the stockpile is 501 px wide, centered at centerX 720, bottom 862,
+  with 4 sections and 19 `ResourceAmount`s; the facility pop-up is centered, bottom 862, has no
+  horizontal overflow and keeps its upgrade title; no console errors.
+  (plan 2026-10-18-visual-overhaul → Task 17)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

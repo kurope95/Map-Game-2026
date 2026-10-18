@@ -1,4 +1,5 @@
 import "./UnitDrawer.css";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useGame } from "../session/GameProvider";
 import { UnitCard } from "./UnitCard";
 
@@ -10,7 +11,8 @@ export function UnitDrawer() {
   return (
     <div className={`unit-drawer ${unitDrawerOpen ? "unit-drawer--open" : "unit-drawer--closed"}`} data-layout="unit-drawer">
       <button className="unit-drawer__toggle" onClick={() => setUnitDrawerOpen((o) => !o)}>
-        {unitDrawerOpen ? "\u25BC" : "\u25B2"} Units in {selectedRegion.name} ({unitsInRegion.length})
+        <span className="unit-drawer__label">Units in {selectedRegion.name} ({unitsInRegion.length})</span>
+        {unitDrawerOpen ? <ChevronDown className="unit-drawer__chevron" size={14} aria-hidden="true" /> : <ChevronUp className="unit-drawer__chevron" size={14} aria-hidden="true" />}
       </button>
       {unitDrawerOpen && (
         <div className="unit-drawer__list">

@@ -1061,9 +1061,9 @@ and `v` means vertical bands hoist to fly.
 - **Facility pop-up:** `Window variant="popup"`, production rows with `ResourceIcon`, and
   recruit/upgrade/repair as `Button`s that keep their `title`s.
 
-- [ ] **Step 1: Restyle.**
-- [ ] **Step 2: Run the layout compare at both sizes** (PASS) **and take screenshots.**
-- [ ] **Step 3: Changelog, then commit** with the message `Restyle unit drawer and map-side pop-ups`.
+- [x] **Step 1: Restyle.**
+- [x] **Step 2: Run the layout compare at both sizes** (PASS) **and take screenshots.**
+- [x] **Step 3: Changelog, then commit** with the message `Restyle unit drawer and map-side pop-ups`.
 
 ### Task 18: Restyle the modal windows
 
