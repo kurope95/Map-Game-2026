@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": ".tmp-check",
+    "rootDir": "."
+  },
+  "include": [
+    "scripts/check-war-entry.ts",
+    "scripts/balanceCheck.ts",
+    "scripts/smokeTest.ts",
+    "scripts/lib/autoPlay.ts",
+    "src/game/**/*.ts"
+  ]
+}

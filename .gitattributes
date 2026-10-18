@@ -1,0 +1,6 @@
+# Normalize text files to LF in the repo and working copy
+* text=auto eol=lf
+
+# Windows batch files must use CRLF or cmd.exe can mis-parse labels/goto
+*.bat text eol=crlf
+*.cmd text eol=crlf
