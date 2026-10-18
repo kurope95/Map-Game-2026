@@ -121,6 +121,9 @@ function replaceUnitNames(text: string, unitLabels: Map<string, string>): string
   return text.replace(UNIT_TOKEN, (token) => unitLabels.get(token) ?? token);
 }
 
+// Only BRICS and EU NATO are blocs a nation can be allied or at odds through; "NEUTRAL" is not one.
+const isAlignedBloc = (blocId: string | null | undefined) => blocId === "BRICS" || blocId === "EU_NATO";
+
 function relationOf(
   key: CountryId | "WORLD",
   playerCountryId: CountryId,
@@ -130,9 +133,8 @@ function relationOf(
   if (key === playerCountryId) return "you";
   const playerBlocId = countries[playerCountryId]?.blocId ?? null;
   const otherBlocId = countries[key]?.blocId ?? null;
-  if (playerBlocId && otherBlocId && playerBlocId === otherBlocId) return "ally";
-  if (playerBlocId && otherBlocId && playerBlocId !== otherBlocId) return "enemy";
-  return "neutral";
+  if (!isAlignedBloc(playerBlocId) || !isAlignedBloc(otherBlocId)) return "neutral";
+  return playerBlocId === otherBlocId ? "ally" : "enemy";
 }
 
 function toneForCapture(clean: string, playerCountryId: CountryId, playerBlocId: string | null, countries: Record<CountryId, CountryDefinition>): ReportTone {
@@ -140,7 +142,7 @@ function toneForCapture(clean: string, playerCountryId: CountryId, playerBlocId:
   const controller = Object.values(countries).find((country) => country.name === controllerName);
   if (!controller) return "neutral";
   if (controller.id === playerCountryId) return "good";
-  if (playerBlocId && controller.blocId === playerBlocId) return "good";
+  if (isAlignedBloc(playerBlocId) && controller.blocId === playerBlocId) return "good";
   return "bad";
 }
 

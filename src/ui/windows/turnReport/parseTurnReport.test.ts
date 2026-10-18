@@ -150,3 +150,51 @@ describe("parseTurnReport", () => {
     expect(lineCount).toBe(2_000);
   });
 });
+
+describe("parseTurnReport relations with neutral nations", () => {
+  const relationOf = (report: TurnReport, key: string) => report.sections.find((section) => section.key === key)?.relation;
+
+  it("calls neutral nations neutral for an aligned player, and keeps allies and enemies", () => {
+    const report = parse(
+      [
+        "[Russia] infantry moved from Moscow to Smolensk.",
+        "Turn advanced. Active country: Austria.",
+        "[Austria] infantry moved from Vienna to Salzburg.",
+        "Turn advanced. Active country: Germany.",
+        "[Germany] infantry moved from Berlin to Essen.",
+        "Turn advanced. Active country: Serbia.",
+        "[Serbia] infantry moved from Belgrade to Nis.",
+      ],
+      "RUSSIA"
+    );
+    expect(relationOf(report, "RUSSIA")).toBe("you");
+    expect(relationOf(report, "GERMANY")).toBe("enemy");
+    expect(relationOf(report, "AUSTRIA")).toBe("neutral");
+    expect(relationOf(report, "SERBIA")).toBe("neutral");
+  });
+
+  it("calls everyone else neutral when the player is neutral", () => {
+    const report = parse(
+      [
+        "[Austria] infantry moved from Vienna to Salzburg.",
+        "Turn advanced. Active country: Germany.",
+        "[Germany] infantry moved from Berlin to Essen.",
+        "Turn advanced. Active country: Serbia.",
+        "[Serbia] infantry moved from Belgrade to Nis.",
+      ],
+      "AUSTRIA"
+    );
+    expect(relationOf(report, "AUSTRIA")).toBe("you");
+    expect(relationOf(report, "GERMANY")).toBe("neutral");
+    expect(relationOf(report, "SERBIA")).toBe("neutral");
+  });
+
+  it("scores a capture as good only for the player's own nation or its aligned bloc", () => {
+    const captureTone = (events: string[], player: CountryId) =>
+      parse(events, player).sections.flatMap((section) => section.rows).find((row) => row.category === "capture")?.tone;
+    expect(captureTone(["Warsaw is now controlled by Austria."], "AUSTRIA")).toBe("good");
+    expect(captureTone(["Warsaw is now controlled by Serbia."], "AUSTRIA")).toBe("bad");
+    expect(captureTone(["Warsaw is now controlled by Serbia."], "RUSSIA")).toBe("bad");
+    expect(captureTone(["Warsaw is now controlled by Novorossia."], "RUSSIA")).toBe("good");
+  });
+});

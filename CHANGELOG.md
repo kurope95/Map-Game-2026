@@ -424,6 +424,15 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [parseTurnReport.test.ts](./src/ui/windows/turnReport/parseTurnReport.test.ts) (10 tests),
   [fixtures.ts](./src/ui/windows/turnReport/fixtures.ts), [windows.css](./src/ui/windows/windows.css)
 
+### Fixed
+- Turn report relations: [`parseTurnReport.ts`](./src/ui/windows/turnReport/parseTurnReport.ts) treated the
+  `NEUTRAL` bloc as a bloc of its own, so for a BRICS player every neutral nation (Austria, Serbia, ...) was
+  tagged "enemy", for a neutral player other neutrals were tagged "ally", and a capture by a neutral nation
+  could score "good". Only BRICS and EU NATO now count as blocs (plan Task 19: "same non-neutral bloc →
+  ally, both in different non-neutral blocs → enemy, otherwise neutral"). Three new tests in
+  [`parseTurnReport.test.ts`](./src/ui/windows/turnReport/parseTurnReport.test.ts) failed first.
+  (plan 2026-10-18-visual-overhaul → Task 19, found in the review of Tasks 9-25)
+
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
   `npm run build` OK (1.2 MB JS bundle), `npm run smoke` passed, `npm run balance-check` passed
