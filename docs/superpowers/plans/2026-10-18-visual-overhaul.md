@@ -1353,22 +1353,22 @@ export function buildRegionShapes(inputs: RegionInput[], shapes: CountryShape[])
 4. If that throws, use the cell clipped to the country bbox rectangle with
    `polygonClipping.intersection` and set `usedFallback: true`.
 
-- [ ] **Step 1: Write the failing tests** on `createInitialState("RUSSIA")`:
+- [x] **Step 1: Write the failing tests** on `createInitialState("RUSSIA")`:
   - one shape per region id (103) with `area > 0`;
   - "every city point lies inside its own polygon": the list of violating ids equals `[]`;
   - no shape has `usedFallback`;
   - for each clip group, the sum of region areas is within 1% of the clipped country area;
   - `buildRegionShapes` takes under 600 ms in Node (the browser budget of 300 ms is checked in
     Task 26).
-- [ ] **Step 2: Run `npm test`.** Expect FAIL: the module is missing. Implement, then run again.
+- [x] **Step 2: Run `npm test`.** Expect FAIL: the module is missing. Implement, then run again.
   - The point-inside test now lists the violating regions (for example `kaliningrad-coast`).
   - For each one, add a `MAP_POINT_OVERRIDES` entry with the real coordinates of the region's named
     city, which must lie inside its clip country. For example:
     - `"kaliningrad-coast": { lon: 19.91, lat: 54.65 }` (Baltiysk);
     - `"podgorica-adriatic-gate": { lon: 19.10, lat: 42.09 }` (Bar) if it is listed.
   - Rerun until PASS.
-- [ ] **Step 3: Run** `npm test`, `npm run smoke` and `npm run balance-check`. Expect all to pass.
-- [ ] **Step 4: Changelog** (list every override under `Decision`), then commit
+- [x] **Step 3: Run** `npm test`, `npm run smoke` and `npm run balance-check`. Expect all to pass.
+- [x] **Step 4: Changelog** (list every override under `Decision`), then commit
   `Build region polygons and fix off-shape map points`.
 
 ### Task 22: Region lookup, boundary edges, shade variants, nation label points

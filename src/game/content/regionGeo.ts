@@ -86,7 +86,18 @@ export const theaterMapLayout: Record<string, GeoPoint> = {
 
 // Display-only fixes for generated map points that fall outside their own country shape. Rules
 // never read this: only the map does, through getRegionGeoPoint.
-export const MAP_POINT_OVERRIDES: Record<string, GeoPoint> = {};
+export const MAP_POINT_OVERRIDES: Record<string, GeoPoint> = {
+  "berlin-brandenburg-belt": { lon: 13.0645, lat: 52.3906 }, // Potsdam
+  "essen-ruhr-corridor": { lon: 6.7623, lat: 51.4344 }, // Duisburg
+  "riga-north": { lon: 26.535, lat: 55.877 }, // Daugavpils
+  "tallinn-east": { lon: 28.05, lat: 59.4 }, // Narva, just inside the river border
+  "novi-sad-vojvodina": { lon: 19.6647, lat: 46.1003 }, // Subotica
+  "sarajevo-northern-bosnia": { lon: 17.191, lat: 44.7722 }, // Banja Luka
+  "podgorica-adriatic-gate": { lon: 19.0983, lat: 42.0931 }, // Bar
+  "pristina-dukagjin": { lon: 20.741, lat: 42.213 }, // Prizren
+  "tirana-durres-coast": { lon: 19.4565, lat: 41.3231 }, // Durres
+  "skopje-pelagonia": { lon: 21.3347, lat: 41.0328 } // Bitola
+};
 
 export function getRegionGeoPoint(regionId: string): GeoPoint | undefined {
   return MAP_POINT_OVERRIDES[regionId] ?? theaterMapLayout[regionId];

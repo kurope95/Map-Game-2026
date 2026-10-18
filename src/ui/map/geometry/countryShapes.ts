@@ -5,6 +5,10 @@ import type { CountryId } from "../../../game/state/types";
 import { bboxOf, multiPolygonArea, nestRings, type BBox, type MultiPolygon, type Ring } from "./polygon";
 import { createProjection, WORLD_CLIP } from "./projection";
 
+// world-atlas gives the Kosovo feature no numeric id, so the game uses a synthetic one that
+// cannot collide with an ISO 3166 numeric code.
+export const KOSOVO_SYNTHETIC_NUMERIC_ID = 983;
+
 export const COUNTRY_ID_BY_NUMERIC: Record<number, CountryId> = {
   8: "ALBANIA",
   40: "AUSTRIA",
@@ -28,7 +32,8 @@ export const COUNTRY_ID_BY_NUMERIC: Record<number, CountryId> = {
   705: "SLOVENIA",
   756: "SWITZERLAND",
   804: "UKRAINE",
-  807: "NORTH_MACEDONIA"
+  807: "NORTH_MACEDONIA",
+  [KOSOVO_SYNTHETIC_NUMERIC_ID]: "KOSOVO"
 };
 
 const NUMERIC_ID_BY_COUNTRY = Object.fromEntries(
@@ -37,7 +42,9 @@ const NUMERIC_ID_BY_COUNTRY = Object.fromEntries(
 
 export const CLIP_ID_BY_REGION: Record<string, number> = {
   "tallinn": 233,
+  "tallinn-east": 233,
   "riga": 428,
+  "riga-north": 428,
   "vilnius": 440,
   "kaunas": 440,
   "donetsk": 804,
@@ -73,7 +80,13 @@ export function loadCountryShapes(): CountryShape[] {
   const shapes: CountryShape[] = [];
 
   for (const atlasFeature of atlasFeatureCollection.features) {
-    const numericId = Number(atlasFeature.id);
+    const atlasId = Number(atlasFeature.id);
+    const name = (atlasFeature.properties as { name?: string } | null | undefined)?.name;
+    const numericId = Number.isFinite(atlasId)
+      ? atlasId
+      : name === "Kosovo"
+        ? KOSOVO_SYNTHETIC_NUMERIC_ID
+        : Number.NaN;
     if (!Number.isFinite(numericId)) continue;
 
     const rings: Ring[] = [];

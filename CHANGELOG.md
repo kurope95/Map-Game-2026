@@ -168,6 +168,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [polygon.test.ts](./src/ui/map/geometry/polygon.test.ts) (5 tests),
   [countryShapes.test.ts](./src/ui/map/geometry/countryShapes.test.ts) (5 tests),
   [package.json](./package.json)
+- Region polygon builder [`regionShapes.ts`](./src/ui/map/geometry/regionShapes.ts): groups the 103
+  runtime regions by clip country, gives single-region countries their own country polygon, and
+  splits multi-region countries with a d3-delaunay Voronoi clipped by `polygon-clipping` (bbox
+  intersection fallback if the clip throws). Covered by
+  [`regionShapes.test.ts`](./src/ui/map/geometry/regionShapes.test.ts) (5 tests: 103 positive-area
+  shapes, every city point inside its own polygon, no fallback, per-country area within 1%, build
+  under 600 ms). (plan 2026-10-18-visual-overhaul → Task 21)
+  Files: [regionShapes.test.ts](./src/ui/map/geometry/regionShapes.test.ts),
+  [countryShapes.ts](./src/ui/map/geometry/countryShapes.ts),
+  [regionGeo.ts](./src/game/content/regionGeo.ts)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -200,6 +210,21 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`.kit-gallery__modal-flow .win-backdrop { position: static; ... }`) so both window variants are
   visible on one page; the kit itself keeps the fixed backdrop.
   (plan 2026-10-18-visual-overhaul → Task 14)
+- Task 21 map-point overrides (display-only, C3): generated points that landed outside their clip
+  country now sit on their named city — `berlin-brandenburg-belt` → Potsdam (13.0645, 52.3906),
+  `essen-ruhr-corridor` → Duisburg (6.7623, 51.4344), `riga-north` → Daugavpils (26.535, 55.877),
+  `tallinn-east` → Narva (28.05, 59.4; the exact centre falls just outside the 50m river border, so
+  the point is nudged inland), `novi-sad-vojvodina` → Subotica (19.6647, 46.1003),
+  `sarajevo-northern-bosnia` → Banja Luka (17.191, 44.7722), `podgorica-adriatic-gate` → Bar
+  (19.0983, 42.0931), `pristina-dukagjin` → Prizren (20.741, 42.213), `tirana-durres-coast` →
+  Durres (19.4565, 41.3231), `skopje-pelagonia` → Bitola (21.3347, 41.0328). Rules never read
+  these. (plan 2026-10-18-visual-overhaul → Task 21)
+- world-atlas omits the numeric id on the Kosovo feature, so
+  [`countryShapes.ts`](./src/ui/map/geometry/countryShapes.ts) gives it the synthetic id 983 (no ISO
+  collision) and finds it by `properties.name === "Kosovo"`; `CLIP_ID_BY_REGION` also pins the
+  generated Baltic regions to their real countries (`riga-north` → 428, `tallinn-east` → 233)
+  because the country fallback resolves `BALTIC_FEDERATION` to Lithuania's 440.
+  (plan 2026-10-18-visual-overhaul → Task 21)
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
@@ -490,6 +515,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   all 23 theatre numeric ids map to their scenario country, Russia's bbox stays inside the clip,
   all coordinates are finite, Warsaw falls inside Poland and Italy inside a background shape with
   `countryId: null`. (plan 2026-10-18-visual-overhaul → Task 20)
+- Task 21: `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm test` 124/124 (5 new region-shape
+  tests), `npm run build` OK (CSS 66.84 kB, JS 1,243.86 kB), `npm run check:layers` "Layering:
+  PASS", `npm run smoke` and `npm run balance-check` ("Balance check passed") pass. The builder
+  returns a positive-area polygon for all 103 runtime regions, no city point falls outside its own
+  polygon, no shape needs the bbox fallback, and every clip group sums to its country area within
+  1%. (plan 2026-10-18-visual-overhaul → Task 21)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
