@@ -1,13 +1,5 @@
 /* Modal windows: shared kit shell plus per-window surfaces. */
 
-.window-close {
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  font-size: 1.2rem;
-  cursor: pointer;
-}
-
 /* ─── Defeat notice ─── */
 
 .win-backdrop.defeat-notice-overlay {
@@ -37,78 +29,6 @@
   color: var(--text-dim);
   font-size: var(--fs-sm);
   line-height: 1.5;
-}
-
-/* ─── Battle report (restyled in the turn-report task) ─── */
-
-.battle-report-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(5, 10, 18, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 90;
-}
-
-.battle-report {
-  width: min(620px, calc(100vw - 40px));
-  max-height: 80vh;
-  overflow-y: auto;
-  border: 1px solid rgba(255, 180, 80, 0.35);
-  background: linear-gradient(180deg, rgba(23, 30, 40, 0.98), rgba(13, 18, 26, 0.98));
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  border-radius: 14px;
-}
-
-.battle-report__header {
-  padding: 14px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f2d36b;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.battle-report__body {
-  padding: 12px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.battle-report__event {
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: #cbd5e1;
-}
-
-.battle-report__event--defeat {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.25);
-  color: #fca5a5;
-}
-
-.battle-report__event--victory {
-  background: rgba(34, 197, 94, 0.1);
-  border-color: rgba(34, 197, 94, 0.25);
-  color: #86efac;
-}
-
-.battle-report__event--combat {
-  background: rgba(245, 158, 11, 0.08);
-}
-
-.battle-report__footer {
-  display: flex;
-  justify-content: center;
-  padding: 12px 18px 18px;
 }
 
 /* ─── Victory / defeat overlay (same z-order as before) ─── */

@@ -322,6 +322,20 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   optional `backdropClassName`, and [`FloatPanel.css`](./src/ui/panels/FloatPanel.css) drops the last
   legacy `.float-panel` shell. No control moved or changed behavior.
   (plan 2026-10-18-visual-overhaul → Task 18)
+- Grouped turn report replaces the flat battle report: [`parseTurnReport.ts`](./src/ui/windows/turnReport/parseTurnReport.ts)
+  segments the end-of-turn log by nation and world event, categorizes and tones each line, merges
+  supply attrition per region and moves per nation, turns unit ids into readable names, and orders
+  sections WORLD, you, allies, enemies, neutrals; [`TurnReportWindow`](./src/ui/windows/turnReport/TurnReportWindow.tsx)
+  renders it as a 720 px kit modal (`z 90`) with summary chips, flags, relation badges, category
+  icons and expandable move rows. `handleAdvanceTurn` stores the log diff with the states before and
+  after, the Orders panel keeps its last-turn list from the same data, and `BattleReportWindow` and
+  its CSS are deleted. (plan 2026-10-18-visual-overhaul → Task 19)
+  Files: [useGameSession.ts](./src/ui/session/useGameSession.ts),
+  [GameProvider.tsx](./src/ui/session/GameProvider.tsx),
+  [GameScreen.tsx](./src/ui/screens/game/GameScreen.tsx),
+  [TurnReportWindow.css](./src/ui/windows/turnReport/TurnReportWindow.css),
+  [parseTurnReport.test.ts](./src/ui/windows/turnReport/parseTurnReport.test.ts) (10 tests),
+  [fixtures.ts](./src/ui/windows/turnReport/fixtures.ts), [windows.css](./src/ui/windows/windows.css)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -449,6 +463,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the defeat notice 540 px (`z 80`, Romania's flag) and a crafted save forced the victory overlay
   520 px (`z 150`, Russia's flag); no console errors.
   (plan 2026-10-18-visual-overhaul → Task 18)
+- Task 19: `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm test` 109/109 (10 new parser tests),
+  `npm run build` OK (CSS 66.84 kB, JS 1,243.86 kB), `npm run check:layers` "Layering: PASS",
+  `npm run smoke` and `npm run balance-check` ("Balance check passed") pass. Layout lock PASS at
+  1440x900 and 1920x1080 (20 probes, `missing: []`). In headless Chrome at 1440x900 End Turn opened
+  "Turn 1 report" at 720x738 (`z 90`) with 4 battles / 0 captures / 24 moves, 7 nation sections,
+  14 rows with 14 category icons, 6 expandable move rows and the first child "armor moved from
+  Mariupol to Tokmak."; Dismiss closed it, the Orders tab kept 8 events, a second End Turn titled the
+  report "Turn 2 report" and a backdrop click closed it. Every bottom panel, the all-units panel,
+  diplomacy, doctrines and save/load were screenshotted with no console errors.
+  (plan 2026-10-18-visual-overhaul → Task 19)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

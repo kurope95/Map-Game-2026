@@ -13,7 +13,6 @@ import { RecruitmentPanel } from "../../panels/RecruitmentPanel";
 import { RegionPanel } from "../../panels/RegionPanel";
 import { WarStatusPanel } from "../../panels/WarStatusPanel";
 import { useGame } from "../../session/GameProvider";
-import { BattleReportWindow } from "../../windows/BattleReportWindow";
 import { DefeatNotice } from "../../windows/DefeatNotice";
 import { DiplomacyWindow } from "../../windows/diplomacy/DiplomacyWindow";
 import { DoctrineWindow } from "../../windows/DoctrineWindow";
@@ -21,6 +20,7 @@ import { FacilityPopup } from "../../windows/FacilityPopup";
 import { GlobalUnitsPanel } from "../../windows/GlobalUnitsPanel";
 import { SaveLoadWindow } from "../../windows/SaveLoadWindow";
 import { StockpilePopup } from "../../windows/StockpilePopup";
+import { TurnReportWindow } from "../../windows/turnReport/TurnReportWindow";
 import { UnitDrawer } from "../../windows/UnitDrawer";
 import { VictoryOverlay } from "../../windows/VictoryOverlay";
 
@@ -84,7 +84,7 @@ export function GameScreen() {
 
       <DefeatNotice />
 
-      <BattleReportWindow />
+      <TurnReportWindow />
 
       <ToastStack />
 

@@ -1210,7 +1210,7 @@ export const TURN1_RUSSIA_EVENTS = [
 ];
 ```
 
-- [ ] **Step 1: Write the failing tests** using `before = after = createInitialState("RUSSIA")`
+- [x] **Step 1: Write the failing tests** using `before = after = createInitialState("RUSSIA")`
   and `playerCountryId: "RUSSIA"`:
   - **Sections:** keys in order `["RUSSIA", "NOVOROSSIA", "GERMANY", "POLAND", "ROMANIA", "BALTIC_FEDERATION", "UKRAINE"]`.
     Relations `you`, `ally`, then `enemy` for the rest. No `PRIDNESTROVIE` section.
@@ -1234,8 +1234,8 @@ export const TURN1_RUSSIA_EVENTS = [
   - **Review Focus 5:** 2,000 synthetic lines spread over 15 nation markers parse in under 50 ms
     (`performance.now()`) and keep the invariant. With `playerCountryId` set to `"BELARUS"` (absent
     from every marker), there is no `you` section and no throw.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Implement the parser; expect PASS.
-- [ ] **Step 3: Build `TurnReportWindow`** (spec 10 "Layout"):
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Implement the parser; expect PASS.
+- [x] **Step 3: Build `TurnReportWindow`** (spec 10 "Layout"):
   - `Window variant="modal"` with `layoutId="turn-report"` and title `Turn {turn} report`.
   - A summary chip row (only non-zero war entries and defeats).
   - Section headers with `Flag`, the name and a relation `Badge` ("you", "ally", "enemy",
@@ -1245,10 +1245,11 @@ export const TURN1_RUSSIA_EVENTS = [
     warning `OctagonAlert`, other `Info`.
   - The move row expands to show its `children`.
   - The footer has a `Dismiss` primary button. A backdrop click closes the window, as today.
-- [ ] **Step 4: Browser check:** End Turn opens the new report. Then run the C7 phase-end checks,
+- [x] **Step 4: Browser check:** End Turn opens the new report. Then run the C7 phase-end checks,
   the layout compare at both sizes (PASS) and screenshots of the main screen with every
   window/panel open.
-- [ ] **Step 5: Changelog, commit** `Add grouped turn report`, then `git push origin main`.
+- [x] **Step 5: Changelog, commit** `Add grouped turn report`. (Commit made; the
+  `git push origin main` is withheld: Marek instructed on 2026-10-18 not to push unless he says so.)
 
 ---
 

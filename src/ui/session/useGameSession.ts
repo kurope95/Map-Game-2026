@@ -5,6 +5,7 @@ import { getPridnestrovieDepotStatus } from "../../game/rules/strategicDepot";
 import type { CountryId, GameState, VictoryStatus } from "../../game/state/types";
 import { executeCountryTurn, planCountryTurn, type BotDecision } from "../../game/ai/heuristicBot";
 import { isPlayerEliminated, runUntilPlayerTurn } from "../../game/sim/autoPlay";
+import type { TurnReportData } from "../windows/turnReport/parseTurnReport";
 import type { BottomTab } from "./types";
 
 export function createSessionState(playerCountryId: CountryId = "RUSSIA") {
@@ -20,8 +21,8 @@ export function useGameSession({ activeTab, clearSelection }: GameSessionOptions
   const [gameState, setGameState] = useState<GameState>(() => createSessionState());
   const [gameStarted, setGameStarted] = useState(false);
   const [playerCountryId, setPlayerCountryId] = useState<CountryId>("RUSSIA");
-  const [combatReportOpen, setCombatReportOpen] = useState(false);
-  const [lastEventLogSnapshot, setLastEventLogSnapshot] = useState<string[]>([]);
+  const [turnReport, setTurnReport] = useState<TurnReportData | null>(null);
+  const [turnReportOpen, setTurnReportOpen] = useState(false);
   const [lastBotDecision, setLastBotDecision] = useState<BotDecision | null>(null);
   const [dismissedDefeatAnnouncement, setDismissedDefeatAnnouncement] = useState<string | null>(null);
 
@@ -122,11 +123,11 @@ export function useGameSession({ activeTab, clearSelection }: GameSessionOptions
       }
 
       setLastBotDecision(latest);
-      // Save event log diff for the battle report
+      // The turn report reads the log diff against the state before and after the turn.
       const newEvents = next.eventLog.slice(prevLogLength);
       if (newEvents.length > 0) {
-        setLastEventLogSnapshot(newEvents);
-        setCombatReportOpen(true);
+        setTurnReport({ turn: s.turn, events: newEvents, before: s, after: next, playerCountryId });
+        setTurnReportOpen(true);
       }
       return next;
     });
@@ -203,10 +204,11 @@ export function useGameSession({ activeTab, clearSelection }: GameSessionOptions
     pridnestrovieDepotStatus,
     lastBotDecision,
     setLastBotDecision,
-    combatReportOpen,
-    setCombatReportOpen,
-    lastEventLogSnapshot,
-    setLastEventLogSnapshot,
+    lastEventLogSnapshot: turnReport?.events ?? [],
+    turnReport,
+    setTurnReport,
+    turnReportOpen,
+    setTurnReportOpen,
     latestDefeatAnnouncement,
     dismissedDefeatAnnouncement,
     setDismissedDefeatAnnouncement,

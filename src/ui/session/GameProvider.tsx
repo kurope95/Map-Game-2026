@@ -62,6 +62,8 @@ function useGameValue() {
     selection.setSelectedUnitIds(new Set());
     selection.setSelectedFacilityId(null);
     session.setLastBotDecision(null);
+    session.setTurnReport(null);
+    session.setTurnReportOpen(false);
     ui.setBottomOpen(true);
     ui.setActiveTab("region");
     saveSlots.setSaveLoadOpen(false);
@@ -77,6 +79,8 @@ function useGameValue() {
     selection.setSelectedUnitIds(new Set());
     selection.setSelectedFacilityId(null);
     session.setLastBotDecision(null);
+    session.setTurnReport(null);
+    session.setTurnReportOpen(false);
     ui.setBottomOpen(true);
     ui.setActiveTab("region");
     ui.setGlobalUnitsOpen(false);

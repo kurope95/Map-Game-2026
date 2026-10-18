@@ -1,0 +1,152 @@
+/* ─── Turn report (replaces the old battle report modal) ─── */
+
+.win-backdrop.turn-report-backdrop {
+  z-index: 90;
+  background: rgba(5, 10, 18, 0.72);
+}
+
+.win--modal.turn-report {
+  width: min(720px, calc(100vw - 40px));
+  max-height: 82vh;
+}
+
+.turn-report__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px 16px 14px;
+}
+
+.turn-report__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.turn-report__section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.turn-report__section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.turn-report__world-icon {
+  flex: none;
+  color: var(--gold);
+}
+
+.turn-report__section-name {
+  flex: 1;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.turn-report__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.turn-report__row {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.turn-report__row--good {
+  border-left-color: rgba(124, 196, 124, 0.6);
+}
+
+.turn-report__row--bad {
+  border-left-color: rgba(224, 96, 90, 0.6);
+}
+
+.turn-report__row--warn {
+  border-left-color: rgba(224, 176, 74, 0.6);
+}
+
+.turn-report__row-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  text-align: left;
+}
+
+button.turn-report__row-head {
+  cursor: pointer;
+}
+
+button.turn-report__row-head:hover {
+  background: var(--surface-3);
+}
+
+.turn-report__row-icon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--text-faint);
+}
+
+.turn-report__row--good .turn-report__row-icon {
+  color: var(--good);
+}
+
+.turn-report__row--bad .turn-report__row-icon {
+  color: var(--bad);
+}
+
+.turn-report__row--warn .turn-report__row-icon {
+  color: var(--warn);
+}
+
+.turn-report__row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.turn-report__chevron {
+  flex: none;
+  margin-top: 2px;
+  color: var(--text-faint);
+}
+
+.turn-report__children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 10px 8px 32px;
+  list-style: none;
+}
+
+.turn-report__children li {
+  padding: 2px 0;
+  border-top: 1px dashed var(--line);
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+.turn-report__empty {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
