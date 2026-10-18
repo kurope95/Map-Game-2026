@@ -83,3 +83,11 @@ export const theaterMapLayout: Record<string, GeoPoint> = {
   "ljubljana": { lon: 14.5058, lat: 46.0569 },
   "chisinau": { lon: 28.8353, lat: 47.0105 }
 };
+
+// Display-only fixes for generated map points that fall outside their own country shape. Rules
+// never read this: only the map does, through getRegionGeoPoint.
+export const MAP_POINT_OVERRIDES: Record<string, GeoPoint> = {};
+
+export function getRegionGeoPoint(regionId: string): GeoPoint | undefined {
+  return MAP_POINT_OVERRIDES[regionId] ?? theaterMapLayout[regionId];
+}

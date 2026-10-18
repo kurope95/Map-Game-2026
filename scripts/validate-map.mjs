@@ -3,8 +3,12 @@ import path from "node:path";
 
 const filePath = path.join(process.cwd(), "src", "game", "content", "regions.ts");
 const text = fs.readFileSync(filePath, "utf8");
-const layoutPath = path.join(process.cwd(), "src", "ui", "mapLayout.ts");
-const layoutText = fs.readFileSync(layoutPath, "utf8");
+const layoutPath = path.join(process.cwd(), "src", "game", "content", "regionGeo.ts");
+const layoutSource = fs.readFileSync(layoutPath, "utf8");
+// Only the theaterMapLayout block: MAP_POINT_OVERRIDES (display-only fixes) follows it in the file.
+const layoutStart = layoutSource.indexOf("export const theaterMapLayout");
+const layoutEnd = layoutSource.indexOf("\nexport ", layoutStart + 1);
+const layoutText = layoutSource.slice(layoutStart, layoutEnd === -1 ? undefined : layoutEnd);
 
 const ids = [...text.matchAll(/id: "([^"]+)"/g)].map((match) => match[1]);
 const adjacencyBlocks = [...text.matchAll(/adjacentRegionIds: \[([^\]]*)\]/g)].map(

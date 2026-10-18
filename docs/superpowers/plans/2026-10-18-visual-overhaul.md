@@ -338,16 +338,16 @@ export const MAP_POINT_OVERRIDES: Record<string, GeoPoint>;      // display-only
 export function getRegionGeoPoint(regionId: string): GeoPoint | undefined; // MAP_POINT_OVERRIDES[id] ?? theaterMapLayout[id]
 ```
 
-- [ ] **Step 1: Write the tests.**
+- [x] **Step 1: Write the tests.**
   - "has a map point for every region after createInitialState": call
     `createInitialState("RUSSIA")`; the ids where `getRegionGeoPoint(id)` is `undefined` equal `[]`.
   - "prefers MAP_POINT_OVERRIDES": for every override entry, `getRegionGeoPoint(id)` equals the
     override.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL: module not found.
-- [ ] **Step 3: Move the file, add the two exports, fix the imports and write `check-layers.mjs`.**
-- [ ] **Step 4: Run** `npm test`, `npm run check:layers` (expect `Layering: PASS`), `npm run smoke`
+- [x] **Step 2: Run `npm test`.** Expect FAIL: module not found.
+- [x] **Step 3: Move the file, add the two exports, fix the imports and write `check-layers.mjs`.**
+- [x] **Step 4: Run** `npm test`, `npm run check:layers` (expect `Layering: PASS`), `npm run smoke`
   and `npm run balance-check`. Expect all to pass.
-- [ ] **Step 5: Run the layout capture and compare.** Expect PASS. Then changelog, then commit
+- [x] **Step 5: Run the layout capture and compare.** Expect PASS. Then changelog, then commit
   `Move map points into src/game/content/regionGeo.ts`.
 
 ### Task 5: One depot-status module

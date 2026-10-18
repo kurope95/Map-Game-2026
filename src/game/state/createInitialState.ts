@@ -1,7 +1,7 @@
 import { modern2026Scenario } from "../content/scenario";
 import { regionEconomies, initialCountryStockpiles } from "../content/economy";
 import { FORTIFICATION_MAX_HEALTH_BY_LEVEL } from "../content/economyRecipes";
-import { theaterMapLayout } from "../../ui/mapLayout";
+import { theaterMapLayout } from "../content/regionGeo";
 import { createInitialDiplomacyState } from "../rules/diplomacy";
 import {
   BlocDefinition,

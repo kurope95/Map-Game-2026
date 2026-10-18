@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:layers": "node scripts/check-layers.mjs",
     "validate-map": "node scripts/validate-map.mjs",
     "check-war-entry": "tsc -p tsconfig.scripts.json && node scripts/run-war-entry-check.cjs",
     "balance-check": "tsc -p tsconfig.scripts.json && node scripts/run-balance-check.cjs",

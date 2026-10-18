@@ -70,6 +70,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and returns `{ avgMs, p95Ms, maxMs, frames, mapRenders, idleMs }` (`idleMs` = idle frame interval,
   the display's floor). It returns `{ error }` instead of hanging when the browser pane is hidden.
   (plan 2026-10-18-visual-overhaul → Task 3)
+- Layering check (constraint C6): `npm run check:layers` ([`check-layers.mjs`](./scripts/check-layers.mjs))
+  fails when anything under `src/game/` imports a `ui`/`app` path or React; it is also a unit test
+  ([`check-layers.test.mjs`](./scripts/check-layers.test.mjs), 15 tests). New game-layer module
+  [`regionGeo.ts`](./src/game/content/regionGeo.ts) adds `MAP_POINT_OVERRIDES` (display-only map
+  point fixes, empty until Task 21) and `getRegionGeoPoint()`; tested in
+  [`regionGeo.test.ts`](./src/game/content/regionGeo.test.ts).
+  (plan 2026-10-18-visual-overhaul → Task 4)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -81,10 +88,19 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   while Tasks 1-3 ran (`requestAnimationFrame` delivered no frames in 5 s although the app listed the
   session on screen), and C2 numbers only count with a visible pane. `docs/superpowers/baselines/perf-legacy.md`
   is added once they can be measured. (plan 2026-10-18-visual-overhaul → Task 3)
+- Task 4 also updates [`validate-map.mjs`](./scripts/validate-map.mjs), which read `src/ui/mapLayout.ts`
+  by path and broke when the file moved (the plan did not list it). It now reads only the
+  `theaterMapLayout` block of `regionGeo.ts`, so the `MAP_POINT_OVERRIDES` entries added in Task 21
+  are not mistaken for orphan layout ids. (plan 2026-10-18-visual-overhaul → Task 4)
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
   entries are filed under the `0.1.0` legacy release below.
+- Map points moved verbatim from `src/ui/mapLayout.ts` to
+  [`src/game/content/regionGeo.ts`](./src/game/content/regionGeo.ts), so the rules engine no longer
+  imports UI code ([`createInitialState.ts`](./src/game/state/createInitialState.ts) and
+  [`TheaterMap.tsx`](./src/ui/TheaterMap.tsx) now import it from there).
+  (plan 2026-10-18-visual-overhaul → Task 4)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -102,6 +118,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   does not exist before Task 4). The benchmark flow was exercised end to end on the legacy map with a
   MessageChannel stand-in for `requestAnimationFrame` (200 frames, pan and zoom took effect). That
   run is script-only and NOT a C2 measurement. (plan 2026-10-18-visual-overhaul → Task 3)
+- Task 4: `npm test` 31/31, `npm run check:layers` "Layering: PASS", `npx tsc -p tsconfig.app.json --noEmit`
+  0 errors, `npm run build` OK, `npm run smoke` and `npm run balance-check` passed, `npm run validate-map`
+  "Map validation passed for 63 regions", layout lock PASS at 1440x900 (full reload; the dev server's
+  hot reload of the moved module threw a transient `lon` error that a reload clears).
+  (plan 2026-10-18-visual-overhaul → Task 4)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
