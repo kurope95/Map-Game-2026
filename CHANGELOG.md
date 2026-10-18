@@ -108,6 +108,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   They are prop-less, read `useGame()`, render only when their tab is open, and their roots carry `data-layout`
   `panel-region`, `panel-economy`, `panel-recruitment`, `panel-orders`, `panel-aiintel`, `panel-warstatus` and
   `panel-eventlog`. (plan 2026-10-18-visual-overhaul → Task 9)
+- Map-side window components [`UnitDrawer`](./src/ui/windows/UnitDrawer.tsx),
+  [`UnitCard`](./src/ui/windows/UnitCard.tsx), [`GlobalUnitsPanel`](./src/ui/windows/GlobalUnitsPanel.tsx),
+  [`StockpilePopup`](./src/ui/windows/StockpilePopup.tsx) and
+  [`FacilityPopup`](./src/ui/windows/FacilityPopup.tsx), each with its own CSS file. They are prop-less
+  and read `useGame()`, except `UnitCard`, which takes `{ unit: UnitDefinition }`; their roots carry
+  `data-layout` `unit-drawer`, `global-units`, `stockpile` and `facility`.
+  (plan 2026-10-18-visual-overhaul → Task 10)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -170,6 +177,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   moved verbatim — a line-by-line comparison against the previous commit found no differences apart from
   indentation and the new `data-layout` attributes.
   (plan 2026-10-18-visual-overhaul → Task 9)
+- Task 10 moved the four map-side windows out of [`GameScreen.tsx`](./src/ui/screens/game/GameScreen.tsx)
+  (1,023 → 651 lines) and the `.unit-drawer*`, `.unit-card*`, `.global-units-panel*`, `.global-unit-row*`,
+  `.stockpile-*` and `.facility-popup*` rules into the five component CSS files (588 lines);
+  [`styles.css`](./src/ui/styles.css) is down 601 lines to 1,267. The JSX moved verbatim — a normalized
+  comparison of all five blocks against the removed code found no differences apart from indentation and
+  the new `data-layout` attributes. `FacilityPopup` is 211 lines, below the 400-line split threshold, so
+  the planned production/recruit split was not needed. (plan 2026-10-18-visual-overhaul → Task 10)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -222,6 +236,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   panel showed the order and its cancel cleared it), pressed End Turn (turn 2, battle report opened and
   dismissed), and opened all seven tabs with their expected headers and no console errors (only the
   pre-existing `favicon.ico` 404). (plan 2026-10-18-visual-overhaul → Task 9)
+- Task 10: `npm test` 88/88, `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm run build`
+  (CSS 38.79 kB / JS 1,209.67 kB) and `npm run check:layers` pass. Layout lock PASS at 1440x900
+  (20 probes, `missing: []`). A headless-Chrome walk-through opened the unit drawer and toggled it,
+  listed 9 units in the all-units panel and selected Smolensk from it, clicked Replenish on the Smolensk
+  bomber (button showed the `1ste+1fue+1tun` cost and the toast said `Requires a airFactory in Smolensk`),
+  opened the stockpile pop-up (19 items, Logic Map button) and a Moscow facility pop-up (`powerPlant —
+  Lv.1`), closing both; the only console error was the pre-existing `favicon.ico` 404.
+  (plan 2026-10-18-visual-overhaul → Task 10)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

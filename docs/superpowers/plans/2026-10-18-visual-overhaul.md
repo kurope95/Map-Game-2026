@@ -626,10 +626,10 @@ export function App(): JSX.Element; // <GameProvider><AppScreens /></GameProvide
 - Produces: prop-less components with `data-layout` values `unit-drawer`, `global-units`,
   `stockpile` and `facility`. `UnitCard` takes `{ unit: UnitDefinition }`.
 
-- [ ] **Step 1: Extract the windows and move their CSS.**
-- [ ] **Step 2: Run the type check, build, manual run** (replenish button, stockpile pop-up,
+- [x] **Step 1: Extract the windows and move their CSS.**
+- [x] **Step 2: Run the type check, build, manual run** (replenish button, stockpile pop-up,
   facility pop-up, all-units list) **and the layout compare.** Expect PASS.
-- [ ] **Step 3: Changelog, then commit** with the message `Split unit drawer and map-side pop-ups`.
+- [x] **Step 3: Changelog, then commit** with the message `Split unit drawer and map-side pop-ups`.
 
 ### Task 11: Split the modal windows and retire `styles.css`
 

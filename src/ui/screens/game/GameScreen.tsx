@@ -1,8 +1,6 @@
-import { getEntrenchmentBonus, getSupplyStatus, getVeterancyLevel } from "../../format/unitStatus";
 import { TheaterMap } from "../../TheaterMap";
 import { EconomyLogicMap } from "../../EconomyLogicMap";
 import { canBlocUseTransit, getCountryDualTiltLabel, getCountryLeanBloc, getCountryTiltLabel, getScaledDiplomacyActionDefinition, LEANING_THRESHOLD, TRANSIT_SUPPORT_THRESHOLD } from "../../../game/rules/diplomacy";
-import { PROCESSING_RECIPES, CHEMICAL_PLANT_RECIPES, MUNITIONS_PLANT_RECIPE, EXTRACTION_FACILITY_RESOURCES, CIVILIAN_GOOD_RECIPES, getFacilityBuildRecipe, getFacilityRepairProfile, getFacilityUpgradeCost, getMilitaryProductionTurns, getReplenishmentCost, getUnitRecruitmentRecipe, MAX_UNIT_STRENGTH, UNIT_RECRUITMENT_COSTS } from "../../../game/content/economyRecipes";
 import { DOCTRINE_DEFINITIONS } from "../../../game/content/doctrines";
 import type { DiplomacyActionType } from "../../../game/state/types";
 import "./GameScreen.css";
@@ -18,25 +16,26 @@ import { RecruitmentPanel } from "../../panels/RecruitmentPanel";
 import { RegionPanel } from "../../panels/RegionPanel";
 import { WarStatusPanel } from "../../panels/WarStatusPanel";
 import { useGame } from "../../session/GameProvider";
+import { FacilityPopup } from "../../windows/FacilityPopup";
+import { GlobalUnitsPanel } from "../../windows/GlobalUnitsPanel";
+import { StockpilePopup } from "../../windows/StockpilePopup";
+import { UnitDrawer } from "../../windows/UnitDrawer";
 
 export function GameScreen() {
   const {
-    gameState, setGameStarted, playerCountryId, selectedRegionId, setSelectedRegionId, selectedUnitIds,
-    combatReportOpen, setCombatReportOpen, lastEventLogSnapshot, unitDrawerOpen, setUnitDrawerOpen, globalUnitsOpen, setGlobalUnitsOpen, stockpileOpen,
-    setStockpileOpen, diplomacyOpen, setDiplomacyOpen, diplomacyTab, setDiplomacyTab, selectedDiplomacyCountryId,
-    setSelectedDiplomacyCountryId, diplomacyIntensity, setDiplomacyIntensity, selectedFacilityId, setSelectedFacilityId, dismissedDefeatAnnouncement,
+    gameState, setGameStarted, playerCountryId, selectedRegionId,
+    combatReportOpen, setCombatReportOpen, lastEventLogSnapshot, diplomacyOpen, setDiplomacyOpen, diplomacyTab, setDiplomacyTab, selectedDiplomacyCountryId,
+    setSelectedDiplomacyCountryId, diplomacyIntensity, setDiplomacyIntensity, dismissedDefeatAnnouncement,
     setDismissedDefeatAnnouncement, logicMapOpen, setLogicMapOpen, doctrineOpen, setDoctrineOpen, showSupplyOverlay,
     saveLoadOpen, setSaveLoadOpen, saveLoadMode, saveSlots, selectedSaveSlotName, setSelectedSaveSlotName,
-    saveSlotInput, setSaveSlotInput, playerCountry, playerBlocId, playerTurnActive, selectedRegion,
-    allPlayerUnits, unitsInRegion, validTargets,
+    saveSlotInput, setSaveSlotInput, playerCountry, playerBlocId, playerTurnActive,
+    validTargets,
     addToast, victoryStatus, latestDefeatAnnouncement, diplomacyTargets,
     diplomacyAlliesTargets, diplomacyEnemyTargets, diplomacyNeutralTargets, visibleDiplomacyTargets, diplomacySnapshot, selectedDiplomacyCountry,
     selectedDiplomacyState, selectedSaveSlot, saveToSlot, handleLoadGame, handleLoadSelectedSlot, handleLoadLegacyQuickSave,
-    handleDeleteSelectedSlot, handleSelectRegion, handleSelectUnit, handleSelectUnitFromMap, handleSelectFacilityFromMap, handleHoldUnit,
-    handleCancelOrder, handleReplenishUnit, handlePurchaseDoctrine, canAfford, getMissingResources,
-    getBestOperationalFacility, handleDiplomacyAction, handleUpgradeFacility, handleRepairFacility,
-    handleRecruitUnit, handleToggleChemicalMode,
-    getUnitOrder,
+    handleDeleteSelectedSlot, handleSelectRegion, handleSelectUnitFromMap, handleSelectFacilityFromMap,
+    handlePurchaseDoctrine, canAfford,
+    handleDiplomacyAction,
   } = useGame();
 
   function renderDiplomacyBar(channel: string, value: number) {
@@ -368,43 +367,7 @@ export function GameScreen() {
       )}
 
       {/* GLOBAL UNITS DROPDOWN */}
-      {globalUnitsOpen && (
-        <div className="global-units-panel">
-          <div className="global-units-panel__header">
-            <span>All {playerCountry.name} Units ({allPlayerUnits.length})</span>
-            <button className="global-units-panel__close" onClick={() => setGlobalUnitsOpen(false)}>Close</button>
-          </div>
-          <div className="global-units-panel__list">
-            {allPlayerUnits.map((unit) => {
-              const region = gameState.regions[unit.regionId];
-              const order = getUnitOrder(unit.id);
-              const supplyStatus = getSupplyStatus(unit);
-              return (
-                <div
-                  key={unit.id}
-                  className={`global-unit-row global-unit-row--supply-${supplyStatus.tone}`}
-                  onClick={() => { setSelectedRegionId(unit.regionId); setGlobalUnitsOpen(false); }}
-                >
-                  <span className="global-unit-row__icon">
-                    {unit.type === "infantry" ? "\u2694" : unit.type === "armor" ? "\u{1F6E1}" : unit.type === "fighter" ? "\u2708" : unit.type === "bomber" ? "\u{1F4A3}" : "\u{1F3AF}"}
-                  </span>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span className="global-unit-row__type">{unit.type}</span>
-                    <span className="global-unit-row__location">{region?.name ?? "?"}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span className="global-unit-row__stats">
-                      STR {unit.strength} | SUP {unit.supplyTurnsRemaining} | VET {getVeterancyLevel(unit)} | ENT {getEntrenchmentBonus(unit)}%
-                    </span>
-                    <span className={`global-unit-row__supply global-unit-row__supply--${supplyStatus.tone}`}>{supplyStatus.label}</span>
-                    {order && <span className={`global-unit-row__order global-unit-row__order--${order.type}`}>{order.type}</span>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <GlobalUnitsPanel />
 
       {/* MAP */}
       <div className="map-stage" data-layout="map-stage">
@@ -420,348 +383,13 @@ export function GameScreen() {
         />
 
         {/* UNIT DRAWER — floats up from bottom of map */}
-        {unitsInRegion.length > 0 && (
-          <div className={`unit-drawer ${unitDrawerOpen ? "unit-drawer--open" : "unit-drawer--closed"}`}>
-            <button className="unit-drawer__toggle" onClick={() => setUnitDrawerOpen((o) => !o)}>
-              {unitDrawerOpen ? "\u25BC" : "\u25B2"} Units in {selectedRegion.name} ({unitsInRegion.length})
-            </button>
-            {unitDrawerOpen && (
-              <div className="unit-drawer__list">
-                {selectedUnitIds.size > 0 && (
-                  <div className="unit-drawer__hint">
-                    {selectedUnitIds.size === 1 ? "Click an adjacent region to move or attack" : `${selectedUnitIds.size} units selected — click a target region to attack with all`}
-                  </div>
-                )}
-                {unitsInRegion.map((unit) => {
-                  const order = getUnitOrder(unit.id);
-                  const isOwnNation = unit.countryId === playerCountryId;
-                  const isOwn = isOwnNation && playerTurnActive;
-                  const isSelected = selectedUnitIds.has(unit.id);
-                  const isBrics = unit.blocId === "BRICS";
-                  const isNeutral = unit.blocId === "NEUTRAL";
-                  const isAllied = unit.blocId === playerBlocId && !isOwnNation;
-                  const isEnemy = unit.blocId !== playerBlocId;
-                  const supplyStatus = getSupplyStatus(unit);
-                  return (
-                    <div
-                      key={unit.id}
-                      className={`unit-card ${isSelected ? "unit-card--selected" : ""} ${isOwn ? "unit-card--own" : ""} ${isAllied ? "unit-card--ally" : ""} ${isEnemy ? "unit-card--enemy" : ""} ${isBrics ? "unit-card--brics" : isNeutral ? "unit-card--neutral" : "unit-card--nato"} unit-card--supply-${supplyStatus.tone}`}
-                      onClick={() => isOwn && handleSelectUnit(unit)}
-                    >
-                      <div className="unit-card__icon">
-                        {unit.type === "infantry" ? "\u2694" : unit.type === "armor" ? "\u{1F6E1}" : unit.type === "fighter" ? "\u2708" : unit.type === "bomber" ? "\u{1F4A3}" : "\u{1F3AF}"}
-                      </div>
-                      <div className="unit-card__info">
-                        <div className="unit-card__type">{unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}</div>
-                        <div className="unit-card__stats">
-                          <span className="unit-card__strength">STR {unit.strength}</span>
-                          <span className={`unit-card__supply unit-card__supply--${supplyStatus.tone}`}>SUP {unit.supplyTurnsRemaining}</span>
-                          <span className="unit-card__strength">VET {getVeterancyLevel(unit)}</span>
-                          <span className="unit-card__strength">ENT {getEntrenchmentBonus(unit)}%</span>
-                        </div>
-                      </div>
-                      <div className={`unit-card__supply-badge unit-card__supply-badge--${supplyStatus.tone}`}>{supplyStatus.label}</div>
-                      <div className="unit-card__bloc">{isBrics ? "BRICS" : isNeutral ? "NEUTRAL" : "NATO"}</div>
-                      {isAllied && <div className="unit-card__ally-label">ALLY</div>}
-                      {isEnemy && <div className="unit-card__enemy-label">ENEMY</div>}
-                      {order && (
-                        <div className={`unit-card__order unit-card__order--${order.type}`}>
-                          {order.type === "attack" ? "\u2192 ATK " : order.type === "move" ? "\u2192 MOV " : "HOLD"}
-                          {order.type !== "hold" && gameState.regions[order.targetRegionId]?.name}
-                        </div>
-                      )}
-                      {isSelected && isOwn && (
-                        <div className="unit-card__actions">
-                          <button className="unit-card__btn" onClick={(e) => { e.stopPropagation(); handleHoldUnit(unit.id); }}>Hold</button>
-                          {unit.strength < (MAX_UNIT_STRENGTH[unit.type] ?? 8) && (() => {
-                            const recruitRecipe = getUnitRecruitmentRecipe(unit.type);
-                            const sourceFacility = recruitRecipe ? getBestOperationalFacility(unit.regionId, recruitRecipe.requiredFacility) : null;
-                            const repInfo = getReplenishmentCost(unit.type, unit.strength, sourceFacility?.level ?? 1);
-                            const alreadyReplenishing = (gameState.economyBuildOrders[playerCountryId] ?? []).some((o) => o.type === "replenishUnit" && o.unitId === unit.id);
-                            if (alreadyReplenishing) return <span className="unit-card__btn" style={{ opacity: 0.5, cursor: "default" }}>Replenishing...</span>;
-                            if (!repInfo) return null;
-                            const costStr = Object.entries(repInfo.cost).map(([k, v]) => `${v}${k.slice(0,3)}`).join("+");
-                            return (
-                              <button className="unit-card__btn unit-card__btn--replenish" onClick={(e) => { e.stopPropagation(); handleReplenishUnit(unit.id); }} title={`Restore to full strength (${repInfo.turns}T, ${costStr})`}>
-                                🔧 Replenish ({costStr})
-                              </button>
-                            );
-                          })()}
-                          {order && (
-                            <button className="unit-card__btn unit-card__btn--cancel" onClick={(e) => { e.stopPropagation(); handleCancelOrder(unit.id); }}>Cancel</button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        <UnitDrawer />
 
         {/* STOCKPILE POPUP — floating window over map */}
-        {stockpileOpen && (() => {
-          const stockpile = gameState.countryStockpiles[playerCountryId];
-          return (
-            <div className="stockpile-popup">
-              <div className="stockpile-popup__header">
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span>Country Stockpile — {playerCountry.name}</span>
-                  <button className="build-btn" onClick={() => setLogicMapOpen(true)}>📊 Logic Map</button>
-                </div>
-                <button className="stockpile-popup__close" onClick={() => setStockpileOpen(false)}>✕</button>
-              </div>
-              <div className="stockpile-popup__grid">
-                <div className="stockpile-popup__section">
-                  <div className="stockpile-popup__section-title">Raw Resources</div>
-                  <div className="stockpile-popup__items">
-                    <div className="stockpile-item"><span className="stockpile-item__icon">🛢</span><span className="stockpile-item__label">Oil</span><span className="stockpile-item__value">{stockpile.oil}</span></div>
-                    <div className="stockpile-item"><span className="stockpile-item__icon">⛏</span><span className="stockpile-item__label">Coal</span><span className="stockpile-item__value">{stockpile.coal}</span></div>
-                    <div className="stockpile-item"><span className="stockpile-item__icon">⚙</span><span className="stockpile-item__label">Iron</span><span className="stockpile-item__value">{stockpile.iron}</span></div>
-                    <div className="stockpile-item"><span className="stockpile-item__icon">🔩</span><span className="stockpile-item__label">Tungsten</span><span className="stockpile-item__value">{stockpile.tungsten}</span></div>
-                    <div className="stockpile-item"><span className="stockpile-item__icon">🌾</span><span className="stockpile-item__label">Food</span><span className="stockpile-item__value">{stockpile.food}</span></div>
-                    <div className="stockpile-item"><span className="stockpile-item__icon">⚗</span><span className="stockpile-item__label">Chemicals</span><span className="stockpile-item__value">{stockpile.chemicals}</span></div>
-                  </div>
-                </div>
-                <div className="stockpile-popup__section">
-                  <div className="stockpile-popup__section-title">Processed</div>
-                  <div className="stockpile-popup__items">
-                    <div className="stockpile-item stockpile-item--processed"><span className="stockpile-item__icon">⚡</span><span className="stockpile-item__label">Energy</span><span className="stockpile-item__value">{stockpile.energy}</span></div>
-                    <div className="stockpile-item stockpile-item--processed"><span className="stockpile-item__icon">🔧</span><span className="stockpile-item__label">Steel</span><span className="stockpile-item__value">{stockpile.steel}</span></div>
-                    <div className="stockpile-item stockpile-item--processed"><span className="stockpile-item__icon">⛽</span><span className="stockpile-item__label">Fuel</span><span className="stockpile-item__value">{stockpile.fuel}</span></div>
-                    <div className="stockpile-item stockpile-item--processed"><span className="stockpile-item__icon">💥</span><span className="stockpile-item__label">Explosives</span><span className="stockpile-item__value">{stockpile.explosives}</span></div>
-                    <div className="stockpile-item stockpile-item--processed"><span className="stockpile-item__icon">🌱</span><span className="stockpile-item__label">Fertilizer</span><span className="stockpile-item__value">{stockpile.fertilizer}</span></div>
-                    <div className="stockpile-item stockpile-item--processed"><span className="stockpile-item__icon">💣</span><span className="stockpile-item__label">Munitions</span><span className="stockpile-item__value">{stockpile.munitions}</span></div>
-                  </div>
-                </div>
-                <div className="stockpile-popup__section">
-                  <div className="stockpile-popup__section-title">Civilian Goods</div>
-                  <div className="stockpile-popup__items">
-                    <div className="stockpile-item stockpile-item--civilian"><span className="stockpile-item__icon">👕</span><span className="stockpile-item__label">Textiles</span><span className="stockpile-item__value">{stockpile.textiles}</span></div>
-                    <div className="stockpile-item stockpile-item--civilian"><span className="stockpile-item__icon">💻</span><span className="stockpile-item__label">Electronics</span><span className="stockpile-item__value">{stockpile.electronics}</span></div>
-                    <div className="stockpile-item stockpile-item--civilian"><span className="stockpile-item__icon">🚗</span><span className="stockpile-item__label">Vehicles</span><span className="stockpile-item__value">{stockpile.vehicles}</span></div>
-                    <div className="stockpile-item stockpile-item--civilian"><span className="stockpile-item__icon">💊</span><span className="stockpile-item__label">Pharma</span><span className="stockpile-item__value">{stockpile.pharmaceuticals}</span></div>
-                    <div className="stockpile-item stockpile-item--civilian"><span className="stockpile-item__icon">💎</span><span className="stockpile-item__label">Luxury</span><span className="stockpile-item__value">{stockpile.luxuryGoods}</span></div>
-                  </div>
-                </div>
-                <div className="stockpile-popup__section">
-                  <div className="stockpile-popup__section-title">Special</div>
-                  <div className="stockpile-popup__items">
-                    <div className="stockpile-item stockpile-item--weed"><span className="stockpile-item__icon">🌿</span><span className="stockpile-item__label">Weed</span><span className="stockpile-item__value">{stockpile.weed}</span></div>
-                    <div className="stockpile-item stockpile-item--trade"><span className="stockpile-item__icon">💰</span><span className="stockpile-item__label">Trade</span><span className="stockpile-item__value">{stockpile.tradePoints}</span></div>
-                  </div>
-                </div>
-              </div>
-              {gameState.weedSaturation[playerCountryId] > 0 && (
-                <div style={{ fontSize: "0.65rem", marginTop: "6px", color: "#8bc99a", padding: "0 8px 6px" }}>
-                  🌿 Weed saturation: {(gameState.weedSaturation[playerCountryId] * 100).toFixed(1)}% — Morale +{gameState.weedSaturation[playerCountryId] >= 0.25 ? 5 : gameState.weedSaturation[playerCountryId] >= 0.10 ? 3 : 1}, Food ×{gameState.weedSaturation[playerCountryId] >= 0.25 ? "1.3" : gameState.weedSaturation[playerCountryId] >= 0.10 ? "1.15" : "1.05"}
-                </div>
-              )}
-            </div>
-          );
-        })()}
+        <StockpilePopup />
 
         {/* FACILITY DETAIL POPUP — floating window over map */}
-        {selectedFacilityId && (() => {
-          const economy = gameState.regionEconomies[selectedRegionId];
-          if (!economy) return null;
-          const facility = economy.facilities.find((f) => f.id === selectedFacilityId);
-          if (!facility) return null;
-          const buildRecipe = getFacilityBuildRecipe(facility.type);
-          const upgradeCost = facility.level < 3 ? (getFacilityUpgradeCost(facility.type, facility.level) ?? {}) : {};
-          const repairProfile = facility.damaged ? getFacilityRepairProfile(facility.type, facility.level) : null;
-          // Production info
-          const extractionResources = EXTRACTION_FACILITY_RESOURCES[facility.type];
-          const processingRecipe = PROCESSING_RECIPES.find((r) => r.facilityType === facility.type);
-          const isMunitionsPlant = facility.type === "munitionsPlant";
-          const isChemicalPlant = facility.type === "chemicalPlant";
-          const isCivilianFactory = facility.type === "civilianFactory";
-          const isFarm = facility.type === "farm";
-          // Military production: which units can this facility recruit?
-          const recruitableUnits = UNIT_RECRUITMENT_COSTS.filter((r) => r.requiredFacility === facility.type);
-          const militaryTimeBonus = Math.max(0, facility.level - 1);
-
-          return (
-            <div className="facility-popup">
-              <div className="facility-popup__header">
-                <span>{facility.type} — Lv.{facility.level}</span>
-                <button className="facility-popup__close" onClick={() => setSelectedFacilityId(null)}>✕</button>
-              </div>
-              <div className="facility-popup__body">
-                {facility.damaged && (
-                  <div className="facility-popup__info" style={{ color: "#ff6b6b" }}>⚠ DAMAGED — not producing</div>
-                )}
-                {recruitableUnits.length > 0 && !facility.damaged && militaryTimeBonus > 0 && (
-                  <div className="facility-popup__info" style={{ color: "#8bc99a" }}>
-                    Recruitment bonus: -{militaryTimeBonus} turn{militaryTimeBonus === 1 ? "" : "s"} for units built here
-                  </div>
-                )}
-
-                {/* Extraction facilities */}
-                {extractionResources && (
-                  <div className="facility-popup__production">
-                    <div className="facility-popup__prod-title">Extracts per turn:</div>
-                    {economy.resourceDeposits.filter((d) => extractionResources.includes(d.type)).map((dep, i) => (
-                      <div key={i} className="facility-popup__prod-row">
-                        <span>{dep.type === "food" ? "Food (fertility)" : dep.type}</span>
-                        <span className="facility-popup__prod-yield">+{dep.richness * facility.level} /turn</span>
-                      </div>
-                    ))}
-                    {isFarm && facility.level >= 2 && (
-                      <div className="facility-popup__prod-row" style={{ color: "#8bc99a" }}>
-                        <span>🌿 Weed production unlocked</span>
-                        <span className="facility-popup__prod-yield">1 food + 1 fert → 3 weed</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Processing facilities */}
-                {processingRecipe && (
-                  <div className="facility-popup__production">
-                    <div className="facility-popup__prod-title">Processes per turn (×Lv.{facility.level}):</div>
-                    <div className="facility-popup__prod-row">
-                      <span>In: {Object.entries(processingRecipe.inputs).map(([k, v]) => `${v} ${k}`).join(" + ")}</span>
-                      <span className="facility-popup__prod-yield">→ {Object.entries(processingRecipe.outputs).map(([k, v]) => `${(v ?? 0) * facility.level} ${k}`).join(" + ")}</span>
-                    </div>
-                    {processingRecipe.energyCost > 0 && <div className="facility-popup__prod-cost">⚡ {processingRecipe.energyCost} energy/turn</div>}
-                  </div>
-                )}
-
-                {/* Munitions plant */}
-                {isMunitionsPlant && (
-                  <div className="facility-popup__production">
-                    <div className="facility-popup__prod-title">Produces per turn (×Lv.{facility.level}):</div>
-                    <div className="facility-popup__prod-row">
-                      <span>In: {Object.entries(MUNITIONS_PLANT_RECIPE.inputs).map(([k, v]) => `${v} ${k}`).join(" + ")}</span>
-                      <span className="facility-popup__prod-yield">→ {(MUNITIONS_PLANT_RECIPE.outputs.munitions ?? 0) * facility.level} munitions</span>
-                    </div>
-                    <div className="facility-popup__prod-cost">⚡ {MUNITIONS_PLANT_RECIPE.energyCost} energy/turn</div>
-                  </div>
-                )}
-
-                {/* Chemical plant mode */}
-                {isChemicalPlant && (() => {
-                  const mode = facility.chemicalMode ?? "fertilizer";
-                  const cRecipe = CHEMICAL_PLANT_RECIPES[mode as keyof typeof CHEMICAL_PLANT_RECIPES];
-                  return (
-                    <div className="facility-popup__production">
-                      <div className="facility-popup__prod-title">Mode: {mode}</div>
-                      <div className="facility-popup__prod-row">
-                        <span>In: {Object.entries(cRecipe.inputs).map(([k, v]) => `${v} ${k}`).join(" + ")}</span>
-                        <span className="facility-popup__prod-yield">→ {Object.entries(cRecipe.outputs).map(([k, v]) => `${(v ?? 0) * facility.level} ${k}`).join(" + ")}</span>
-                      </div>
-                      <button className="build-btn" style={{ marginTop: 4 }} onClick={() => handleToggleChemicalMode(selectedRegionId, facility.id)}>
-                        Switch to {mode === "explosives" ? "fertilizer" : "explosives"}
-                      </button>
-                    </div>
-                  );
-                })()}
-
-                {/* Civilian factory */}
-                {isCivilianFactory && (
-                  <div className="facility-popup__production">
-                    <div className="facility-popup__prod-title">Civilian goods (auto per turn):</div>
-                    {CIVILIAN_GOOD_RECIPES.filter((r) => r.requiredLevel <= facility.level).map((r) => (
-                      <div key={r.good} className="facility-popup__prod-row">
-                        <span>{Object.entries(r.inputs).map(([k, v]) => `${v} ${k}`).join(" + ")}</span>
-                        <span className="facility-popup__prod-yield">→ {r.outputAmount} {r.good} (+{r.tradeValue} trade)</span>
-                      </div>
-                    ))}
-                    {CIVILIAN_GOOD_RECIPES.some((r) => r.requiredLevel > facility.level) && (
-                      <div className="facility-popup__prod-cost" style={{ color: "var(--muted)" }}>
-                        Upgrade to unlock: {CIVILIAN_GOOD_RECIPES.filter((r) => r.requiredLevel > facility.level).map((r) => `${r.good} (Lv.${r.requiredLevel})`).join(", ")}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Military recruitment */}
-                {recruitableUnits.length > 0 && !facility.damaged && selectedRegion.controllerCountryId === playerCountryId && playerTurnActive && (
-                  <div className="facility-popup__production">
-                    <div className="facility-popup__prod-title">Recruit units:</div>
-                    {recruitableUnits.map((recipe) => {
-                      const affordable = canAfford(recipe.cost);
-                      const recruitTurns = getMilitaryProductionTurns(recipe.turns, facility.level);
-                      return (
-                        <div key={recipe.unitType} className="facility-popup__prod-row" style={{ alignItems: "center" }}>
-                          <span>{recipe.unitType} — {Object.entries(recipe.cost).map(([k, v]) => `${v} ${k}`).join(", ")}</span>
-                          <button
-                            className={`build-btn ${affordable && !facility.damaged ? "" : "build-btn--disabled"}`}
-                            disabled={!affordable || facility.damaged}
-                            onClick={() => { handleRecruitUnit(selectedRegionId, recipe.unitType); }}
-                            title={facility.damaged ? "Repair this facility first" : affordable ? "" : `Missing: ${getMissingResources(recipe.cost).join(", ")}`}
-                          >
-                            Recruit ({recruitTurns}t)
-                          </button>
-                        </div>
-                      );
-                    })}
-                    
-                    {/* Replenish troops currently stationed here */}
-                    {Object.values(gameState.units).some(u => 
-                      u.regionId === selectedRegionId && 
-                      u.countryId === playerCountryId && 
-                      u.strength < MAX_UNIT_STRENGTH[u.type] && 
-                      recruitableUnits.some(r => r.unitType === u.type)
-                    ) && (
-                      <div style={{ marginTop: 12 }}>
-                        <div className="facility-popup__prod-title">Replenish stationed troops:</div>
-                        {Object.values(gameState.units).filter(u => 
-                          u.regionId === selectedRegionId && 
-                          u.countryId === playerCountryId && 
-                          u.strength < MAX_UNIT_STRENGTH[u.type] && 
-                          recruitableUnits.some(r => r.unitType === u.type)
-                        ).map((unit) => {
-                          const repInfo = getReplenishmentCost(unit.type, unit.strength, facility.level);
-                          if (!repInfo) return null;
-                          const replenishCost = repInfo.cost;
-                          const affordable = canAfford(replenishCost);
-                          const alreadyReplenishing = (gameState.economyBuildOrders[playerCountryId] ?? []).some((o) => o.type === "replenishUnit" && o.unitId === unit.id);
-                          return (
-                            <div key={unit.id} className="facility-popup__prod-row" style={{ alignItems: "center" }}>
-                              <span>{unit.type} (STR: {unit.strength}/{MAX_UNIT_STRENGTH[unit.type]})</span>
-                              <button
-                                className={`build-btn ${affordable && !alreadyReplenishing ? "" : "build-btn--disabled"}`}
-                                disabled={!affordable || alreadyReplenishing}
-                                onClick={() => { handleReplenishUnit(unit.id); }}
-                                title={alreadyReplenishing ? "Already replenishing" : affordable ? "" : `Missing: ${getMissingResources(replenishCost).join(", ")}`}
-                              >
-                                {alreadyReplenishing ? "Queued" : `Replenish (${repInfo.turns}t - ${Object.entries(replenishCost).map(([k, v]) => `${v} ${k}`).join(", ")})`}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Upgrade */}
-                {facility.level < 3 && selectedRegion.controllerCountryId === playerCountryId && playerTurnActive && (
-                  <div className="facility-popup__actions">
-                    <button className="build-btn" disabled={facility.damaged || !canAfford(upgradeCost)} onClick={() => { handleUpgradeFacility(facility.id, selectedRegionId); setSelectedFacilityId(null); }} title={facility.damaged ? "Repair this facility first" : canAfford(upgradeCost) ? "" : `Missing: ${getMissingResources(upgradeCost).join(", ")}`}>
-                      ⬆ Upgrade to Lv.{facility.level + 1} ({Object.entries(upgradeCost).map(([k, v]) => `${v} ${k}`).join(", ")})
-                    </button>
-                  </div>
-                )}
-                {repairProfile && selectedRegion.controllerCountryId === playerCountryId && playerTurnActive && (
-                  <div className="facility-popup__actions">
-                    <button
-                      className="build-btn"
-                      disabled={!canAfford(repairProfile.cost) || (gameState.economyBuildOrders[playerCountryId] ?? []).some((o) => o.type === "repairFacility" && o.facilityId === facility.id)}
-                      onClick={() => { handleRepairFacility(facility.id, selectedRegionId); setSelectedFacilityId(null); }}
-                      title={canAfford(repairProfile.cost) ? "" : `Missing: ${getMissingResources(repairProfile.cost).join(", ")}`}
-                    >
-                      Repair ({repairProfile.turns}t{Object.keys(repairProfile.cost).length > 0 ? ` - ${Object.entries(repairProfile.cost).map(([k, v]) => `${v} ${k}`).join(", ")}` : ""})
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })()}
+        <FacilityPopup />
       </div>
 
       {/* FLOATING PANELS — each tab opens its own popup over the map */}

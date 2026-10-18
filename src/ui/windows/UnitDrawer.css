@@ -1,0 +1,60 @@
+/* ═══════════════════════════════════
+   UNIT DRAWER (floats up from bottom of map)
+   ═══════════════════════════════════ */
+
+.unit-drawer {
+  position: absolute;
+  bottom: 0;
+  right: 12px;
+  width: 220px;
+  z-index: 20;
+  background: rgba(17, 25, 32, 0.92);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.unit-drawer__toggle {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  text-align: left;
+}
+
+.unit-drawer__toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.unit-drawer__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.unit-drawer__hint {
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: #ffd700;
+  padding: 4px 6px;
+  text-align: center;
+  animation: hint-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes hint-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

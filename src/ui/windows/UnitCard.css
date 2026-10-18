@@ -1,0 +1,201 @@
+/* ═══════════════════════════════════
+   UNIT CARDS
+   ═══════════════════════════════════ */
+
+.unit-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: default;
+  transition: all 0.15s ease;
+  position: relative;
+  min-width: 180px;
+}
+
+.unit-card--own {
+  cursor: pointer;
+}
+
+.unit-card--own:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.unit-card--ally {
+  border-color: rgba(120, 205, 150, 0.24);
+}
+
+.unit-card--selected {
+  background: rgba(255, 215, 0, 0.12) !important;
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+}
+
+.unit-card__icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  width: 28px;
+  text-align: center;
+}
+
+.unit-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.unit-card__type {
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.unit-card--brics .unit-card__type { color: #ff9a9d; }
+.unit-card--nato .unit-card__type { color: #9dc2ff; }
+.unit-card--neutral .unit-card__type { color: #c7d0da; }
+
+.unit-card__stats {
+  display: flex;
+  gap: 8px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.unit-card__strength { color: #e8c96a; }
+.unit-card__supply { color: #8bc99a; }
+.unit-card__supply--good { color: #8bc99a; }
+.unit-card__supply--low { color: #d5d96b; }
+.unit-card__supply--critical { color: #f7b955; }
+.unit-card__supply--cutoff { color: #ff8a8a; }
+.unit-card__supply--air { color: #b6c0ca; }
+
+.unit-card__supply-badge {
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.unit-card__supply-badge--good { background: rgba(90, 180, 120, 0.14); color: #8bc99a; }
+.unit-card__supply-badge--low { background: rgba(213, 217, 107, 0.14); color: #d5d96b; }
+.unit-card__supply-badge--critical { background: rgba(247, 185, 85, 0.16); color: #f7b955; }
+.unit-card__supply-badge--cutoff { background: rgba(255, 90, 90, 0.18); color: #ff8a8a; }
+.unit-card__supply-badge--air { background: rgba(125, 135, 147, 0.14); color: #b6c0ca; }
+
+.unit-card--supply-cutoff {
+  border-color: rgba(255, 90, 90, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(255, 90, 90, 0.08);
+}
+
+.unit-card--supply-critical {
+  border-color: rgba(247, 185, 85, 0.28);
+}
+
+.unit-card__bloc {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.unit-card--brics .unit-card__bloc { background: rgba(198, 93, 98, 0.2); }
+.unit-card--nato .unit-card__bloc { background: rgba(94, 144, 234, 0.2); }
+.unit-card--neutral .unit-card__bloc { background: rgba(125, 135, 147, 0.22); }
+
+.unit-card__order {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 0 6px 0 4px;
+  letter-spacing: 0.03em;
+}
+
+.unit-card__order--attack {
+  background: rgba(255, 80, 80, 0.3);
+  color: #ff9a9d;
+  border-bottom: 1px solid rgba(255, 80, 80, 0.4);
+  border-left: 1px solid rgba(255, 80, 80, 0.4);
+}
+
+.unit-card__order--move {
+  background: rgba(100, 180, 255, 0.2);
+  color: #9dc2ff;
+  border-bottom: 1px solid rgba(100, 180, 255, 0.3);
+  border-left: 1px solid rgba(100, 180, 255, 0.3);
+}
+
+.unit-card__order--hold {
+  background: rgba(255, 215, 0, 0.15);
+  color: #e8c96a;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+  border-left: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.unit-card__actions {
+  display: flex;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.unit-card__btn {
+  padding: 2px 8px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(10, 17, 24, 0.7);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.unit-card__btn:hover {
+  background: rgba(32, 48, 65, 0.8);
+}
+
+.unit-card__btn--cancel {
+  color: #ff6b6b;
+  border-color: rgba(255, 80, 80, 0.3);
+}
+
+.unit-card__btn--cancel:hover {
+  background: rgba(255, 80, 80, 0.15);
+}
+
+.unit-card__enemy-label {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #ff6b6b;
+  background: rgba(255, 80, 80, 0.15);
+  border: 1px solid rgba(255, 80, 80, 0.3);
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.unit-card__ally-label {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #7ed49b;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(80, 170, 110, 0.16);
+  border: 1px solid rgba(80, 170, 110, 0.3);
+}
+
+.unit-card--enemy {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+}

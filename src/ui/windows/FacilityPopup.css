@@ -1,0 +1,105 @@
+/* ─── Facility Detail Popup (floating over map) ─── */
+
+.facility-popup {
+  position: fixed;
+  bottom: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel);
+  border: 1px solid rgba(100, 180, 255, 0.3);
+  border-radius: 8px;
+  z-index: 130;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  min-width: 320px;
+  max-width: 480px;
+}
+
+.facility-popup__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.facility-popup__close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 6px;
+}
+
+.facility-popup__close:hover {
+  color: var(--text);
+}
+
+.facility-popup__body {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.facility-popup__info {
+  font-size: 0.68rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.facility-popup__label {
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.58rem;
+}
+
+.facility-popup__actions {
+  margin-top: 4px;
+}
+
+.facility-popup__production {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.facility-popup__prod-title {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.facility-popup__prod-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.66rem;
+  color: var(--text);
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.facility-popup__prod-yield {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.facility-popup__prod-cost {
+  font-size: 0.58rem;
+  color: #e8c96a;
+}
