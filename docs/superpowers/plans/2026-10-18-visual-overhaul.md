@@ -284,7 +284,7 @@ describe("compareLayout", () => {
   - `mapRenders` is `window.__mapStats.renders` after minus before, or `null` when `__mapStats` is
     missing.
 
-- [ ] **Step 1: Write the snippet.**
+- [x] **Step 1: Write the snippet.**
   1. If `document.visibilityState !== "visible"`, return
      `{ error: "Browser pane hidden: show it and rerun" }`.
   2. Record frame deltas with `requestAnimationFrame`.

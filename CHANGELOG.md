@@ -65,6 +65,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`layout-1920x1080.json`](./docs/superpowers/baselines/layout-1920x1080.json).
   (plan 2026-10-18-visual-overhaul → Task 2)
   Files: [compareLayout.test.mjs](./scripts/layout/compareLayout.test.mjs) (11 tests)
+- Pan/zoom benchmark (constraint C2): browser snippet [`pan-zoom-bench.js`](./scripts/perf/pan-zoom-bench.js)
+  drives 180 scripted `pointermove` frames in an ellipse plus 20 `wheel` steps on the map element
+  and returns `{ avgMs, p95Ms, maxMs, frames, mapRenders, idleMs }` (`idleMs` = idle frame interval,
+  the display's floor). It returns `{ error }` instead of hanging when the browser pane is hidden.
+  (plan 2026-10-18-visual-overhaul → Task 3)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -72,6 +77,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   relative to the default fit (0.6x-24x) because canvas scale differs from the old SVG viewBox
   scale; region shade variants use greedy neighbor coloring instead of a hash so same-owner
   neighbors never share a shade.
+- **Legacy frame-time numbers are pending (Task 3 step 2).** The built-in browser pane was hidden
+  while Tasks 1-3 ran (`requestAnimationFrame` delivered no frames in 5 s although the app listed the
+  session on screen), and C2 numbers only count with a visible pane. `docs/superpowers/baselines/perf-legacy.md`
+  is added once they can be measured. (plan 2026-10-18-visual-overhaul → Task 3)
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
@@ -88,6 +97,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `node scripts/layout/compare-layout.mjs <baseline> <second capture>` with `Layout lock: PASS` at
   1440x900 and 1920x1080; the legacy keys captured for the top bar, bottom bar and map controls equal
   the `data-layout-key` lists planned for Task 8. (plan 2026-10-18-visual-overhaul → Task 2)
+- Task 3: C7 checks pass (`npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm run build` OK,
+  `npm test` 12/12, `npm run smoke`, `npm run balance-check` "Balance check passed"; `check:layers`
+  does not exist before Task 4). The benchmark flow was exercised end to end on the legacy map with a
+  MessageChannel stand-in for `requestAnimationFrame` (200 frames, pan and zoom took effect). That
+  run is script-only and NOT a C2 measurement. (plan 2026-10-18-visual-overhaul → Task 3)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
