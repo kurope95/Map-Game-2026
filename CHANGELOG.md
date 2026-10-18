@@ -241,8 +241,8 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([`PerfMeter.ts`](./src/ui/map/perf/PerfMeter.ts)). `MapController.ts` was split so that gestures
   ([`MapPointerInput.ts`](./src/ui/map/MapPointerInput.ts)), easing ([`cameraTween.ts`](./src/ui/map/cameraTween.ts)), the
   tooltip and the meter live in their own modules (565 -> 370 lines). `derive.ts` gained `orderedUnitIds`. 103 new
-  tests. **Not done in this task: the benchmark step with real requestAnimationFrame deltas (the pane did not draw
-  while the Claude window was not in front); it moves to Task 28 step 3.**
+  tests. **Not done in Task 27 or 28: the benchmark with real requestAnimationFrame deltas (the pane only draws while
+  the Claude window is in front); see the Task 28 Verified entry.**
   (plan 2026-10-18-visual-overhaul → Task 27)
 
 ### Decision
@@ -481,6 +481,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`GameScreen.tsx`](./src/ui/screens/game/GameScreen.tsx) renders `MapView` instead of `TheaterMap` when the URL
   has `?map=new`. (plan 2026-10-18-visual-overhaul → Task 26)
 
+- The game now draws the canvas map by default: [`GameScreen.tsx`](./src/ui/screens/game/GameScreen.tsx) always renders
+  [`MapView`](./src/ui/map/MapView.tsx), passing the selected unit ids, the move and attack target lists and stable
+  callbacks ([`useStableCallback.ts`](./src/ui/session/useStableCallback.ts)); `MapView` is `React.memo` with a props
+  comparator ([`mapViewProps.ts`](./src/ui/map/mapViewProps.ts), 6 tests) so re-renders caused by anything but the map's own
+  inputs do not redraw it. The `?map=new` switch is gone. (plan 2026-10-18-visual-overhaul → Task 28)
+
 ### Fixed
 - Turn report relations: [`parseTurnReport.ts`](./src/ui/windows/turnReport/parseTurnReport.ts) treated the
   `NEUTRAL` bloc as a bloc of its own, so for a BRICS player every neutral nation (Austria, Serbia, ...) was
@@ -500,6 +506,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`buildMapGeometry.ts`](./src/ui/map/geometry/buildMapGeometry.ts) now bounds the region POINTS (spec 11.3),
   guarded by [`buildMapGeometry.test.ts`](./src/ui/map/geometry/buildMapGeometry.test.ts) (failed first).
   (plan 2026-10-18-visual-overhaul → Task 26)
+
+### Removed
+- The SVG map: `src/ui/TheaterMap.tsx` (1206 lines) and `src/ui/TheaterMap.css`. Its `onSelectFacility` prop was declared
+  but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -701,6 +711,29 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   two runs): average 1.4-1.5 ms, p95 2.1-2.4 ms, 0 React renders. The real C2 numbers (rAF deltas) still need the
   window in view: the pane was shown but `requestAnimationFrame` did not fire (Claude window not in front).
   (plan 2026-10-18-visual-overhaul → Task 27)
+- Task 28 (switch to the canvas map): `npm test` 291/291, `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
+  `npm run build`, `npm run check:layers`, `npm run validate-map`, `npm run smoke` and `npm run balance-check` pass, and
+  searching `src` for `TheaterMap` finds nothing. Layout lock: PASS at 1440x900 and at 1920x1080, with the `map-controls`
+  keys `zoomin`, `zoomout` and `reset`. The quick manual run (walk, 20 steps) and the economy flow (12 steps) pass on the
+  canvas map (the walk script now clicks the move target on the canvas). Parity checklist of spec 12.4, run in the browser on the
+  default map (dev build, stand-in `requestAnimationFrame`, scripts kept outside the repo):
+  - [x] Select regions (a city and a bare polygon), units (a counter) and stacks (expand, collapse on a sea click).
+  - [x] Orders issued by clicking the canvas: move (the Orders tab counts 1), attack (infantry and armor), air support
+    (fighter) and bombard (bomber) each draw an arrow of the right type; Cancel removes it; Hold shows as a hold order and
+    Cancel clears it. [ ] Missile strike was not issued in a live game (Germany's strategic missile has no target in range
+    at the start); its arrow was checked with a synthetic arrow and the order logic is covered by the unit tests.
+  - [x] Supply overlay on and off; depot badge and deposit chips at z 5; + and Reset buttons.
+  - [x] End Turn, then the turn report.
+  - [x] Save a slot, End Turn (autosave written), load the slot: the turn, the unit positions and the map follow.
+  - [ ] Continue from the start screen: the start screen with Continue arrives in Task 29.
+  - [x] The Diplomacy and Doctrines windows open, the facility popup opens from the Economy panel, build, cancel and
+    recruit work. [ ] Diplomacy actions, doctrine purchase, repair and demolish were not re-run here: this task did not
+    touch them and their logic is covered by the unit tests.
+  - [x] Victory and defeat overlays, forced through crafted save slots.
+  **Not done: the benchmark (step 3).** The Browser pane was shown, but `requestAnimationFrame` only fired intermittently
+  (the Claude window has to be in front of every other window); three runs of `pan-zoom-bench.js` need about a minute of
+  that, and the legacy numbers of Task 3 (`perf-legacy.md`) need the same. JS draw time is 1.4-1.5 ms on average (p95
+  2.1-2.4 ms) with 0 React renders during the benchmark gestures. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

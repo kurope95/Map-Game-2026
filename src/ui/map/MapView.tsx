@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef } from "react";
 import type { CountryId, GameState } from "../../game/state/types";
 import { BUTTON_ZOOM, MapController } from "./MapController";
+import { mapViewPropsEqual } from "./mapViewProps";
 import { recordRender } from "./perf/frameStats";
 import "./MapView.css";
 
@@ -62,4 +63,4 @@ function MapViewComponent(props: MapViewProps) {
   );
 }
 
-export const MapView = memo(MapViewComponent);
+export const MapView = memo(MapViewComponent, mapViewPropsEqual);

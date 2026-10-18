@@ -5,7 +5,7 @@ import type { Point } from "./types";
 export const WORLD = { width: theaterMapSize.width, height: theaterMapSize.height } as const;
 export const WORLD_CLIP: [[number, number], [number, number]] = [[-200, -200], [1800, 1180]];
 
-// Same projection and fitting as the legacy TheaterMap so the new canvas map keeps the exact
+// Same projection and fitting as the old SVG map, so the canvas map keeps the exact
 // geography and city positions.
 export function createProjection(): GeoProjection {
   const projection = geoMercator();

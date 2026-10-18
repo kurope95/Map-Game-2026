@@ -1,4 +1,4 @@
-import { TheaterMap } from "../../TheaterMap";
+import { useMemo } from "react";
 import { MapView } from "../../map/MapView";
 import { EconomyLogicMap } from "../../windows/EconomyLogicMap";
 import "./GameScreen.css";
@@ -14,6 +14,7 @@ import { RecruitmentPanel } from "../../panels/RecruitmentPanel";
 import { RegionPanel } from "../../panels/RegionPanel";
 import { WarStatusPanel } from "../../panels/WarStatusPanel";
 import { useGame } from "../../session/GameProvider";
+import { useStableCallback } from "../../session/useStableCallback";
 import { DefeatNotice } from "../../windows/DefeatNotice";
 import { DiplomacyWindow } from "../../windows/diplomacy/DiplomacyWindow";
 import { DoctrineWindow } from "../../windows/DoctrineWindow";
@@ -25,21 +26,27 @@ import { TurnReportWindow } from "../../windows/turnReport/TurnReportWindow";
 import { UnitDrawer } from "../../windows/UnitDrawer";
 import { VictoryOverlay } from "../../windows/VictoryOverlay";
 
-// Temporary switch until Task 28: the canvas map is opt-in through ?map=new.
-const USE_CANVAS_MAP = new URLSearchParams(window.location.search).get("map") === "new";
-
 export function GameScreen() {
   const {
     gameState,
     selectedRegionId,
+    selectedUnitIds,
     handleSelectRegion,
-    handleSelectFacilityFromMap,
     handleSelectUnitFromMap,
     validTargets,
     showSupplyOverlay,
     logicMapOpen,
     setLogicMapOpen,
   } = useGame();
+
+  // The map is memoized: id lists and callbacks keep their identity unless their content changes.
+  const attackTargets = useMemo(
+    () => [...validTargets.attacks, ...validTargets.airTargets, ...validTargets.bombardTargets, ...validTargets.missileTargets],
+    [validTargets]
+  );
+  const unitIds = useMemo(() => [...selectedUnitIds], [selectedUnitIds]);
+  const onSelectRegion = useStableCallback(handleSelectRegion);
+  const onSelectUnit = useStableCallback(handleSelectUnitFromMap);
 
   return (
     <div className="game-shell">
@@ -54,28 +61,16 @@ export function GameScreen() {
 
       {/* MAP */}
       <div className="map-stage" data-layout="map-stage">
-        {USE_CANVAS_MAP ? (
-          <MapView
-            state={gameState}
-            selectedRegionId={selectedRegionId}
-            onSelectRegion={handleSelectRegion}
-            onSelectUnit={handleSelectUnitFromMap}
-            validMoveTargets={validTargets.moves}
-            validAttackTargets={[...validTargets.attacks, ...validTargets.airTargets, ...validTargets.bombardTargets, ...validTargets.missileTargets]}
-            showSupplyOverlay={showSupplyOverlay}
-          />
-        ) : (
-          <TheaterMap
-            state={gameState}
-            selectedRegionId={selectedRegionId}
-            onSelectRegion={handleSelectRegion}
-            onSelectFacility={handleSelectFacilityFromMap}
-            onSelectUnit={handleSelectUnitFromMap}
-            validMoveTargets={validTargets.moves}
-            validAttackTargets={[...validTargets.attacks, ...validTargets.airTargets, ...validTargets.bombardTargets, ...validTargets.missileTargets]}
-            showSupplyOverlay={showSupplyOverlay}
-          />
-        )}
+        <MapView
+          state={gameState}
+          selectedRegionId={selectedRegionId}
+          selectedUnitIds={unitIds}
+          onSelectRegion={onSelectRegion}
+          onSelectUnit={onSelectUnit}
+          validMoveTargets={validTargets.moves}
+          validAttackTargets={attackTargets}
+          showSupplyOverlay={showSupplyOverlay}
+        />
 
         {/* UNIT DRAWER — floats up from bottom of map */}
         <UnitDrawer />

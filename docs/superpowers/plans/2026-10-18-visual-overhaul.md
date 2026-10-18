@@ -1795,15 +1795,15 @@ p95 frame time and the render count, updated every 500 ms.
   and the same target arrays as before. Remove the `?map=new` switch.
 - Delete: `src/ui/TheaterMap.tsx`, `src/ui/TheaterMap.css` and any leftover `.theater-map*` CSS.
 
-- [ ] **Step 1: Switch over and delete the old map.** `npx tsc -p tsconfig.app.json --noEmit` must
+- [x] **Step 1: Switch over and delete the old map.** `npx tsc -p tsconfig.app.json --noEmit` must
   pass, and searching for `TheaterMap` must find no remaining references.
-- [ ] **Step 2: Run the parity checklist** (spec 12.4) in the browser and tick each item in the
+- [x] **Step 2: Run the parity checklist** (spec 12.4) in the browser and tick each item in the
   changelog `Verified` entry.
 - [ ] **Step 3: Run the benchmark** three times (pane visible, 1920x1080). The medians must meet C2.
   Record them next to the legacy numbers in `docs/superpowers/baselines/perf-legacy.md`.
-- [ ] **Step 4: Run the C7 phase-end checks and the layout compare at both sizes** (PASS, with
+- [x] **Step 4: Run the C7 phase-end checks and the layout compare at both sizes** (PASS, with
   `map-controls` keys `zoomin`/`zoomout`/`reset`).
-- [ ] **Step 5: Changelog, commit** `Switch to the canvas map and remove the SVG map`, then
+- [x] **Step 5: Changelog, commit** `Switch to the canvas map and remove the SVG map`, then
   `git push origin main`.
 
 ---
