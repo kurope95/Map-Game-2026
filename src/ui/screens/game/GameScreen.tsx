@@ -1,4 +1,5 @@
 import { TheaterMap } from "../../TheaterMap";
+import { MapView } from "../../map/MapView";
 import { EconomyLogicMap } from "../../windows/EconomyLogicMap";
 import "./GameScreen.css";
 import { BottomBar } from "../../hud/BottomBar";
@@ -23,6 +24,9 @@ import { StockpilePopup } from "../../windows/StockpilePopup";
 import { TurnReportWindow } from "../../windows/turnReport/TurnReportWindow";
 import { UnitDrawer } from "../../windows/UnitDrawer";
 import { VictoryOverlay } from "../../windows/VictoryOverlay";
+
+// Temporary switch until Task 28: the canvas map is opt-in through ?map=new.
+const USE_CANVAS_MAP = new URLSearchParams(window.location.search).get("map") === "new";
 
 export function GameScreen() {
   const {
@@ -50,16 +54,28 @@ export function GameScreen() {
 
       {/* MAP */}
       <div className="map-stage" data-layout="map-stage">
-        <TheaterMap
-          state={gameState}
-          selectedRegionId={selectedRegionId}
-          onSelectRegion={handleSelectRegion}
-          onSelectFacility={handleSelectFacilityFromMap}
-          onSelectUnit={handleSelectUnitFromMap}
-          validMoveTargets={validTargets.moves}
-          validAttackTargets={[...validTargets.attacks, ...validTargets.airTargets, ...validTargets.bombardTargets, ...validTargets.missileTargets]}
-          showSupplyOverlay={showSupplyOverlay}
-        />
+        {USE_CANVAS_MAP ? (
+          <MapView
+            state={gameState}
+            selectedRegionId={selectedRegionId}
+            onSelectRegion={handleSelectRegion}
+            onSelectUnit={handleSelectUnitFromMap}
+            validMoveTargets={validTargets.moves}
+            validAttackTargets={[...validTargets.attacks, ...validTargets.airTargets, ...validTargets.bombardTargets, ...validTargets.missileTargets]}
+            showSupplyOverlay={showSupplyOverlay}
+          />
+        ) : (
+          <TheaterMap
+            state={gameState}
+            selectedRegionId={selectedRegionId}
+            onSelectRegion={handleSelectRegion}
+            onSelectFacility={handleSelectFacilityFromMap}
+            onSelectUnit={handleSelectUnitFromMap}
+            validMoveTargets={validTargets.moves}
+            validAttackTargets={[...validTargets.attacks, ...validTargets.airTargets, ...validTargets.bombardTargets, ...validTargets.missileTargets]}
+            showSupplyOverlay={showSupplyOverlay}
+          />
+        )}
 
         {/* UNIT DRAWER — floats up from bottom of map */}
         <UnitDrawer />

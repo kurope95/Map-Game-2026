@@ -213,6 +213,17 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   nearest city, region, sea). 18 tests in four files, including Review Focus 2 (CSS pixels, no DPR
   input), 3 (8 expanded units never overlap) and 4 (pills stay clear of the bars in all eight
   directions). (plan 2026-10-18-visual-overhaul → Task 25)
+- Canvas map skeleton (opt-in through `http://127.0.0.1:4173/?map=new` until Task 28):
+  [`MapView.tsx`](./src/ui/map/MapView.tsx) (canvas, zoom buttons with the layout-lock keys, `React.memo`),
+  [`MapController.ts`](./src/ui/map/MapController.ts) (camera, 140 ms easing, drag with a 5 px threshold, wheel
+  zoom anchored at the cursor, click resolution in spec order, `requestAnimationFrame` coalescing, canvas sized
+  by `devicePixelRatio`, geometry built after the first paint of "Preparing map…"; it never calls React
+  `setState`), [`renderFrame.ts`](./src/ui/map/render/renderFrame.ts) with the first layers
+  ([`layers/base.ts`](./src/ui/map/render/layers/base.ts): sea, background land, controller-colored region
+  fills, city dots), a `Path2D` cache ([`paths.ts`](./src/ui/map/render/paths.ts)) and the dev frame meter
+  [`frameStats.ts`](./src/ui/map/perf/frameStats.ts) (`window.__mapStats`).
+  **STATUS: PARTIAL (Task 26): code committed; browser check and benchmark pending.**
+  (plan 2026-10-18-visual-overhaul → Task 26)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -423,6 +434,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [TurnReportWindow.css](./src/ui/windows/turnReport/TurnReportWindow.css),
   [parseTurnReport.test.ts](./src/ui/windows/turnReport/parseTurnReport.test.ts) (10 tests),
   [fixtures.ts](./src/ui/windows/turnReport/fixtures.ts), [windows.css](./src/ui/windows/windows.css)
+- The `.map-controls` and `.map-control-button` rules moved from [`TheaterMap.css`](./src/ui/TheaterMap.css) into
+  [`MapView.css`](./src/ui/map/MapView.css) (the legacy `TheaterMap.tsx` imports it until Task 28);
+  [`GameScreen.tsx`](./src/ui/screens/game/GameScreen.tsx) renders `MapView` instead of `TheaterMap` when the URL
+  has `?map=new`. (plan 2026-10-18-visual-overhaul → Task 26)
 
 ### Fixed
 - Turn report relations: [`parseTurnReport.ts`](./src/ui/windows/turnReport/parseTurnReport.ts) treated the

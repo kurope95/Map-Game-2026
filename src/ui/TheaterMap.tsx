@@ -5,6 +5,7 @@ import { geoGraticule10, geoMercator, geoPath, type GeoProjection } from "d3-geo
 import countries50m from "world-atlas/countries-50m.json";
 import { CountryId, GameState, UnitDefinition } from "../game/state/types";
 import { europeCountryIds, theaterMapLayout, theaterMapSize } from "../game/content/regionGeo";
+import "./map/MapView.css";
 import { getPridnestrovieDepotStatus } from "../game/rules/strategicDepot";
 import "./TheaterMap.css";
 
