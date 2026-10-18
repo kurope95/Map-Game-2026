@@ -1518,7 +1518,7 @@ export function isFrontPair(state: GameState, regionA: string, regionB: string):
 export function deriveMapData(state: GameState, geometry: Pick<MapGeometry, "edges">, opts: { playerCountryId: CountryId; showSupply: boolean }): DerivedMapData; // WeakMap cache keyed by state, then by showSupply
 ```
 
-- [ ] **Step 1: Write the failing tests** on `evaluateWarEntryRules(createInitialState("RUSSIA"))`
+- [x] **Step 1: Write the failing tests** on `evaluateWarEntryRules(createInitialState("RUSSIA"))`
   and its geometry:
   - **Occupation:**
     - `occupiedBy.size === 0` at the start;
@@ -1534,8 +1534,8 @@ export function deriveMapData(state: GameState, geometry: Pick<MapGeometry, "edg
     puts the unit in `holdUnitIds`.
   - **Supply:** `supply` is null when `showSupply` is false.
   - **Cache:** a second call with the same state returns the same object (`toBe`).
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
-- [ ] **Step 3: Changelog, then commit** with the message `Add per-state derived map data`.
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
+- [x] **Step 3: Changelog, then commit** with the message `Add per-state derived map data`.
 
 ### Task 25: Screen-space layout: labels, counters, edge pills, hit testing
 

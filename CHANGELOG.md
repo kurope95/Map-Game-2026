@@ -197,6 +197,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (0.6x-24x of the fit scale) from spec 11.3. Covered by
   [`camera.test.ts`](./src/ui/map/camera.test.ts) (9 tests).
   (plan 2026-10-18-visual-overhaul → Task 23)
+- Per-state map data [`derive.ts`](./src/ui/map/derive.ts): controller fills, occupied regions against
+  the pre-war baseline, front-edge indexes (`isFrontPair` = different blocs, both controllers at
+  war), unit stacks with a majority/secondary country, merged order arrows plus hold unit ids, and
+  the player supply overlay, all cached in a `WeakMap` keyed by `GameState` and `showSupply`.
+  Covered by [`derive.test.ts`](./src/ui/map/derive.test.ts) (9 tests).
+  (plan 2026-10-18-visual-overhaul → Task 24)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -568,6 +574,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   point within 1e-6 and clamps to the given range, fitting centers the bounds with padding,
   clamping restores at least a quarter of the world from every direction, and the zoom easing hits
   its endpoints while staying monotonic. (plan 2026-10-18-visual-overhaul → Task 23)
+- Task 24: `npm test` 153/153 (9 new derive tests), `npx tsc -p tsconfig.app.json --noEmit`
+  0 errors, `npm run build` OK. No region starts occupied; capturing Lublin makes it occupied by
+  POLAND and paints it with Russia's color; all front edges join different blocs whose controllers
+  are at war; Belarus never appears on a turn-1 front edge while Novorossia and Ukraine do meet on
+  one; stacks report Russia/Belarus majority and secondary; two orders merge into one count-2 arrow
+  and a hold lands in `holdUnitIds`; supply is null without the overlay and reaches the capital
+  with it; repeated calls return the cached object.
+  (plan 2026-10-18-visual-overhaul → Task 24)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
