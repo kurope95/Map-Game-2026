@@ -1011,10 +1011,10 @@ and `v` means vertical bands hoist to fly.
 - **Toasts:** `--surface-1` cards, a 3 px left edge in the tone color, and an icon per tone (`Info`,
   `CheckCircle2`, `TriangleAlert`, `OctagonAlert`).
 
-- [ ] **Step 1: Restyle.**
-- [ ] **Step 2: Run the layout compare at both sizes** (PASS) **and take screenshots.** Check that
+- [x] **Step 1: Restyle.**
+- [x] **Step 2: Run the layout compare at both sizes** (PASS) **and take screenshots.** Check that
   the bars are 36 px tall and that tab order and positions are unchanged.
-- [ ] **Step 3: Changelog, then commit** with the message `Restyle top bar, tab bar, supply toggle and toasts`.
+- [x] **Step 3: Changelog, then commit** with the message `Restyle top bar, tab bar, supply toggle and toasts`.
 
 ### Task 16: Restyle the bottom-tab panels
 

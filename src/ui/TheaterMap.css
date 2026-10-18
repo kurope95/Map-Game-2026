@@ -25,18 +25,33 @@
 }
 
 .map-control-button {
-  padding: 5px 8px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  background: rgba(9, 15, 22, 0.85);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: var(--surface-1);
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 500;
+  line-height: 1;
   cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 .map-control-button:hover {
-  background: rgba(20, 32, 44, 0.9);
+  background: var(--surface-3);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
+.map-control-button--reset {
+  font-size: 10px;
+  letter-spacing: 0.02em;
 }
 
 /* panel removed — all content is now in floating windows */

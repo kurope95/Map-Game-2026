@@ -6,7 +6,7 @@ function tabs(orderCount: number): { id: BottomTab; label: string }[] {
     { id: "region", label: "Region" },
     { id: "stockpile", label: "Stockpile" },
     { id: "economy", label: "Economy" },
-    { id: "military", label: "Recruitment 🎖" },
+    { id: "military", label: "Recruitment" },
     { id: "orders", label: `Orders (${orderCount})` },
     { id: "ai", label: "AI Intel" },
     { id: "war", label: "War Status" },

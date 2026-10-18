@@ -275,6 +275,17 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   screen and its providers are unchanged. Added [`vite-env.d.ts`](./src/vite-env.d.ts) so the type
   check knows `import.meta.env`.
   (plan 2026-10-18-visual-overhaul → Task 14)
+- HUD restyled in style C: [`TopBar`](./src/ui/hud/TopBar.tsx) is a `#14181c` band with a gold
+  hairline, dim labels with Oswald values, a nation `Flag`, kit buttons (primary End Turn, icon
+  secondary Diplomacy/Doctrines, ghost icon Save/Load) and an inset select;
+  [`BottomBar`](./src/ui/hud/BottomBar.tsx) shows the spec 7.3 icon plus label per tab with a 2 px
+  gold underline on the active tab; [`SupplyToggle`](./src/ui/hud/SupplyToggle.tsx) is a `Network`
+  pill that fills gold when on; [`ToastStack`](./src/ui/hud/ToastStack.tsx) uses `--surface-1`
+  cards with a 3 px tone edge and a tone icon; the map buttons in
+  [`TheaterMap.css`](./src/ui/TheaterMap.css) are 30 px squares. The Recruitment tab label lost its
+  emoji (spec 7.3 removes emoji) and kit `Button` labels no longer wrap, which the dense top bar
+  needs. All positioning, order and behavior are unchanged.
+  (plan 2026-10-18-visual-overhaul → Task 15)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -371,6 +382,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   modal windows, with the title in Oswald and no console errors. The normal game still loads and
   the layout lock passes at 1440x900 after the `App.tsx` change.
   (plan 2026-10-18-visual-overhaul → Task 14)
+- Task 15: `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm run build` OK (CSS 70.64 kB).
+  Layout lock PASS at 1440x900 and 1920x1080 (20 probes, `missing: []`); the top bar is 36 px and
+  the bottom bar 33 px at both sizes, and the eight tabs keep their order and rows. In the browser:
+  top bar `rgb(20,24,28)` with a 1 px gold bottom border; 8 tabs each with one icon; supply toggle
+  centerX at the viewport centre and top 50, `rgb(212,165,55)` fill with `rgb(29,22,6)` text when
+  on; map buttons 30x30; toasts 3 px tone edges and tone icons; no console errors.
+  (plan 2026-10-18-visual-overhaul → Task 15)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

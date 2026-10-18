@@ -629,10 +629,10 @@ function TheaterMapComponent({
 
   return (
     <>
-      <div className="map-controls">
-        <button className="map-control-button" onClick={zoomIn}>+</button>
-        <button className="map-control-button" onClick={zoomOut}>-</button>
-        <button className="map-control-button" onClick={resetView}>Reset</button>
+      <div className="map-controls" data-layout="map-controls">
+        <button className="map-control-button" data-layout-key="zoomin" onClick={zoomIn}>+</button>
+        <button className="map-control-button" data-layout-key="zoomout" onClick={zoomOut}>−</button>
+        <button className="map-control-button map-control-button--reset" data-layout-key="reset" onClick={resetView}>Reset</button>
       </div>
 
       <div

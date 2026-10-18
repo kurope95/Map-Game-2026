@@ -9,6 +9,7 @@
   font-family: var(--font-body);
   font-weight: 500;
   line-height: 1;
+  white-space: nowrap;
   transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
