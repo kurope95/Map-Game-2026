@@ -748,7 +748,7 @@ the UI setters and `addToast`) → useEconomyActions → useDiplomacy → `loadS
   JSX moved in Tasks 7-11 stays unchanged.
 - Log this under `Decision`.
 
-- [ ] **Step 1: Write `saveSlots.test.ts`** (Review Focus 1).
+- [x] **Step 1: Write `saveSlots.test.ts`** (Review Focus 1).
   - An envelope payload gives `isLegacyPayload: false` and keeps `savedAt`, `turn` and `countryId`.
   - A raw `GameState` JSON (from `createInitialState("POLAND")`, `turn: 7`) gives
     `isLegacyPayload: true`, `savedAt: new Date(0).toISOString()`, `turn: 7` and
@@ -756,19 +756,19 @@ the UI setters and `addToast`) → useEconomyActions → useDiplomacy → `loadS
   - A raw state without `playerCountryId` uses the fallback country.
   - `"{not json"` gives `null`.
   - `sortSaveSlots` puts the newest first and epoch-0 legacy slots last.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Implement `saveSlots.ts`; expect PASS.
-- [ ] **Step 3: Carve the hooks** as listed, then delete `useGameController.ts`.
-- [ ] **Step 4: Check file sizes.** Run
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Implement `saveSlots.ts`; expect PASS.
+- [x] **Step 3: Carve the hooks** as listed, then delete `useGameController.ts`.
+- [x] **Step 4: Check file sizes.** Run
   `node -e "const fs=require('fs'),p=require('path');const w=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?w(p.join(d,e.name)):[p.join(d,e.name)]);for(const f of [...w('src/app'),...w('src/ui')]){const n=fs.readFileSync(f,'utf8').split('\n').length;if(n>400)console.log(n,f)}"`.
   Expect the output to list only `src/ui/TheaterMap.tsx` (deleted in Task 28).
-- [ ] **Step 5: Run the C7 phase-end checks and the layout compare at both sizes.** Expect PASS.
+- [x] **Step 5: Run the C7 phase-end checks and the layout compare at both sizes.** Expect PASS.
   Then do the full manual pass:
   - start, then save a slot, then load it;
   - load a slot saved on `legacy` (create one by checking out `legacy` in a temporary worktree,
     or reuse an existing browser save);
   - diplomacy action, doctrine purchase, build, End Turn.
-- [ ] **Step 6: Changelog, commit** `Carve game controller into focused hooks`, then
-  `git push origin main`.
+- [x] **Step 6: Changelog, commit** `Carve game controller into focused hooks`. (Commit made; the
+  `git push origin main` is withheld: Marek instructed on 2026-10-18 not to push unless he says so.)
 
 ---
 

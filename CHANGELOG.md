@@ -128,6 +128,15 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `defeat-notice` and `victory`, and the closing backdrops carry `doctrines-backdrop`,
   `save-load-backdrop` and `logic-map-backdrop`.
   (plan 2026-10-18-visual-overhaul → Task 11)
+- Split the game controller into focused hooks under [`src/ui/session/`](./src/ui/session/):
+  [`useToasts.ts`](./src/ui/session/useToasts.ts), [`useUiState.ts`](./src/ui/session/useUiState.ts),
+  [`useGameSession.ts`](./src/ui/session/useGameSession.ts), [`useSelection.ts`](./src/ui/session/useSelection.ts),
+  [`useEconomyActions.ts`](./src/ui/session/useEconomyActions.ts), [`useDiplomacy.ts`](./src/ui/session/useDiplomacy.ts)
+  and [`useSaveSlots.ts`](./src/ui/session/useSaveSlots.ts), with the shared types in
+  [`types.ts`](./src/ui/session/types.ts). The pure save parsing moved to
+  [`saveSlots.ts`](./src/ui/session/saveSlots.ts) and is covered by
+  [`saveSlots.test.ts`](./src/ui/session/saveSlots.test.ts) (5 tests: envelope, legacy raw state,
+  fallback country, invalid JSON, newest-first sort). (plan 2026-10-18-visual-overhaul → Task 12)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -147,6 +156,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   are map-specific, so they moved to [`TheaterMap.css`](./src/ui/TheaterMap.css) and
   [`base.css`](./src/ui/theme/base.css) holds only the resets, `body` and `button`/`select`.
   (plan 2026-10-18-visual-overhaul → Task 11)
+- Spec 6.4 describes the context in groups (`session`, `selection`, `ui`, `economy`, `toasts`).
+  This plan implements those groups as separate hooks but keeps the context value **flat**, so the
+  JSX moved in Tasks 7-11 stays unchanged. (plan 2026-10-18-visual-overhaul → Task 12)
+- Task 12 Step 4's 400-line check also lists [`diplomacy.css`](./src/ui/windows/diplomacy/diplomacy.css)
+  (545 lines). It is a stylesheet, not a component or module, and Task 11 deliberately consolidated the
+  diplomacy rules into that one owner file; splitting it now would be off-plan and would change CSS
+  order. Task 30's file-size check will need to account for stylesheets.
+  (plan 2026-10-18-visual-overhaul → Task 12)
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
@@ -214,6 +231,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `max-width: 1380px`, `min-width: 980px`, `z-index: 42`, `max-height: 84vh` and a 80vh body.
   [`EconomyLogicMap.tsx`](./src/ui/windows/EconomyLogicMap.tsx) moved into `windows/`.
   (plan 2026-10-18-visual-overhaul → Task 11)
+- [`useGameController.ts`](./src/ui/session/useGameController.ts) (716 lines) is deleted; its state,
+  derived values and handlers moved verbatim into the seven hooks, and
+  [`GameProvider.tsx`](./src/ui/session/GameProvider.tsx) now composes them (useToasts → useUiState →
+  useGameSession → useSelection → useEconomyActions → useDiplomacy → useSaveSlots), defines
+  `loadStateFromSave` (old App 419-436 plus `setGameStarted(true)`, so loading works from the start
+  screen) and `handleStartGame` (old App 1201-1219), and spreads the hooks into the same flat
+  `GameContextValue`. The three forward references (the toast getter reading the session turn,
+  `clearSelection` used by the turn handlers, `onLoad` used by the save slots) are deferred closures
+  that only run from events after initialization. No component changed.
+  (plan 2026-10-18-visual-overhaul → Task 12)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -285,6 +312,18 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (1 → 2) with the battle report showing 42 events and dismissing cleanly. A fresh load with a cleared
   cache requests only the new CSS files and fails only on the pre-existing `favicon.ico` 404.
   (plan 2026-10-18-visual-overhaul → Task 11)
+- Task 12: `npm test` 93/93 (5 new in `saveSlots.test.ts`), `npx tsc -p tsconfig.app.json --noEmit`
+  0 errors, `npm run build` OK (252 modules; CSS 44.54 kB, JS 1,208.55 kB), `npm run check:layers`
+  "Layering: PASS", `npm run smoke` and `npm run balance-check` ("Balance check passed") all pass.
+  Layout lock PASS at 1440x900 and 1920x1080 (20 probes, `missing: []` at both sizes). A
+  headless-Chrome pass covered the full manual list: start, save slot `task12-check`, End Turn
+  (1 → 2, 42-event report), load restores turn 1, a raw-`GameState` slot under
+  `mapgame_slot_legacy-check` shows "- Legacy Slot" and loads, the legacy quick save loads, Auto x6
+  reaches turn 7 (22 TP), a diplomacy action shows the "already used" note, a doctrine purchase
+  (Infantry Drill, 20 TP) succeeds, a mine build queues (2 turns), and End Turn reaches turn 8
+  (47-event report) with no console errors. The Step 4 size check lists only `TheaterMap.tsx` (1,205
+  lines, deleted in Task 28) and `diplomacy.css` (545; see Decision).
+  (plan 2026-10-18-visual-overhaul → Task 12)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
