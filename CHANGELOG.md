@@ -82,6 +82,15 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`strategicDepot.test.ts`](./src/game/rules/strategicDepot.test.ts) (9 tests: locked, claimed,
   bridge needed, claimable, unavailable, claimant mismatch, path search).
   (plan 2026-10-18-visual-overhaul → Task 5)
+- [`playerActions.ts`](./src/game/rules/playerActions.ts): the player's economy and doctrine actions as pure
+  functions (`queueFacilityBuild/Upgrade/Repair`, `queueFortificationBuild/Upgrade/Repair`,
+  `demolishFacility`, `queueUnitRecruit`, `queueUnitReplenish`, `cancelBuildOrder`, `purchaseDoctrine`,
+  `toggleChemicalMode`, plus `canAfford`, `getMissingResources`, `getOperationalFacilities`,
+  `getBestOperationalFacility`); guards, order shapes and toast texts are moved verbatim from the
+  `App.tsx` handlers, silent failures stay silent. 41 tests in
+  [`playerActions.test.ts`](./src/game/rules/playerActions.test.ts).
+  **STATUS: PARTIAL (Task 6, part 1 of 2): module and tests are done; the `App.tsx` handlers are NOT
+  rewired yet and still use their own copies.** (plan 2026-10-18-visual-overhaul → Task 6)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so

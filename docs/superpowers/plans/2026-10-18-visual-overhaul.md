@@ -440,7 +440,7 @@ export function toggleChemicalMode(state: GameState, regionId: string, facilityI
 | `purchaseDoctrine` | not enough trade points | warning | `Insufficient trade points (need ${def.cost}, have ${Math.floor(tradePoints)})` |
 | `purchaseDoctrine` | success | success | `Doctrine unlocked: ${def.name}` |
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - Helpers:
 
     ```ts
@@ -491,7 +491,7 @@ export function toggleChemicalMode(state: GameState, regionId: string, facilityI
       stockpile and the order is gone.
     - **toggleChemicalMode:** an undefined mode becomes `"explosives"`, and toggling again gives
       `"fertilizer"`.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL.
+- [x] **Step 2: Run `npm test`.** Expect FAIL.
 - [ ] **Step 3: Implement `playerActions.ts`**, then rewire the App handlers.
   - Add a local helper in App:
     `const applyAction = (r: ActionResult) => { if (r.ok) setGameState(r.state); if (r.toast) addToast(r.toast.message, r.toast.tone); };`
