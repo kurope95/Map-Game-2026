@@ -839,17 +839,17 @@ SERBIA-NORTH_MACEDONIA MONTENEGRO-KOSOVO MONTENEGRO-ALBANIA KOSOVO-ALBANIA KOSOV
 ALBANIA-NORTH_MACEDONIA FINLAND-BALTIC_FEDERATION
 ```
 
-- [ ] **Step 1: Write `palette.test.ts`.**
+- [x] **Step 1: Write `palette.test.ts`.**
   - "every nation has a color": the keys of `createInitialState().countries` are all in
     `NATION_COLORS`.
   - "neighbors are distinct": collect `GEO_NEIGHBORS`, plus every pair of different
     `controllerCountryId` values across `adjacentRegionIds` in `createInitialState("RUSSIA")`.
     Every pair has `rgbDistance ≥ 40` (closest expected: Austria and Slovakia at 41.5).
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Implement, then expect PASS.
-- [ ] **Step 3: Install packages, write the tokens and wire the fonts.** Run the browser check:
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Implement, then expect PASS.
+- [x] **Step 3: Install packages, write the tokens and wire the fonts.** Run the browser check:
   the whole interface now uses Oswald and Inter and the new background. Run the layout compare at
   both sizes; expect PASS.
-- [ ] **Step 4: Changelog, then commit** with the message `Add style C tokens, fonts and nation palette`.
+- [x] **Step 4: Changelog, then commit** with the message `Add style C tokens, fonts and nation palette`.
 
 ### Task 14: Kit components and the dev gallery
 

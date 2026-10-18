@@ -1,32 +1,42 @@
 :root {
   color-scheme: dark;
-  --bg: #111920;
-  --panel: #17222d;
-  --panel-soft: #203041;
-  --border: #314a63;
-  --text: #eef4f8;
-  --muted: #9db1c5;
-  --accent: #c9d86c;
-  --brics: #c65d62;
-  --eu: #5e90ea;
-  --neutral: #7d8793;
-  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  scrollbar-color: var(--line-strong) var(--surface-inset);
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-inset);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--radius-sm);
 }
 
 body {
   margin: 0;
-  background: #0b1117;
+  background: var(--bg-app);
   color: var(--text);
+  font-family: var(--font-body);
   overflow: hidden;
 }
 
 button,
 select {
   font: inherit;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }

@@ -1,0 +1,51 @@
+:root {
+  --bg-app: #0e1114;
+  --surface-1: #171b1f;
+  --surface-2: #1d2227;
+  --surface-3: #252b31;
+  --surface-inset: #121518;
+  --line: #2c3238;
+  --line-strong: #3a424a;
+  --text: #e4e8ec;
+  --text-dim: #a3acb5;
+  --text-faint: #737d87;
+  --gold: #d4a537;
+  --gold-bright: #f0c75e;
+  --gold-deep: #2a2516;
+  --gold-ink: #1d1606;
+  --brics: #b8423f;
+  --brics-soft: #4a1f1d;
+  --brics-text: #f0a49e;
+  --nato: #3f72b8;
+  --nato-soft: #1d2f4a;
+  --nato-text: #9cc0f0;
+  --neutral: #8b8667;
+  --neutral-soft: #33321f;
+  --neutral-text: #d8d2a2;
+  --good: #7cc47c;
+  --warn: #e0b04a;
+  --bad: #e0605a;
+  --info: #6ea8e0;
+  --font-display: "Oswald", "Arial Narrow", sans-serif;
+  --font-body: "Inter", "Segoe UI", sans-serif;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 18px;
+  --fs-2xl: 24px;
+  --fs-3xl: 32px;
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --shadow-window: 0 12px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:root { /* aliases for CSS not yet restyled; unused ones are removed in Task 30 */
+  --bg: var(--bg-app);
+  --panel: var(--surface-1);
+  --panel-soft: var(--surface-2);
+  --border: var(--line-strong);
+  --muted: var(--text-dim);
+  --accent: var(--gold);
+  --eu: var(--nato);
+}

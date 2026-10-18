@@ -137,6 +137,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`saveSlots.ts`](./src/ui/session/saveSlots.ts) and is covered by
   [`saveSlots.test.ts`](./src/ui/session/saveSlots.test.ts) (5 tests: envelope, legacy raw state,
   fallback country, invalid JSON, newest-first sort). (plan 2026-10-18-visual-overhaul → Task 12)
+- Style C theme foundation: [`tokens.css`](./src/ui/theme/tokens.css) holds the spec 7.1 palette,
+  type scale, radii and window shadow verbatim plus the alias block for not-yet-restyled CSS, and
+  [`palette.ts`](./src/ui/theme/palette.ts) holds `NATION_COLORS` (spec 7.2), `NON_SCENARIO_LAND`,
+  `BLOC_COLORS`, `SHADE_OVERLAYS`, `GEO_NEIGHBORS` and `rgbDistance`, covered by
+  [`palette.test.ts`](./src/ui/theme/palette.test.ts) (2 tests: every nation has a color; every
+  neighbor pair differs by RGB distance ≥ 40). (plan 2026-10-18-visual-overhaul → Task 13)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -241,6 +247,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `clearSelection` used by the turn handlers, `onLoad` used by the save slots) are deferred closures
   that only run from events after initialization. No component changed.
   (plan 2026-10-18-visual-overhaul → Task 12)
+- [`base.css`](./src/ui/theme/base.css) now takes its page background (`--bg-app`), text color and
+  body font from the tokens and styles scrollbars with `--line-strong` / `--surface-inset`; it adds
+  the `.tabular` utility. [`main.tsx`](./src/app/main.tsx) imports the bundled Oswald (400/500/600)
+  and Inter (400/500/600) faces before `tokens.css` and `base.css`. Dependencies added:
+  `@fontsource/oswald`, `@fontsource/inter` and `lucide-react` (used from Task 14).
+  (plan 2026-10-18-visual-overhaul → Task 13)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -324,6 +336,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (47-event report) with no console errors. The Step 4 size check lists only `TheaterMap.tsx` (1,205
   lines, deleted in Task 28) and `diplomacy.css` (545; see Decision).
   (plan 2026-10-18-visual-overhaul → Task 12)
+- Task 13: `npm test` 95/95 (2 new palette tests), `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
+  `npm run build` OK (CSS 63.06 kB, JS 1,208.55 kB, font assets emitted), layout lock PASS at
+  1440x900 and 1920x1080 (20 probes, `missing: []` at both sizes). In the browser the body computes
+  `font-family: Inter, "Segoe UI", sans-serif` and `background: rgb(14, 17, 20)` (`#0e1114`); the
+  Oswald and Inter faces are registered and load on use (Inter on the page, Oswald when an element
+  first uses it). Typography per element is applied in Tasks 15-18.
+  (plan 2026-10-18-visual-overhaul → Task 13)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
