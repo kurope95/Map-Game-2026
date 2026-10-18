@@ -1,0 +1,80 @@
+# Map Game: Europe 2026
+
+Single-player, turn-based grand strategy game that runs in the browser (React 18 + TypeScript + Vite).
+Two blocs (BRICS and EU NATO) plus neutral states fight over 103 city-regions in Central and
+Eastern Europe. Marek plays it alone on his Windows PC.
+
+## Direction (agreed 2026-10-18)
+
+- Deep grand strategy in the spirit of Hearts of Iron: keep and deepen the economy, production
+  chains, diplomacy and doctrines. Long campaigns are fine.
+- Stays turn-based and single-player. No multiplayer, tutorial or hosting.
+- Regions are strategic city-regions. Do not add open-field mechanics (encirclement pockets,
+  terrain-by-biome combat).
+- **Keep the main-screen control layout**: top bar, bottom tab bar, where each floating panel
+  opens, unit drawer, map controls, supply toggle. Restyling is welcome; moving or regrouping
+  controls needs Marek's OK.
+- Smooth pan and zoom is a hard requirement. Lag was a long-running problem, so never make the
+  map re-render through React on every pan/zoom frame.
+
+## Commands
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Vite dev server on http://127.0.0.1:4173 (preview config `map-game` in `.claude/launch.json`) |
+| `launch.bat` | Frees port 4173, starts the dev server, opens the browser |
+| `npx tsc -p tsconfig.app.json --noEmit` | Type-check the app |
+| `npm run build` | `tsc -b && vite build` into `dist/` |
+| `npm run smoke` | 5-turn auto-play for RUSSIA, ROMANIA, AUSTRIA |
+| `npm run balance-check` | 10-turn AI auto-play for all 24 nations; must end with "Balance check passed" |
+| `npm run check-war-entry` | Scripted war-entry checks |
+| `npm run validate-map` | Map adjacency and layout validation |
+
+Before every commit, the type check and build must pass. After any change under `src/game/`,
+`npm run smoke` and `npm run balance-check` must pass too. UI changes get checked in the browser.
+
+The project path contains spaces (`Marek - Harddisk`), so quote paths in shell commands.
+
+## Code layout
+
+```
+src/
+  app/       main.tsx, App.tsx (top-level screen and state)
+  game/      Pure rules engine. No React or DOM imports: the scripts run it in Node.
+    state/     types.ts (GameState and friends), createInitialState.ts
+    content/   Scenario data: countries, regions, units, economy, recipes, doctrines, AI goals
+    rules/     turnEngine, orderResolution (combat), economyEngine, diplomacy
+    ai/        heuristicBot (per-nation AI), allyCoordination
+    sim/       autoPlay helpers shared by the UI and the harnesses
+  ui/        React components: TheaterMap (map), LandingPage, EconomyLogicMap, mapLayout, styles.css
+scripts/     Node harnesses, compiled by tsconfig.scripts.json into .tmp-check/
+docs/        v1-design.md (original vision), balance-report.md, superpowers/specs and plans
+```
+
+## How the game loop works
+
+- `GameState` (`src/game/state/types.ts`) is treated as immutable: rules return a new state.
+- The human plays `playerCountryId`. Nations act in `turnOrder`. `advanceTurn` resolves the current
+  nation's orders, runs its economy, then hands over to the next nation. The UI calls
+  `runUntilPlayerTurn` so every AI nation acts instantly after the player ends the turn.
+- Combat randomness is seeded (`setCombatSeed`) so harness runs are reproducible.
+- Saves live in browser localStorage: `mapgame_slot_<name>`, `mapgame_autosave`, legacy `mapgame_save`.
+
+## Git
+
+- Repo: https://github.com/kurope95/Map-Game-2026
+- `legacy` is a frozen snapshot of the game before the improvement work. Never commit to it.
+- `main` holds all improvements. Commit there in small steps that each build and run.
+- Line endings are LF, except `.bat`/`.cmd` files which are CRLF (see `.gitattributes`).
+
+## Conventions
+
+- Record every change in `CHANGELOG.md` under `[Unreleased]`, using the format described at the top
+  of that file.
+- Design specs go in `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`, implementation plans in
+  `docs/superpowers/plans/`.
+- `CODEX_PLAN.md` and `implementation_plan.md` are history. Everything in them is done except
+  `implementation_plan.md` TASK 6–9 (three-condition victory, city siege loop, bloc AI strategy,
+  difficulty levels), which will be folded into a future gameplay spec. Don't start them ad hoc.
+- Prefer CSS classes and the shared design tokens over inline `style={{...}}` objects.
+- Keep files focused. A component or module growing past roughly 400 lines is a signal to split it.

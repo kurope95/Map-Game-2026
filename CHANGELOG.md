@@ -3,9 +3,14 @@
 All notable changes to **Map Game** are recorded here.
 
 This project's planning lives in:
-- [`CODEX_PLAN.md`](./CODEX_PLAN.md) — the original multi-phase implementation roadmap.
-- [`implementation_plan.md`](./implementation_plan.md) — the remaining work (TASK 1–5).
-- [`docs/v1-design.md`](./docs/v1-design.md) — the product/design vision.
+- [`CLAUDE.md`](./CLAUDE.md) — project guide for agents: direction, commands, layout, git rules.
+- [`docs/superpowers/specs/`](./docs/superpowers/specs/) — current design specs.
+- [`docs/superpowers/plans/`](./docs/superpowers/plans/) — current implementation plans (cite their
+  task numbers, e.g. `(plan 2026-10-18-visual-overhaul → Task 3)`).
+- [`docs/v1-design.md`](./docs/v1-design.md) — the original product/design vision.
+- History: [`CODEX_PLAN.md`](./CODEX_PLAN.md) (original roadmap, done) and
+  [`implementation_plan.md`](./implementation_plan.md) (TASK 1–5 done; TASK 6–9 not started and
+  due to be folded into a future gameplay spec).
 
 ## How to use this file (instructions for the implementing agent)
 
@@ -29,6 +34,25 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 ## [Unreleased]
+
+### Added
+- Standalone git repo pushed to https://github.com/kurope95/Map-Game-2026: `legacy` branch freezes
+  the pre-improvement game, `main` carries all improvements. Added [`.gitignore`](./.gitignore)
+  (node_modules, dist, .tmp-check, local settings) and [`.gitattributes`](./.gitattributes)
+  (LF everywhere, CRLF for `.bat` so `launch.bat` labels keep working).
+- [`CLAUDE.md`](./CLAUDE.md): agreed direction (deep grand strategy, turn-based, single player,
+  keep main-screen control layout, smooth pan/zoom), commands, code layout, git and changelog rules.
+
+### Changed
+- This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
+  entries are filed under the `0.1.0` legacy release below.
+
+### Verified
+- Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
+  `npm run build` OK (1.2 MB JS bundle), `npm run smoke` passed, `npm run balance-check` passed
+  for all 24 nations.
+
+## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
 ### Added
 - `implementation_plan.md` — detailed plan for the remaining `CODEX_PLAN.md` work (TASK 1–5).
