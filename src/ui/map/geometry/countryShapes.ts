@@ -75,11 +75,79 @@ const atlasFeatureCollection = feature(
   atlasCountries.objects.countries
 ) as unknown as GeoJSON.FeatureCollection;
 
-export function loadCountryShapes(): CountryShape[] {
+type LonLatBox = [number, number, number, number];
+
+/** Plain min/max over a feature's coordinates (no trigonometry), in degrees. */
+function featureLonLatBox(feature: GeoJSON.Feature): LonLatBox {
+  let minLon = Number.POSITIVE_INFINITY;
+  let minLat = Number.POSITIVE_INFINITY;
+  let maxLon = Number.NEGATIVE_INFINITY;
+  let maxLat = Number.NEGATIVE_INFINITY;
+  const visit = (node: unknown): void => {
+    const list = node as unknown[];
+    if (typeof list[0] === "number") {
+      const [lon, lat] = list as number[];
+      if (lon < minLon) minLon = lon;
+      if (lon > maxLon) maxLon = lon;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      return;
+    }
+    for (const child of list) visit(child);
+  };
+  const geometry = feature.geometry as GeoJSON.Geometry & { coordinates?: unknown };
+  if (geometry && "coordinates" in geometry && geometry.coordinates) visit(geometry.coordinates);
+  return [minLon, minLat, maxLon, maxLat];
+}
+
+const featureBoxes = new Map<GeoJSON.Feature, LonLatBox>();
+
+/**
+ * The longitude/latitude window the clip rectangle covers, found by projecting (Mercator is monotonic in both
+ * axes) with a small margin so features that only graze the edge are kept.
+ */
+function clipWindow(projection: ReturnType<typeof createProjection>): LonLatBox {
+  const project = (lon: number, lat: number): [number, number] => projection([lon, lat]) as [number, number];
+  const originX = project(0, 0)[0];
+  const pxPerDegree = project(1, 0)[0] - originX;
+  const lonMin = (WORLD_CLIP[0][0] - originX) / pxPerDegree;
+  const lonMax = (WORLD_CLIP[1][0] - originX) / pxPerDegree;
+  // y falls as latitude rises; bisect the latitude that projects onto a given y
+  const latAtY = (y: number): number => {
+    let low = -85;
+    let high = 85;
+    for (let i = 0; i < 40; i += 1) {
+      const mid = (low + high) / 2;
+      if (project(0, mid)[1] > y) low = mid;
+      else high = mid;
+    }
+    return (low + high) / 2;
+  };
+  const latMax = latAtY(WORLD_CLIP[0][1]);
+  const latMin = latAtY(WORLD_CLIP[1][1]);
+  return [lonMin - 2, latMin - 2, lonMax + 2, latMax + 2];
+}
+
+/**
+ * Every world-atlas feature that reaches the clip rectangle, projected and clipped. `skipOutsideWindow`
+ * (default) skips features whose longitude/latitude box is clear of the rectangle before the costly
+ * projection; the result is identical, which a test checks.
+ */
+export function loadCountryShapes(options: { skipOutsideWindow?: boolean } = {}): CountryShape[] {
+  const { skipOutsideWindow = true } = options;
   const projection = createProjection().clipExtent(WORLD_CLIP);
+  const window = clipWindow(projection);
   const shapes: CountryShape[] = [];
 
   for (const atlasFeature of atlasFeatureCollection.features) {
+    if (skipOutsideWindow) {
+      let box = featureBoxes.get(atlasFeature);
+      if (!box) {
+        box = featureLonLatBox(atlasFeature);
+        featureBoxes.set(atlasFeature, box);
+      }
+      if (box[2] < window[0] || box[0] > window[2] || box[3] < window[1] || box[1] > window[3]) continue;
+    }
     const atlasId = Number(atlasFeature.id);
     const name = (atlasFeature.properties as { name?: string } | null | undefined)?.name;
     const numericId = Number.isFinite(atlasId)

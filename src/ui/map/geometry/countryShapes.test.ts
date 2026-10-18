@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { europeCountryIds } from "../../../game/content/regionGeo";
 import { COUNTRY_ID_BY_NUMERIC, loadCountryShapes } from "./countryShapes";
-import { pointInMultiPolygon } from "./polygon";
+import { multiPolygonArea, pointInMultiPolygon } from "./polygon";
 import { projectGeoPoint, WORLD_CLIP } from "./projection";
 
 const shapes = loadCountryShapes();
@@ -49,5 +49,16 @@ describe("loadCountryShapes", () => {
     const italy = shapes.find((shape) => pointInMultiPolygon(x, y, shape.polygon));
     expect(italy).toBeDefined();
     expect(italy!.countryId).toBeNull();
+  });
+});
+
+describe("loadCountryShapes window skipping", () => {
+  it("returns exactly the shapes (ids and areas) that projecting every feature would", () => {
+    const fast = loadCountryShapes();
+    const full = loadCountryShapes({ skipOutsideWindow: false });
+    expect(fast.map((shape) => shape.numericId)).toEqual(full.map((shape) => shape.numericId));
+    fast.forEach((shape, index) => {
+      expect(multiPolygonArea(shape.polygon)).toBeCloseTo(multiPolygonArea(full[index].polygon), 6);
+    });
   });
 });

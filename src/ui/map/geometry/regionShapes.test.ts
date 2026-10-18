@@ -1,7 +1,10 @@
+import { Delaunay } from "d3-delaunay";
 import { describe, expect, it } from "vitest";
 import { createInitialState } from "../../../game/state/createInitialState";
 import { getClipNumericId, loadCountryShapes, type CountryShape } from "./countryShapes";
-import { multiPolygonArea, pointInMultiPolygon } from "./polygon";
+import { intersection } from "./clipping";
+import { multiPolygonArea, pointInMultiPolygon, type Ring } from "./polygon";
+import { WORLD_CLIP } from "./projection";
 import { buildRegionShapes, getRegionInputs } from "./regionShapes";
 
 const state = createInitialState("RUSSIA");
@@ -59,5 +62,18 @@ describe("buildRegionShapes", () => {
     const started = performance.now();
     buildRegionShapes(inputs, shapes);
     expect(performance.now() - started).toBeLessThan(600);
+  });
+});
+
+describe("buildRegionShapes clipping shortcut", () => {
+  it("gives every Russian region the area of intersecting its cell with the whole country", () => {
+    const russia = shapes.find((shape) => shape.numericId === 643)!;
+    const group = inputs.filter((input) => getClipNumericId(input.id, input.homeCountryId) === 643);
+    const voronoi = Delaunay.from(group.map((input) => input.point)).voronoi([WORLD_CLIP[0][0], WORLD_CLIP[0][1], WORLD_CLIP[1][0], WORLD_CLIP[1][1]]);
+    group.forEach((input, index) => {
+      const expected = multiPolygonArea(intersection([voronoi.cellPolygon(index) as Ring], russia.polygon));
+      const actual = built.get(input.id)!.area;
+      expect(Math.abs(actual - expected), input.id).toBeLessThan(Math.max(1e-6, expected * 1e-4));
+    });
   });
 });

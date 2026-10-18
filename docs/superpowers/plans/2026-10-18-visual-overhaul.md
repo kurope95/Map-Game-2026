@@ -1706,17 +1706,17 @@ export function recordRender(): void;                // MapView calls this in it
 - **This task's frame** draws the sea (flat `#14303f`), background land (`NON_SCENARIO_LAND`),
   region fills (`derived.fillByRegion`) and city dots. Everything else comes in Task 27.
 
-- [ ] **Step 1: Implement the files above.**
-- [ ] **Step 2: Browser check** at `http://127.0.0.1:4173/?map=new` after starting as Russia:
+- [x] **Step 1: Implement the files above.**
+- [x] **Step 2: Browser check** at `http://127.0.0.1:4173/?map=new` after starting as Russia:
   - regions draw in nation colors;
   - drag pans, the wheel zooms smoothly around the cursor, and `+`, `−` and Reset work;
   - clicking a region updates the Region panel;
   - with units selected, clicking a valid target issues the order (toast appears);
   - `window.__mapStats.renders` stays constant while you pan;
   - the dev console logs `buildMs ≤ 300`.
-- [ ] **Step 3: Run the benchmark** (pane visible, 1920x1080) on `?map=new`. Record the numbers in
+- [x] **Step 3: Run the benchmark** (pane visible, 1920x1080) on `?map=new`. Record the numbers in
   the changelog; C2 is checked in Task 28.
-- [ ] **Step 4: Run the type check and build, update the changelog, then commit**
+- [x] **Step 4: Run the type check and build, update the changelog, then commit**
   `Add canvas MapController skeleton behind ?map=new`.
 
 ### Task 27: All map layers, tooltip, pills and perf meter

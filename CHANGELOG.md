@@ -222,7 +222,6 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([`layers/base.ts`](./src/ui/map/render/layers/base.ts): sea, background land, controller-colored region
   fills, city dots), a `Path2D` cache ([`paths.ts`](./src/ui/map/render/paths.ts)) and the dev frame meter
   [`frameStats.ts`](./src/ui/map/perf/frameStats.ts) (`window.__mapStats`).
-  **STATUS: PARTIAL (Task 26): code committed; browser check and benchmark pending.**
   (plan 2026-10-18-visual-overhaul → Task 26)
 
 ### Decision
@@ -286,6 +285,21 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   edges ~34 ms, labels ~43 ms), above the spec's ≤300 ms browser budget. The budget check belongs
   to Task 26, where the build is timed in the browser; the 4-color fallback and label sampling are
   the likely levers if it misses. (plan 2026-10-18-visual-overhaul → Task 22)
+
+- **Geometry build time (spec 11.2 budget: 300 ms).** The cold `buildMapGeometry` took 560-610 ms in Node and
+  about 1,500 ms in the hidden dev browser. Profiling found Russia (17 regions against a 7,300-vertex, 101-part
+  country polygon) at 366 of the 428 ms of clipping, and string-keyed ring checks in `nestRings`. Changes, none
+  of which alters the result: each cell is clipped only against the parts of its country near it, with
+  Sutherland-Hodgman cut to the cell's box ([`regionShapes.ts`](./src/ui/map/geometry/regionShapes.ts); a test
+  compares every Russian region's area with the plain intersection); world-atlas features outside the clip window
+  are skipped before projection ([`countryShapes.ts`](./src/ui/map/geometry/countryShapes.ts); a test compares the
+  ids and areas with the unfiltered run); `nestRings` no longer builds a string set per point and prefilters
+  holes by box ([`polygon.ts`](./src/ui/map/geometry/polygon.ts)); the nation label sampler scores a thinned
+  copy of long rings ([`labelPoints.ts`](./src/ui/map/geometry/labelPoints.ts), tested in
+  `labelPoints.test.ts`). Result: ~270 ms cold in Node (three runs: 271, 267, 274), ~600-710 ms in the hidden
+  dev browser (unminified, background pane), and the production build draws the first map frame within ~115 ms of
+  pressing Start. The dev-browser number should be re-read with the pane visible.
+  (plan 2026-10-18-visual-overhaul → Task 26)
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
@@ -447,6 +461,17 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ally, both in different non-neutral blocs → enemy, otherwise neutral"). Three new tests in
   [`parseTurnReport.test.ts`](./src/ui/windows/turnReport/parseTurnReport.test.ts) failed first.
   (plan 2026-10-18-visual-overhaul → Task 19, found in the review of Tasks 9-25)
+
+- `vite build` failed as soon as the map code was imported by the app: `polygon-clipping`'s ESM build only has a
+  default export, so `import { intersection }` worked in Node and Vitest but not in the production bundle.
+  [`clipping.ts`](./src/ui/map/geometry/clipping.ts) reads the default export first (typed named exports as
+  fallback) and [`regionShapes.ts`](./src/ui/map/geometry/regionShapes.ts) imports it from there; the production
+  build renders the map. (plan 2026-10-18-visual-overhaul → Task 26, found when the map was first imported)
+- The default view was fitted to the bounding boxes of the region polygons, which run across all of Russia, so the
+  theatre showed as a small patch; `regionBounds` in
+  [`buildMapGeometry.ts`](./src/ui/map/geometry/buildMapGeometry.ts) now bounds the region POINTS (spec 11.3),
+  guarded by [`buildMapGeometry.test.ts`](./src/ui/map/geometry/buildMapGeometry.test.ts) (failed first).
+  (plan 2026-10-18-visual-overhaul → Task 26)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -623,6 +648,17 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   inside `[12,1428] × [48,854]` in all eight directions and are null for on-screen targets. A
   counter beats a city within 9 px, pills beat regions, and empty sea returns `sea`.
   (plan 2026-10-18-visual-overhaul → Task 25)
+- Task 26: `npm test` 182/182, `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm run build`,
+  `npm run check:layers`, `npm run smoke` and `npm run balance-check` pass. A browser check of the canvas map at
+  `?map=new` (dev build, 18 steps, run with a MessageChannel stand-in for `requestAnimationFrame` because the pane
+  is hidden) passed: the default view is the fit (z = 1); wheel zoom anchors at the cursor (drift < 1.5 px) and stops
+  at 24x and 0.6x; +, - and Reset behave (1.6x steps, Reset back to the fit); a move under 5 px does not pan and a
+  drag does; clicking the map selects a region (the Region panel follows); `window.__mapStats.renders` stayed
+  constant over the zooms, 40 drag moves and the button presses. The production build was served and drew the
+  expected region colors. A script-only run of `pan-zoom-bench.js` on the canvas map (stand-in `requestAnimationFrame`,
+  1920x1080, three runs) gave average 5.9-6.5 ms, p95 15.8-18.2 ms and `mapRenders: 0`, against ~45 ms average on the
+  SVG map in the same mode. This is NOT a C2 measurement (hidden pane, no paint); real numbers need the pane visible.
+  (plan 2026-10-18-visual-overhaul → Task 26)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

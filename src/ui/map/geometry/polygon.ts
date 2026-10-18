@@ -85,33 +85,47 @@ export function distanceToSegment(px: number, py: number, a: Point, b: Point): n
   return Math.hypot(px - (a[0] + t * dx), py - (a[1] + t * dy));
 }
 
+/** At least three different points (cheaper than collecting them in a set; exits after a few vertices). */
+function hasThreeDistinctPoints(ring: Ring): boolean {
+  const first = ring[0];
+  let second: Point | null = null;
+  for (let i = 1; i < ring.length; i += 1) {
+    const p = ring[i];
+    if (p[0] === first[0] && p[1] === first[1]) continue;
+    if (second === null) {
+      second = p;
+    } else if (p[0] !== second[0] || p[1] !== second[1]) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Groups clipped path rings into polygons: the largest ring defines the exterior winding, rings
  * with the opposite winding are holes and each hole goes to the smallest exterior containing it.
  */
 export function nestRings(rings: Ring[]): MultiPolygon {
-  const usable: Ring[] = [];
+  const usable: { ring: Ring; area: number }[] = [];
   for (const ring of rings) {
-    if (ring.length < 3) continue;
-    const distinct = new Set<string>();
-    for (const [x, y] of ring) distinct.add(`${x},${y}`);
-    if (distinct.size < 3) continue;
-    if (Math.abs(ringArea(ring)) < 0.01) continue;
-    usable.push(ring);
+    if (ring.length < 3 || !hasThreeDistinctPoints(ring)) continue;
+    const area = ringArea(ring);
+    if (Math.abs(area) < 0.01) continue;
+    usable.push({ ring, area });
   }
   if (usable.length === 0) return [];
 
   let largest = usable[0];
-  for (const ring of usable) {
-    if (Math.abs(ringArea(ring)) > Math.abs(ringArea(largest))) largest = ring;
+  for (const entry of usable) {
+    if (Math.abs(entry.area) > Math.abs(largest.area)) largest = entry;
   }
-  const exteriorSign = Math.sign(ringArea(largest)) || 1;
+  const exteriorSign = Math.sign(largest.area) || 1;
 
-  const polygons: { exterior: Ring; area: number; holes: Ring[] }[] = [];
+  const polygons: { exterior: Ring; area: number; holes: Ring[]; bbox: BBox | null }[] = [];
   const holes: Ring[] = [];
-  for (const ring of usable) {
-    if (Math.sign(ringArea(ring)) === exteriorSign) {
-      polygons.push({ exterior: ring, area: Math.abs(ringArea(ring)), holes: [] });
+  for (const { ring, area } of usable) {
+    if (Math.sign(area) === exteriorSign) {
+      polygons.push({ exterior: ring, area: Math.abs(area), holes: [], bbox: null });
     } else {
       holes.push(ring);
     }
@@ -119,11 +133,12 @@ export function nestRings(rings: Ring[]): MultiPolygon {
 
   for (const hole of holes) {
     const [x, y] = hole[0];
-    let target: { exterior: Ring; area: number; holes: Ring[] } | null = null;
+    let target: (typeof polygons)[number] | null = null;
     for (const polygon of polygons) {
-      if (pointInRing(x, y, polygon.exterior) && (target === null || polygon.area < target.area)) {
-        target = polygon;
-      }
+      if (target !== null && polygon.area >= target.area) continue;
+      polygon.bbox ??= bboxOf([[polygon.exterior]]);
+      if (!bboxContainsPoint(polygon.bbox, x, y)) continue;
+      if (pointInRing(x, y, polygon.exterior)) target = polygon;
     }
     if (target) target.holes.push(hole);
   }

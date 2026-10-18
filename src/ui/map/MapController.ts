@@ -130,6 +130,18 @@ export class MapController {
     );
   }
 
+  /** Dev/test helper: the camera and the sizes it is relative to. */
+  debugSnapshot(): { camera: Camera; fitScale: number; z: number; viewport: Viewport; ready: boolean; tweening: boolean } {
+    return {
+      camera: { ...this.camera },
+      fitScale: this.fitScale,
+      z: this.camera.scale / this.fitScale,
+      viewport: { ...this.viewport },
+      ready: this.geometry !== null && this.derived !== null,
+      tweening: this.tween !== null
+    };
+  }
+
   destroy(): void {
     this.destroyed = true;
     this.abort.abort();

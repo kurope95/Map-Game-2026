@@ -33,6 +33,7 @@ function MapViewComponent(props: MapViewProps) {
   useEffect(() => {
     const controller = new MapController({ canvas: canvasRef.current!, tooltip: tooltipRef.current!, perf: perfRef.current! });
     controllerRef.current = controller;
+    if (import.meta.env.DEV) (window as unknown as { __mapController?: MapController }).__mapController = controller;
     controller.setProps(propsRef.current);
     return () => {
       controller.destroy();

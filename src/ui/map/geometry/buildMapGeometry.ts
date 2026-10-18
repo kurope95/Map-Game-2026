@@ -44,17 +44,18 @@ function buildGraticule(): Point[][] {
   return lines.filter((line) => line.length >= 2);
 }
 
+/** Bounds of the region POINTS (spec 11.3: the default view fits all region points); the polygons run far beyond them. */
 function regionBoundsOf(regions: Map<string, RegionShape>): BBox {
   let minX = Number.POSITIVE_INFINITY;
   let minY = Number.POSITIVE_INFINITY;
   let maxX = Number.NEGATIVE_INFINITY;
   let maxY = Number.NEGATIVE_INFINITY;
   for (const region of regions.values()) {
-    const [a, b, c, d] = region.bbox;
-    if (a < minX) minX = a;
-    if (b < minY) minY = b;
-    if (c > maxX) maxX = c;
-    if (d > maxY) maxY = d;
+    const [x, y] = region.point;
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
   }
   if (!Number.isFinite(minX)) return [0, 0, 0, 0];
   return [minX, minY, maxX, maxY];
