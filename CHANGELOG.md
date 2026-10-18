@@ -286,6 +286,18 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   emoji (spec 7.3 removes emoji) and kit `Button` labels no longer wrap, which the dense top bar
   needs. All positioning, order and behavior are unchanged.
   (plan 2026-10-18-visual-overhaul → Task 15)
+- Bottom-tab panels restyled in style C: all seven use the kit `Window` (positioning classes kept,
+  `panel-*` layout probes) in [`panels/`](./src/ui/panels/). The Region panel gets a controller row
+  (`Flag`, name, bloc `Badge`), toned stability and deposits drawn with `ResourceIcon` + `Pips`;
+  Economy and Recruitment rows use the `FACILITY_META` icon, `Lv.n`, tone `Badge`s and right-aligned
+  Demolish, build options are kit `Button`s and queues use `ProgressBar`; Orders chips pair a
+  `UnitSymbol` with the order type and route; War Status cards show a `Flag` + status `Badge`; AI
+  Intel and Event Log use `--surface-2` cards. [`FloatPanel.css`](./src/ui/panels/FloatPanel.css)
+  now holds only the frozen positioning plus the card/chip styles (legacy shell kept for the
+  Diplomacy and Save/Load windows until their tasks), and
+  [`EconomyPanels.css`](./src/ui/panels/EconomyPanels.css) drops the unused stat, capture and old
+  queue-bar rules. No control moved or changed behavior.
+  (plan 2026-10-18-visual-overhaul → Task 16)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -389,6 +401,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   centerX at the viewport centre and top 50, `rgb(212,165,55)` fill with `rgb(29,22,6)` text when
   on; map buttons 30x30; toasts 3 px tone edges and tone icons; no console errors.
   (plan 2026-10-18-visual-overhaul → Task 15)
+- Task 16: `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm test` 99/99,
+  `npm run build` OK (CSS 71.94 kB), `npm run check:layers` "Layering: PASS". Layout lock PASS at
+  1440x900 and 1920x1080 (20 probes, `missing: []`). In headless Chrome each of the seven tabs was
+  opened and screenshotted at 1440x900: every panel is bottom-anchored at 862, the wide panels are
+  720 px, no panel overflows horizontally, and there are no console errors. A real hold order
+  produced one chip (16 px `UnitSymbol`, `--surface-2` fill, `--line` border) whose cancel cleared
+  it, and the facility rows right-align `Lv.n` and Demolish after the layout fix.
+  (plan 2026-10-18-visual-overhaul → Task 16)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

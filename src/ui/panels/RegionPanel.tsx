@@ -1,5 +1,13 @@
 import "./FloatPanel.css";
 import "./EconomyPanels.css";
+import { MapPin } from "lucide-react";
+import { Badge } from "../kit/Badge";
+import { Flag } from "../kit/Flag";
+import { Pips } from "../kit/Pips";
+import { ResourceIcon } from "../kit/ResourceIcon";
+import { StatRow } from "../kit/StatRow";
+import { Window } from "../kit/Window";
+import { RESOURCE_META } from "../kit/resources";
 import { useGame } from "../session/GameProvider";
 
 export function RegionPanel() {
@@ -11,64 +19,69 @@ export function RegionPanel() {
   if (!bottomOpen || activeTab !== "region") return null;
 
   const economy = gameState.regionEconomies[selectedRegionId];
+  const stabilityTone = !economy ? undefined : economy.stability >= 70 ? "good" : economy.stability >= 40 ? "warn" : "bad";
+  const depotTone = pridnestrovieDepotStatus.tone === "claimed" ? "good" : pridnestrovieDepotStatus.tone === "claimable" ? "warn" : undefined;
+
   return (
-    <div className="float-panel float-panel--bottom-left" data-layout="panel-region">
-      <div className="float-panel__header">
-        <span>{selectedRegion.name}</span>
-        <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
-      </div>
-      <div className="float-panel__body" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+    <Window
+      title={selectedRegion.name}
+      icon={MapPin}
+      onClose={() => setBottomOpen(false)}
+      className="float-panel--bottom-left"
+      layoutId="panel-region"
+    >
+      <div className="region-panel__grid">
         <div>
-          <div className="float-panel__row" style={{ paddingBottom: "6px", borderBottom: "1px solid rgba(255,255,255,0.1)", marginBottom: "6px" }}>
-            <span className="float-panel__lbl">Controlled By:</span>
-            <span style={{ fontWeight: 800, color: controllerCountry.blocId === 'BRICS' ? '#ff9a9d' : controllerCountry.blocId === 'EU_NATO' ? '#9dc2ff' : '#c7d0da', fontSize: "1.05rem" }}>
-              {controllerCountry.blocId === 'BRICS' ? '🟥' : controllerCountry.blocId === 'EU_NATO' ? '🟦' : '⬜'} {controllerCountry.name}
+          <div className="region-panel__controller">
+            <span className="region-panel__label">Controlled by</span>
+            <span className="region-panel__controller-value">
+              <Flag countryId={controllerCountry.id} width={18} />
+              {controllerCountry.name}
+              <Badge tone={controllerCountry.blocId === "BRICS" ? "brics" : controllerCountry.blocId === "EU_NATO" ? "nato" : "neutral"}>
+                {controllerCountry.blocId === "BRICS" ? "BRICS" : controllerCountry.blocId === "EU_NATO" ? "EU NATO" : "Neutral"}
+              </Badge>
             </span>
           </div>
-          <div className="float-panel__row"><span className="float-panel__lbl">Core Territory</span><span>{selectedCountry.name}</span></div>
-          <div className="float-panel__row"><span className="float-panel__lbl">Terrain</span><span>{selectedRegion.terrain}</span></div>
-          <div className="float-panel__row"><span className="float-panel__lbl">Value</span><span>{selectedRegion.points} pts</span></div>
+          <StatRow label="Core territory" value={selectedCountry.name} />
+          <StatRow label="Terrain" value={selectedRegion.terrain} />
+          <StatRow label="Value" value={`${selectedRegion.points} pts`} />
           {selectedRegion.id === "chisinau-pridnestrovie" && (
             <>
-              <div className="float-panel__row">
-                <span className="float-panel__lbl">Depot</span>
-                <span style={{ color: pridnestrovieDepotStatus.tone === "claimed" ? "#7fd98b" : pridnestrovieDepotStatus.tone === "claimable" ? "#f2d36b" : "#c0cad5" }}>
-                  {pridnestrovieDepotStatus.label}
-                </span>
-              </div>
-              <div className="float-panel__subtle">{pridnestrovieDepotStatus.detail}</div>
+              <StatRow label="Depot" value={pridnestrovieDepotStatus.label} tone={depotTone} />
+              <div className="region-panel__subtle">{pridnestrovieDepotStatus.detail}</div>
             </>
           )}
           {economy && (
             <>
-              <div className="float-panel__row"><span className="float-panel__lbl">Population</span><span>{economy.population.toLocaleString()}k</span></div>
-              <div className="float-panel__row"><span className="float-panel__lbl">Stability</span><span style={{ color: economy.stability >= 70 ? "#8bc99a" : economy.stability >= 40 ? "#e8c96a" : "#ff6b6b" }}>{economy.stability}%</span></div>
-              <div className="float-panel__row"><span className="float-panel__lbl">Recruitable</span><span>{economy.recruitablePool.toLocaleString()}</span></div>
-              <div className="float-panel__row"><span className="float-panel__lbl">Build Slots</span><span>{economy.facilities.length}/{economy.buildingSlots}</span></div>
+              <StatRow label="Population" value={`${economy.population.toLocaleString()}k`} />
+              <StatRow label="Stability" value={`${economy.stability}%`} tone={stabilityTone} />
+              <StatRow label="Recruitable" value={economy.recruitablePool.toLocaleString()} />
+              <StatRow label="Build slots" value={`${economy.facilities.length}/${economy.buildingSlots}`} />
             </>
           )}
         </div>
         <div>
-          <div className="economy-section__title" style={{ marginBottom: 4 }}>Deposits</div>
+          <div className="economy-section__title">Deposits</div>
           {!economy || economy.resourceDeposits.length === 0 ? (
-            <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>None</span>
+            <span className="economy-empty">None</span>
           ) : (
             <div className="deposit-list">
               {economy.resourceDeposits.map((dep, i) => (
                 <div key={i} className="deposit-item">
-                  <span className="deposit-item__type">{dep.type === "food" ? "Fertility" : dep.type}</span>
-                  <span className="deposit-item__richness">{"★".repeat(dep.richness)}{"☆".repeat(5 - dep.richness)}</span>
-                  {dep.type === "food" && <span style={{ fontSize: "0.55rem", color: "#8bc99a" }}>+{dep.richness * 15}%</span>}
+                  <ResourceIcon resource={dep.type} />
+                  <span className="deposit-item__type">{dep.type === "food" ? "Fertility" : RESOURCE_META[dep.type].label}</span>
+                  <Pips count={dep.richness} max={5} />
+                  {dep.type === "food" && <span className="deposit-item__bonus">+{dep.richness * 15}%</span>}
                 </div>
               ))}
             </div>
           )}
-          <div className="economy-section__title" style={{ marginTop: 8, marginBottom: 4 }}>Adjacent</div>
-          <div style={{ fontSize: "0.65rem", color: "var(--muted)", lineHeight: 1.4 }}>
+          <div className="economy-section__title economy-section__title--spaced">Adjacent</div>
+          <div className="region-panel__adjacent">
             {selectedRegion.adjacentRegionIds.map((id) => gameState.regions[id].name).join(" · ")}
           </div>
         </div>
       </div>
-    </div>
+    </Window>
   );
 }

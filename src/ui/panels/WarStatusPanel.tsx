@@ -1,4 +1,8 @@
 import "./FloatPanel.css";
+import { Swords } from "lucide-react";
+import { Badge } from "../kit/Badge";
+import { Flag } from "../kit/Flag";
+import { Window } from "../kit/Window";
 import { useGame } from "../session/GameProvider";
 
 export function WarStatusPanel() {
@@ -7,17 +11,31 @@ export function WarStatusPanel() {
   if (!bottomOpen || activeTab !== "war") return null;
 
   return (
-    <div className="float-panel float-panel--bottom-center float-panel--wide" data-layout="panel-warstatus">
-      <div className="float-panel__header">
-        <span>War Status</span>
-        <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
-      </div>
-      <div className="float-panel__body panel-grid panel-grid--cols-4">
-        {Object.values(gameState.countries).map((country) => {
-          const status = gameState.countryStates[country.id];
-          return (<div className="panel-card" key={country.id}><p><span className={`war-dot ${status.atWar ? "war-dot--active" : "war-dot--inactive"}`} /><strong>{country.name}</strong> — {status.atWar ? `At war (turn ${status.activatedOnTurn})` : country.alignment === "neutral" ? "Neutral" : "Aligned, not at war"}</p></div>);
-        })}
-      </div>
-    </div>
+    <Window
+      title="War Status"
+      icon={Swords}
+      onClose={() => setBottomOpen(false)}
+      className="float-panel--bottom-center float-panel--wide"
+      bodyClassName="panel-grid panel-grid--cols-4"
+      layoutId="panel-warstatus"
+    >
+      {Object.values(gameState.countries).map((country) => {
+        const status = gameState.countryStates[country.id];
+        const label = status.atWar
+          ? `At war (turn ${status.activatedOnTurn})`
+          : country.alignment === "neutral"
+            ? "Neutral"
+            : "Aligned, not at war";
+        return (
+          <div className="panel-card panel-card--country" key={country.id}>
+            <div className="panel-card__title">
+              <Flag countryId={country.id} width={20} />
+              <strong>{country.name}</strong>
+            </div>
+            <Badge tone={status.atWar ? "bad" : country.alignment === "neutral" ? "plain" : "info"}>{label}</Badge>
+          </div>
+        );
+      })}
+    </Window>
   );
 }

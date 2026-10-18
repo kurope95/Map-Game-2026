@@ -1,4 +1,6 @@
 import "./FloatPanel.css";
+import { ScrollText } from "lucide-react";
+import { Window } from "../kit/Window";
 import { useGame } from "../session/GameProvider";
 
 export function EventLogPanel() {
@@ -7,14 +9,16 @@ export function EventLogPanel() {
   if (!bottomOpen || activeTab !== "log") return null;
 
   return (
-    <div className="float-panel float-panel--bottom-center" data-layout="panel-eventlog">
-      <div className="float-panel__header">
-        <span>Event Log</span>
-        <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
-      </div>
-      <div className="float-panel__body panel-card">
+    <Window
+      title="Event Log"
+      icon={ScrollText}
+      onClose={() => setBottomOpen(false)}
+      className="float-panel--bottom-center"
+      layoutId="panel-eventlog"
+    >
+      <div className="panel-card panel-card--log">
         <ul>{[...gameState.eventLog].slice(-12).reverse().map((entry, i) => (<li key={`${entry}-${i}`}>{entry}</li>))}</ul>
       </div>
-    </div>
+    </Window>
   );
 }

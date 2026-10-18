@@ -1036,9 +1036,9 @@ and `v` means vertical bands hoist to fly.
 - **War Status:** cards show `Flag` and a status `Badge`.
 - **AI Intel and Event Log:** `--surface-2` cards.
 
-- [ ] **Step 1: Restyle.**
-- [ ] **Step 2: Run the layout compare at both sizes** (PASS) **and screenshot each tab.**
-- [ ] **Step 3: Changelog, then commit** with the message `Restyle bottom-tab panels`.
+- [x] **Step 1: Restyle.**
+- [x] **Step 2: Run the layout compare at both sizes** (PASS) **and screenshot each tab.**
+- [x] **Step 3: Changelog, then commit** with the message `Restyle bottom-tab panels`.
 
 ### Task 17: Restyle the unit drawer and map-side pop-ups
 
