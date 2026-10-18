@@ -16,7 +16,7 @@ import { WORLD } from "./geometry/projection";
 import { hitTest, type FrameHitData } from "./layout/hitTest";
 import type { MapViewProps } from "./MapView";
 import { recordFrame } from "./perf/frameStats";
-import { drawSea } from "./render/layers/base";
+import { drawFlatSea } from "./render/layers/sea";
 import { renderFrame } from "./render/renderFrame";
 import { getStartingControllers } from "./startingControllers";
 
@@ -427,7 +427,7 @@ export class MapController {
   private drawPreparing(): void {
     const { ctx, dpr, viewport } = this;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawSea(ctx, viewport);
+    drawFlatSea(ctx, viewport);
     ctx.fillStyle = "#9db1c5";
     ctx.font = '14px Inter, "Segoe UI", sans-serif';
     ctx.textAlign = "center";

@@ -223,6 +223,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   fills, city dots), a `Path2D` cache ([`paths.ts`](./src/ui/map/render/paths.ts)) and the dev frame meter
   [`frameStats.ts`](./src/ui/map/perf/frameStats.ts) (`window.__mapStats`).
   (plan 2026-10-18-visual-overhaul → Task 26)
+- Canvas map layers, part a of Task 27 (spec 11.4 layers 1-9): sea with vignette, noise and graticule
+  ([`sea.ts`](./src/ui/map/render/layers/sea.ts)), coast halo and background land
+  ([`land.ts`](./src/ui/map/render/layers/land.ts)), controller-colored region fills with shade variants and
+  occupation stripes ([`regions.ts`](./src/ui/map/render/layers/regions.ts),
+  [`patterns.ts`](./src/ui/map/render/patterns.ts)), borders, the gold front line, the highlight stack (hover, links of
+  the selection, selection, move and attack targets) and the supply overlay, orchestrated by
+  [`renderFrame.ts`](./src/ui/map/render/renderFrame.ts). **STATUS: PARTIAL (Task 27): part a done (layers 1-9);
+  part b (links, markers, arrows, counters, depot and deposits, labels, pills) and part c (tooltip, hover, F3 meter)
+  are NOT started; the temporary city dots in `layers/base.ts` stand in for the markers.**
+  (plan 2026-10-18-visual-overhaul → Task 27)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so

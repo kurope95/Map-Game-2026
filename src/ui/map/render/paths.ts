@@ -1,5 +1,6 @@
 import type { MapGeometry } from "../geometry/buildMapGeometry";
-import type { BBox, MultiPolygon } from "../geometry/polygon";
+import type { EdgeKind } from "../geometry/boundaries";
+import type { BBox, MultiPolygon, Point } from "../geometry/polygon";
 
 export interface BackgroundPath {
   path: Path2D;
@@ -9,6 +10,19 @@ export interface BackgroundPath {
 export interface PathCache {
   region: Map<string, Path2D>;
   background: BackgroundPath[];
+  /** Whole-country outlines (scenario and background) for the coast halo. */
+  outlines: BackgroundPath[];
+  /** One path per boundary kind: internal, national, foreign, coast. */
+  borders: Record<EdgeKind, Path2D>;
+  graticule: Path2D;
+}
+
+function polylinesPath(lines: Point[][]): Path2D {
+  const path = new Path2D();
+  for (const line of lines) {
+    line.forEach(([x, y], index) => (index === 0 ? path.moveTo(x, y) : path.lineTo(x, y)));
+  }
+  return path;
 }
 
 /** One Path2D per ring set; holes are cut with the even-odd fill rule. */
@@ -31,7 +45,15 @@ export function getPaths(geometry: MapGeometry): PathCache {
   if (!cache) {
     cache = {
       region: new Map([...geometry.regions].map(([id, shape]) => [id, multiPolygonPath(shape.polygon)])),
-      background: geometry.background.map((shape) => ({ path: multiPolygonPath(shape.polygon), bbox: shape.bbox }))
+      background: geometry.background.map((shape) => ({ path: multiPolygonPath(shape.polygon), bbox: shape.bbox })),
+      outlines: [...geometry.scenarioShapes, ...geometry.background].map((shape) => ({ path: multiPolygonPath(shape.polygon), bbox: shape.bbox })),
+      borders: {
+        internal: polylinesPath(geometry.edges.filter((edge) => edge.kind === "internal").map((edge) => edge.points)),
+        national: polylinesPath(geometry.edges.filter((edge) => edge.kind === "national").map((edge) => edge.points)),
+        foreign: polylinesPath(geometry.edges.filter((edge) => edge.kind === "foreign").map((edge) => edge.points)),
+        coast: polylinesPath(geometry.edges.filter((edge) => edge.kind === "coast").map((edge) => edge.points))
+      },
+      graticule: polylinesPath(geometry.graticule)
     };
     caches.set(geometry, cache);
   }
