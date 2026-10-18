@@ -35,6 +35,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+> **Work in progress: visual overhaul (plan `2026-10-18-visual-overhaul`).** Tasks 1-28 are done and pushed (`origin/main` = a4eab68).
+> **Partial:** the benchmark with real frame deltas for Tasks 3 and 28 (needs the Claude window in front of every other window; see the
+> Task 28 entry under Verified). **Not started:** Task 29 (start screen) and Task 30 (final verification and docs). **Resume with Task 29.**
+> Step-by-step packages, the ledger and the check scripts live outside the repo (notes folder: `HANDOVER.md`,
+> `task-29-30-workpackages.md`). Remove this banner in Task 30.
+
 ### Added
 - Standalone git repo pushed to https://github.com/kurope95/Map-Game-2026: `legacy` branch freezes
   the pre-improvement game, `main` carries all improvements. Added [`.gitignore`](./.gitignore)
