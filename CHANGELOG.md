@@ -237,8 +237,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`links.ts`](./src/ui/map/render/layers/links.ts) and [`cities.ts`](./src/ui/map/render/layers/cities.ts), 20
   tests; the temporary `layers/base.ts` is gone); b2 DONE (spec layer 13: the player's pending orders as curved arrows
   with dark underlay, per-type color and pattern, arrowheads, bombard burst and a ×N badge for merged orders, in
-  [`arrows.ts`](./src/ui/map/render/layers/arrows.ts), 9 tests); b3 (unit counters and stacks) NOT
-  started; b4 (depot badge, deposit chips, labels) NOT started; c (hover, tooltip, F3 meter, benchmark) NOT started.
+  [`arrows.ts`](./src/ui/map/render/layers/arrows.ts), 9 tests); b3 DONE (spec layer 14: unit counters and stacks in
+  [`units.ts`](./src/ui/map/render/layers/units.ts), 8 tests, nation-colored cards with NATO symbol, strength, strength
+  bar, supply dot, veterancy chevrons, gold edge for pending orders, white edge for selected, hold shield and
+  shadow-card stacks with ×N and a second-nation dot; `derive.ts` gained `orderedUnitIds`); b4 (depot badge, deposit chips, labels) NOT started; c (hover, tooltip, F3 meter, benchmark) NOT started.
   Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
   (plan 2026-10-18-visual-overhaul → Task 27)
 

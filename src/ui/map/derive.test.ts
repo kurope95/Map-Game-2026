@@ -116,6 +116,26 @@ describe("deriveMapData", () => {
     expect([...derived.holdUnitIds]).toEqual(["r3"]);
   });
 
+  it("lists every unit with a pending order, hold included, for the gold counter edge", () => {
+    const orderState: GameState = {
+      ...state,
+      units: {
+        r1: makeUnit("r1", "infantry", "RUSSIA", "BRICS", "moscow"),
+        r2: makeUnit("r2", "infantry", "RUSSIA", "BRICS", "moscow"),
+        r3: makeUnit("r3", "armor", "RUSSIA", "BRICS", "moscow")
+      },
+      pendingOrders: {
+        ...state.pendingOrders,
+        RUSSIA: [
+          { unitId: "r1", type: "move", targetRegionId: "smolensk" },
+          { unitId: "r3", type: "hold", targetRegionId: "moscow" }
+        ]
+      }
+    };
+    expect([...deriveMapData(orderState, geometry, options).orderedUnitIds].sort()).toEqual(["r1", "r3"]);
+    expect(deriveMapData(state, geometry, options).orderedUnitIds.size).toBe(0);
+  });
+
   it("only computes supply lines when the overlay is shown", () => {
     expect(deriveMapData(state, geometry, options).supply).toBeNull();
     const withSupply = deriveMapData(state, geometry, { ...options, showSupply: true }).supply;

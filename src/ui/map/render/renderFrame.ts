@@ -3,6 +3,7 @@ import type { Camera, Viewport } from "../camera";
 import type { DerivedMapData } from "../derive";
 import type { MapGeometry } from "../geometry/buildMapGeometry";
 import type { BBox } from "../geometry/types";
+import { layoutCounters } from "../layout/counters";
 import type { FrameHitData } from "../layout/hitTest";
 import type { MapViewProps } from "../MapView";
 import { drawOrderArrows } from "./layers/arrows";
@@ -15,6 +16,7 @@ import { drawLinkNetwork, drawSelectionLinks, linkPairs } from "./layers/links";
 import { drawSupplyOverlay } from "./layers/overlays";
 import { drawRegions } from "./layers/regions";
 import { drawSea } from "./layers/sea";
+import { drawCounters } from "./layers/units";
 import { setScreenTransform, setWorldTransform } from "./transforms";
 
 export interface FrameInput {
@@ -83,7 +85,7 @@ export function renderFrame(input: FrameInput): FrameHitData {
   );
   drawSupplyOverlay(ctx, geometry, derived, camera);
 
-  // screen space, layers 10-13 (Task 27 part b3-b4 add counters, depot and deposits, labels)
+  // screen space, layers 10-14 (Task 27 part b4 adds depot, deposits and labels)
   setScreenTransform(ctx, dpr);
   const cities = cityScreenPoints(geometry, camera);
   drawLinkNetwork(ctx, linkPairs(state.regions), cities, input.z);
@@ -103,9 +105,11 @@ export function renderFrame(input: FrameInput): FrameHitData {
   });
   const showcase = props.mode === "showcase";
   if (!showcase) drawOrderArrows(ctx, derived.arrows, cities, viewport);
+  const counters = showcase ? [] : layoutCounters(derived.stacks, cities, input.z, input.expandedRegionId);
+  drawCounters(ctx, counters, { state, derived, selectedUnitIds: toSet(props.selectedUnitIds), viewport });
 
   return {
-    counters: [],
+    counters,
     cities: [...cities].map(([regionId, [x, y]]) => ({ regionId, x, y })),
     pills
   };

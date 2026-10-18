@@ -36,6 +36,8 @@ export interface DerivedMapData {
   /** The player's pending orders except hold, merged by from|to|type. */
   arrows: OrderArrow[];
   holdUnitIds: Set<string>;
+  /** Every unit with a pending order of the player, hold included (the gold counter edge). */
+  orderedUnitIds: Set<string>;
   supply: { supplied: [string, string][]; unsupplied: [string, string][] } | null;
 }
 
@@ -200,7 +202,9 @@ export function deriveMapData(
   const arrows: OrderArrow[] = [];
   const arrowByKey = new Map<string, OrderArrow>();
   const holdUnitIds = new Set<string>();
+  const orderedUnitIds = new Set<string>();
   for (const order of state.pendingOrders[opts.playerCountryId] ?? []) {
+    orderedUnitIds.add(order.unitId);
     if (order.type === "hold") {
       holdUnitIds.add(order.unitId);
       continue;
@@ -230,6 +234,7 @@ export function deriveMapData(
     stacks,
     arrows,
     holdUnitIds,
+    orderedUnitIds,
     supply: opts.showSupply ? deriveSupply(state, opts.playerCountryId) : null
   };
   bySupply.set(opts.showSupply, data);
