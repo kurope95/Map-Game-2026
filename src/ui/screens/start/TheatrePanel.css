@@ -1,0 +1,110 @@
+/* Theatre panel: starting region control by bloc, below the nation briefing. */
+
+.start-theatre {
+  flex: 0 0 auto;
+  padding: 12px;
+  background: rgba(14, 17, 20, 0.55);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.start-theatre__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.start-theatre__count {
+  color: var(--text-faint);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.start-theatre__bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.start-theatre__segment {
+  min-width: 0;
+}
+
+.start-theatre__segment--brics {
+  background: var(--brics);
+}
+
+.start-theatre__segment--neutral {
+  background: var(--neutral);
+}
+
+.start-theatre__segment--nato {
+  background: var(--nato);
+}
+
+.start-theatre__legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.start-theatre__legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+}
+
+.start-theatre__swatch {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+}
+
+.start-theatre__swatch--brics {
+  background: var(--brics);
+}
+
+.start-theatre__swatch--neutral {
+  background: var(--neutral);
+}
+
+.start-theatre__swatch--nato {
+  background: var(--nato);
+}
+
+.start-theatre__label {
+  flex: 1 1 auto;
+}
+
+.start-theatre__value {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.start-theatre__note {
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}

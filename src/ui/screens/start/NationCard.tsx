@@ -1,7 +1,6 @@
 import type { CountryId } from "../../../game/state/types";
 import { Badge, type BadgeTone } from "../../kit/Badge";
 import { Flag } from "../../kit/Flag";
-import { Pips } from "../../kit/Pips";
 import type { NationBriefing } from "./briefing";
 
 interface NationCardProps {
@@ -14,7 +13,7 @@ interface NationCardProps {
 function statusTone(status: string): BadgeTone {
   if (status === "At war") return "bad";
   if (status.startsWith("Joins")) return "warn";
-  if (status.includes("reserve")) return "info";
+  if (status.includes("reserve")) return "warn";
   return "plain";
 }
 
@@ -24,6 +23,7 @@ export function NationCard({ briefing, selected, onSelect, onHover }: NationCard
     <button
       type="button"
       className={`nation-card${selected ? " nation-card--selected" : ""}`}
+      aria-pressed={selected}
       onClick={onSelect}
       onMouseEnter={() => onHover(countryId)}
       onMouseLeave={() => onHover(null)}
@@ -35,11 +35,17 @@ export function NationCard({ briefing, selected, onSelect, onHover }: NationCard
           <Flag countryId={countryId} />
         </span>
         <span className="nation-card__name">{briefing.name}</span>
-        <Pips count={briefing.difficultyPips} />
       </span>
       <span className="nation-card__meta">
-        <span className="nation-card__tier">{briefing.tierLabel}</span>
-        <Badge tone={statusTone(briefing.status)}>{briefing.status}</Badge>
+        <span className="nation-card__tier">
+          {briefing.tierLabel} · {briefing.regionCount}{" "}
+          {briefing.regionCount === 1 ? "region" : "regions"}
+        </span>
+        {briefing.status === "Neutral" ? (
+          <span className="nation-card__status">{briefing.status}</span>
+        ) : (
+          <Badge tone={statusTone(briefing.status)}>{briefing.status}</Badge>
+        )}
       </span>
     </button>
   );

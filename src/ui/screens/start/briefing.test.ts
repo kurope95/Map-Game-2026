@@ -42,4 +42,28 @@ describe("getNationBriefing", () => {
     expect(briefing.difficultyPips).toBe(4);
     expect(briefing.warEntryText).toBe("Neutral at the start.");
   });
+
+  it("names the enemy bloc, its belligerents and its majors from the BRICS side", () => {
+    const briefing = getNationBriefing(state, "RUSSIA");
+
+    expect(briefing.enemyBlocLabel).toBe("EU NATO");
+    expect(briefing.enemyBelligerentCount).toBe(5);
+    expect(briefing.enemyMajorLabels).toEqual(["Germany (Berlin)", "Poland (Warsaw)"]);
+  });
+
+  it("counts the BRICS belligerents from the EU NATO side", () => {
+    const briefing = getNationBriefing(state, "GERMANY");
+
+    expect(briefing.enemyBlocLabel).toBe("BRICS");
+    expect(briefing.enemyBelligerentCount).toBe(3);
+    expect(briefing.enemyMajorLabels).toEqual(["Russia (Moscow)"]);
+  });
+
+  it("leaves the enemy fields empty for a neutral nation", () => {
+    const briefing = getNationBriefing(state, "AUSTRIA");
+
+    expect(briefing.enemyBlocLabel).toBeNull();
+    expect(briefing.enemyBelligerentCount).toBe(0);
+    expect(briefing.enemyMajorLabels).toEqual([]);
+  });
 });

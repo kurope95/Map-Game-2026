@@ -10,6 +10,7 @@
 .start-screen__map {
   position: absolute;
   inset: 0;
+  filter: saturate(0.7) brightness(0.85);
 }
 
 .start-screen__overlay {
@@ -30,13 +31,66 @@
   padding: 28px 32px 24px;
 }
 
+/* Soft top scrim so the masthead stays legible over the busy map. */
+.start-screen__content::before {
+  position: absolute;
+  z-index: -1;
+  inset: -28px -32px auto;
+  height: 150px;
+  background: linear-gradient(180deg, rgba(9, 11, 13, 0.88), rgba(9, 11, 13, 0));
+  content: "";
+  pointer-events: none;
+}
+
 /* ─── Header ─── */
 
 .start-screen__header {
   flex: 0 0 auto;
 }
 
+.start-screen__masthead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.start-screen__stats {
+  display: flex;
+  gap: 24px;
+  padding-bottom: 4px;
+}
+
+.start-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.start-stat__value {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.start-stat__label {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.start-stat--war .start-stat__value {
+  color: var(--bad);
+}
+
 .start-screen__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--gold);
   font-family: var(--font-display);
   font-size: var(--fs-sm);
@@ -45,19 +99,28 @@
   text-transform: uppercase;
 }
 
+.start-screen__eyebrow::after {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 1px;
+  background: var(--gold);
+  content: "";
+  opacity: 0.8;
+}
+
 .start-screen__title {
   color: var(--text);
   font-family: var(--font-display);
-  font-size: var(--fs-3xl);
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-size: var(--fs-4xl);
+  font-weight: 600;
+  letter-spacing: 0.03em;
   line-height: 1.1;
 }
 
 .start-screen__subtitle {
-  margin-top: 2px;
+  margin-top: 6px;
   color: var(--text-dim);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
 }
 
 /* ─── Three bloc columns + briefing panel ─── */
@@ -74,9 +137,21 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: rgba(14, 17, 20, 0.55);
+  background: rgba(14, 17, 20, 0.74);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
+}
+
+.start-column--brics {
+  border-top: 2px solid var(--brics);
+}
+
+.start-column--neutral {
+  border-top: 2px solid var(--neutral);
+}
+
+.start-column--nato {
+  border-top: 2px solid var(--nato);
 }
 
 .start-column__header {
@@ -84,12 +159,12 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 11px 12px;
   border-bottom: 1px solid var(--line);
   font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 
@@ -106,9 +181,10 @@
 }
 
 .start-column__count {
-  color: var(--text-faint);
+  color: var(--text-dim);
   font-family: var(--font-body);
   font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
@@ -124,13 +200,28 @@
   overflow-y: auto;
 }
 
+.start-column__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 12px;
+  border-top: 1px solid var(--line);
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.start-column__footer-war {
+  color: var(--bad);
+}
+
 /* ─── Nation card ─── */
 
 .nation-card {
   display: block;
   width: 100%;
   padding: 8px 10px;
-  background: rgba(23, 27, 31, 0.82);
+  background: rgba(23, 27, 31, 0.9);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   color: var(--text);
@@ -151,8 +242,14 @@
 
 .nation-card--selected,
 .nation-card--selected:hover {
-  background: var(--gold-deep);
+  background: linear-gradient(90deg, rgba(212, 165, 55, 0.22), rgba(212, 165, 55, 0.06));
   border-color: var(--gold);
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.nation-card--selected .nation-card__name {
+  color: var(--gold-bright);
+  font-weight: 600;
 }
 
 .nation-card__top {
@@ -171,8 +268,8 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  font-size: var(--fs-sm);
-  font-weight: 500;
+  font-size: var(--fs-md);
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -186,89 +283,27 @@
 }
 
 .nation-card__tier {
+  min-width: 0;
+  overflow: hidden;
   color: var(--text-dim);
   font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* ─── Briefing panel ─── */
+.nation-card__status {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
-.start-briefing {
+/* ─── Briefing sidebar ─── */
+
+.start-screen__sidebar {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   min-height: 0;
-  padding: 14px;
-  overflow-y: auto;
-  background: rgba(23, 27, 31, 0.92);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-md);
 }
 
-.start-briefing__head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.start-briefing__name {
-  font-family: var(--font-display);
-  font-size: var(--fs-xl);
-  font-weight: 500;
-  line-height: 1.1;
-}
-
-.start-briefing__bloc {
-  margin-top: 2px;
-  color: var(--text-dim);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.start-briefing__stats {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-
-.start-briefing__difficulty {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.start-briefing__war {
-  padding: 9px 10px;
-  background: var(--surface-inset);
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--gold);
-  border-radius: var(--radius-sm);
-}
-
-.start-briefing__war-label {
-  color: var(--text-faint);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.start-briefing__war p {
-  margin-top: 3px;
-  color: var(--text-dim);
-  font-size: var(--fs-sm);
-  line-height: 1.4;
-}
-
-.start-briefing__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: auto;
-}
-
-.start-briefing__actions .btn {
-  width: 100%;
-}

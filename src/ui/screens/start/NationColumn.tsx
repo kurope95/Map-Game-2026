@@ -5,6 +5,8 @@ import { NationCard } from "./NationCard";
 interface NationColumnProps {
   label: string;
   modifier: "brics" | "neutral" | "nato";
+  regionCount: number;
+  atWarCount: number;
   nations: NationBriefing[];
   selectedCountryId: CountryId;
   onSelectCountry: (countryId: CountryId) => void;
@@ -14,6 +16,8 @@ interface NationColumnProps {
 export function NationColumn({
   label,
   modifier,
+  regionCount,
+  atWarCount,
   nations,
   selectedCountryId,
   onSelectCountry,
@@ -36,6 +40,12 @@ export function NationColumn({
           />
         ))}
       </div>
+      <footer className="start-column__footer">
+        <span>{regionCount} regions</span>
+        <span className={atWarCount > 0 ? "start-column__footer-war" : undefined}>
+          {atWarCount} at war
+        </span>
+      </footer>
     </section>
   );
 }

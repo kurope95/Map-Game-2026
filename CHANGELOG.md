@@ -265,6 +265,9 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   game, Continue loads the autosave, and Load game opens the save window before a game starts
   (`SaveLoadWindow` now renders from `App`, so it also works pre-game).
   (plan 2026-10-18-visual-overhaul → Task 29)
+- Start-screen scenario summary ([`scenarioOverview.ts`](./src/ui/screens/start/scenarioOverview.ts)):
+  `getScenarioOverview` counts nations, city-regions (by starting controller) and nations at war per
+  bloc, so the masthead and the columns share one source of truth. 3 tests.
 
 ### Decision
 - Task 27 (map labels and extras), choices where the spec or plan left room (plan 2026-10-18-visual-overhaul → Task 27):
@@ -521,6 +524,32 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   imported next to it from [`DiplomacyWindow.tsx`](./src/ui/windows/diplomacy/DiplomacyWindow.tsx). The
   styleprint is IDENTICAL (17 states, 6234 elements) and the layout lock passes at both sizes.
   (plan 2026-10-18-visual-overhaul → Task 30)
+- Start screen redesigned for legibility and game feel while keeping its three-column structure: the
+  masthead now carries the scenario summary (24 nations, 103 city-regions, 8 at war) from
+  [`scenarioOverview.ts`](./src/ui/screens/start/scenarioOverview.ts); each bloc column has a
+  bloc-coloured top rule and a footer with its region and at-war counts; the right rail stacks the
+  gold-accented campaign briefing over a new starting-control panel with a bloc share bar; the
+  briefing is content-height (the actions no longer sit below a large void), has a "Campaign
+  briefing" kicker, bloc and difficulty badges, a stacked starting-forces row and war-entry details
+  naming the enemy bloc, its belligerent count and its majors; the selected nation card uses a gold
+  edge and gradient; cards trade the unlabelled difficulty pips for tier + region counts, reserves
+  use the amber "will join" tone, and the Continue button is labelled as the autosave; Neutral
+  statuses lost their repeated grey pill; and the showcase map is calmer (lower saturation and
+  brightness) under a masthead scrim.
+  Files: [StartScreen.tsx](./src/ui/screens/start/StartScreen.tsx),
+  [StartScreen.css](./src/ui/screens/start/StartScreen.css),
+  [BriefingPanel.tsx](./src/ui/screens/start/BriefingPanel.tsx),
+  [BriefingPanel.css](./src/ui/screens/start/BriefingPanel.css),
+  [NationColumn.tsx](./src/ui/screens/start/NationColumn.tsx),
+  [NationCard.tsx](./src/ui/screens/start/NationCard.tsx),
+  [TheatrePanel.tsx](./src/ui/screens/start/TheatrePanel.tsx),
+  [TheatrePanel.css](./src/ui/screens/start/TheatrePanel.css)
+- Shared kit support for the start screen: [`tokens.css`](./src/ui/theme/tokens.css) gains the
+  `--fs-4xl` (40 px) display step, [`Button`](./src/ui/kit/Button.tsx) gains an `lg` size, and
+  [`StatRow`](./src/ui/kit/StatRow.tsx) accepts a `className` for the stacked starting-forces row.
+  Briefing styles moved out of `StartScreen.css` (424 lines) into
+  [`BriefingPanel.css`](./src/ui/screens/start/BriefingPanel.css), keeping both files well under the
+  400-line signal.
 
 ### Fixed
 - `npm run check-war-entry` expected one lost Polish key city for the Czech Republic to join, but the
@@ -822,6 +851,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   legacy SVG 71.71 ms / 91.60 ms, `mapRenders` 0 in every canvas run (1.7x faster average, 1.8x lower
   p95). The absolute C2 verdict still needs one visible-window run (see Decision).
   (plan 2026-10-18-visual-overhaul → Task 30)
+- Start-screen redesign: `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm test` 307/307
+  (41 files, including the 3 new `getScenarioOverview` tests and 3 new enemy-summary briefing tests)
+  and `npm run build` OK (CSS 70.63 kB, JS 1,314.68 kB). Screenshots at 1440x900 and 1920x1080
+  checked: masthead stats, bloc rules and footers, compact briefing, enemy details, theatre share
+  bar and column accents all render; the selected card, badges and start button use the kit tokens.
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

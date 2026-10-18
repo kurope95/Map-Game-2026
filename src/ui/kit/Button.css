@@ -28,6 +28,12 @@
   font-size: var(--fs-xs);
 }
 
+.btn--lg {
+  padding: 9px 14px;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
 .btn--primary {
   background: var(--gold);
   border-color: var(--gold);

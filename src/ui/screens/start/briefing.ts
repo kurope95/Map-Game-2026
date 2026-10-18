@@ -19,6 +19,9 @@ export interface NationBriefing {
   keyCityCount: number;
   unitSummary: string;
   warEntryText: string;
+  enemyBlocLabel: "BRICS" | "EU NATO" | null;
+  enemyBelligerentCount: number;
+  enemyMajorLabels: string[];
 }
 
 const DIFFICULTY_PIPS: Record<NationBriefing["difficulty"], NationBriefing["difficultyPips"]> = {
@@ -122,6 +125,33 @@ function getUnitSummary(state: GameState, countryId: CountryId): string {
   return parts.length === 0 ? "No units" : parts.join(" · ");
 }
 
+function getEnemySummary(
+  state: GameState,
+  country: CountryDefinition
+): Pick<NationBriefing, "enemyBlocLabel" | "enemyBelligerentCount" | "enemyMajorLabels"> {
+  const enemyBlocId =
+    country.blocId === "BRICS" ? "EU_NATO" : country.blocId === "EU_NATO" ? "BRICS" : null;
+  if (!state.countryStates[country.id]?.atWar || enemyBlocId === null) {
+    return { enemyBlocLabel: null, enemyBelligerentCount: 0, enemyMajorLabels: [] };
+  }
+
+  const belligerents = state.scenario.countries.filter(
+    (other) => other.blocId === enemyBlocId && state.countryStates[other.id]?.atWar
+  );
+
+  return {
+    enemyBlocLabel: enemyBlocId === "EU_NATO" ? "EU NATO" : "BRICS",
+    enemyBelligerentCount: belligerents.length,
+    enemyMajorLabels: belligerents
+      .filter((other) => other.tier === "major")
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map(
+        (other) =>
+          `${other.name} (${state.regions[other.capitalRegionId]?.name ?? other.capitalRegionId})`
+      )
+  };
+}
+
 export function getNationBriefing(state: GameState, countryId: CountryId): NationBriefing {
   const country = state.countries[countryId];
   const countryState = state.countryStates[countryId];
@@ -139,6 +169,7 @@ export function getNationBriefing(state: GameState, countryId: CountryId): Natio
     regionCount: country.startingRegionIds.length,
     keyCityCount: country.keyRegionIds.length,
     unitSummary: getUnitSummary(state, countryId),
-    warEntryText: getWarEntryText(state, country)
+    warEntryText: getWarEntryText(state, country),
+    ...getEnemySummary(state, country)
   };
 }

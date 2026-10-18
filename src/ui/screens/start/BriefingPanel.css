@@ -1,0 +1,125 @@
+/* Briefing panel: the selected nation and the start/continue/load actions. */
+
+.start-briefing {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(23, 27, 31, 0.97);
+  border: 1px solid var(--line-strong);
+  border-top: 2px solid var(--gold);
+  border-radius: var(--radius-md);
+}
+
+.start-briefing__kicker {
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.start-briefing__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.start-briefing__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.start-briefing__bloc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.start-briefing__tier {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.start-briefing__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.start-briefing__forces {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.start-briefing__forces .stat-row__value {
+  text-align: left;
+}
+
+.start-briefing__war {
+  padding: 9px 10px;
+  background: var(--surface-inset);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius-sm);
+}
+
+.start-briefing__war-label {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.start-briefing__war p {
+  margin-top: 3px;
+  color: var(--text);
+  font-size: var(--fs-md);
+  line-height: 1.45;
+}
+
+.start-briefing__enemy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+.start-briefing__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.start-briefing__actions .start-briefing__continue {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.start-briefing__actions .start-briefing__continue:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.start-briefing__actions .btn {
+  width: 100%;
+}
