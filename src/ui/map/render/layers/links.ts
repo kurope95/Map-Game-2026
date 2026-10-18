@@ -66,6 +66,38 @@ export function pillBox(anchor: { x: number; y: number }, labelWidth: number, vi
   };
 }
 
+/**
+ * Slides pills that share an edge apart along it (`axis` is the direction they slide) so none covers its
+ * neighbour, then pulls the row back inside `bounds`. Returns new boxes in the input order.
+ */
+export function spreadPills<T extends Box>(boxes: readonly T[], axis: "x" | "y", bounds: Box, gap = 4): T[] {
+  const size = axis === "x" ? "width" : "height";
+  const order = boxes.map((_, index) => index).sort((a, b) => boxes[a][axis] - boxes[b][axis] || a - b);
+  const pos = order.map((index) => boxes[index][axis]);
+  const low = bounds[axis];
+  const high = bounds[axis] + bounds[size];
+  for (let k = 0; k < order.length; k += 1) {
+    pos[k] = k === 0 ? Math.max(pos[k], low) : Math.max(pos[k], pos[k - 1] + boxes[order[k - 1]][size] + gap);
+  }
+  for (let k = order.length - 1; k >= 0; k -= 1) {
+    const limit = k === order.length - 1 ? high - boxes[order[k]][size] : pos[k + 1] - boxes[order[k]][size] - gap;
+    if (pos[k] > limit) pos[k] = limit;
+  }
+  const result = boxes.map((box) => ({ ...box }));
+  order.forEach((index, k) => {
+    result[index][axis] = pos[k];
+  });
+  return result;
+}
+
+type Edge = "top" | "bottom" | "left" | "right";
+
+function edgeOf(anchor: { x: number; y: number }, viewport: Viewport, insets: Insets): Edge {
+  if (anchor.y <= insets.top + 0.5) return "top";
+  if (anchor.y >= viewport.height - insets.bottom - 0.5) return "bottom";
+  return anchor.x <= insets.left + 0.5 ? "left" : "right";
+}
+
 function drawPill(ctx: CanvasRenderingContext2D, box: Box, text: string, angle: number): void {
   roundedRect(ctx, box.x, box.y, box.width, box.height, 4);
   ctx.fillStyle = "rgba(14, 18, 22, 0.92)";
@@ -163,9 +195,21 @@ export function drawSelectionLinks(ctx: CanvasRenderingContext2D, input: Selecti
   strokeLinks(ctx, from, ends, 1);
 
   if (!input.fontsReady) return pills;
-  for (const { regionId, anchor } of pending) {
+  const prepared = pending.map(({ regionId, anchor }) => {
     const name = state.regions[regionId]?.name ?? regionId;
-    const box = pillBox(anchor, textWidth(ctx, font(500, 12), name), viewport, insets);
+    return { regionId, anchor, name, box: pillBox(anchor, textWidth(ctx, font(500, 12), name), viewport, insets) };
+  });
+  // pills whose links leave the screen on the same edge slide apart so each stays readable and clickable
+  const bounds: Box = { x: insets.left, y: insets.top, width: viewport.width - insets.left - insets.right, height: viewport.height - insets.top - insets.bottom };
+  for (const edge of ["top", "bottom", "left", "right"] as const) {
+    const group = prepared.filter((entry) => edgeOf(entry.anchor, viewport, insets) === edge);
+    if (group.length < 2) continue;
+    const spread = spreadPills(group.map((entry) => entry.box), edge === "top" || edge === "bottom" ? "x" : "y", bounds);
+    group.forEach((entry, index) => {
+      entry.box = spread[index];
+    });
+  }
+  for (const { regionId, anchor, name, box } of prepared) {
     drawPill(ctx, box, name, anchor.angle);
     pills.push({ ...box, regionId });
   }

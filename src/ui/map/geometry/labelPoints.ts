@@ -1,6 +1,7 @@
 import type { CountryId } from "../../../game/state/types";
-import type { MultiPolygon, Point, Polygon, Ring } from "./polygon";
-import { bboxOf, pointInPolygon, ringArea } from "./polygon";
+import { intersection } from "./clipping";
+import type { BBox, MultiPolygon, Point, Polygon, Ring } from "./polygon";
+import { bboxOf, multiPolygonArea, pointInPolygon, ringArea } from "./polygon";
 import type { RegionShape } from "./regionShapes";
 
 function segmentDistance(x: number, y: number, ax: number, ay: number, bx: number, by: number): number {
@@ -80,10 +81,30 @@ export function interiorPoint(mp: MultiPolygon, grid = 24, fallback: Point = [0,
   return fallback;
 }
 
-/** One label anchor per starting controller: the interior point of its largest starting region. */
+/** The part of a region inside `view`, and its area; the region itself when it already fits (or clipping fails). */
+function visiblePart(region: RegionShape, view: BBox): { polygon: MultiPolygon; area: number } {
+  const [minX, minY, maxX, maxY] = region.bbox;
+  if (minX >= view[0] && minY >= view[1] && maxX <= view[2] && maxY <= view[3]) {
+    return { polygon: region.polygon, area: region.area };
+  }
+  const box: Polygon = [[[view[0], view[1]], [view[2], view[1]], [view[2], view[3]], [view[0], view[3]], [view[0], view[1]]]];
+  try {
+    const clipped = intersection(region.polygon, [box]) as MultiPolygon;
+    return { polygon: clipped, area: multiPolygonArea(clipped) };
+  } catch {
+    return { polygon: region.polygon, area: region.area };
+  }
+}
+
+/**
+ * One label anchor per starting controller: the interior point of its largest starting region. With a `view` box
+ * (the default view), regions that run beyond it, such as Russia's, are judged and anchored by the part inside it,
+ * so the name lands where the player sees the nation. `area` is always the whole nation's, for the font size.
+ */
 export function computeNationLabelPoints(
   regions: Map<string, RegionShape>,
-  startingControllers: Record<string, CountryId>
+  startingControllers: Record<string, CountryId>,
+  view?: BBox
 ): Map<CountryId, { point: Point; area: number }> {
   const byNation = new Map<CountryId, RegionShape[]>();
   for (const [id, countryId] of Object.entries(startingControllers)) {
@@ -102,7 +123,18 @@ export function computeNationLabelPoints(
       area += region.area;
       if (region.area > largest.area) largest = region;
     }
-    labels.set(countryId, { point: interiorPoint(largest.polygon, 24, largest.point), area });
+    let anchor: { polygon: MultiPolygon; fallback: Point } = { polygon: largest.polygon, fallback: largest.point };
+    if (view) {
+      let bestVisible = 0;
+      for (const region of list) {
+        const part = visiblePart(region, view);
+        if (part.area > bestVisible) {
+          bestVisible = part.area;
+          anchor = { polygon: part.polygon, fallback: region.point };
+        }
+      }
+    }
+    labels.set(countryId, { point: interiorPoint(anchor.polygon, 24, anchor.fallback), area });
   }
   return labels;
 }

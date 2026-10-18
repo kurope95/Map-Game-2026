@@ -240,11 +240,22 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`arrows.ts`](./src/ui/map/render/layers/arrows.ts), 9 tests); b3 DONE (spec layer 14: unit counters and stacks in
   [`units.ts`](./src/ui/map/render/layers/units.ts), 8 tests, nation-colored cards with NATO symbol, strength, strength
   bar, supply dot, veterancy chevrons, gold edge for pending orders, white edge for selected, hold shield and
-  shadow-card stacks with ×N and a second-nation dot; `derive.ts` gained `orderedUnitIds`); b4 (depot badge, deposit chips, labels) NOT started; c (hover, tooltip, F3 meter, benchmark) NOT started.
-  Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
+  shadow-card stacks with ×N and a second-nation dot; `derive.ts` gained `orderedUnitIds`); b4 DONE (spec layers 15-16: the DEPOT badge from z 1.5 and the resource deposit
+  chips from z 3.5 in [`extras.ts`](./src/ui/map/render/layers/extras.ts), nation names with letter spacing, size by
+  area and a fade between z 1.3 and 1.6, and collision-avoided city labels with forced labels for the selection and
+  its links in [`labels.ts`](./src/ui/map/render/layers/labels.ts), 17 tests; `pills` slide apart along a shared
+  screen edge; nation names are anchored by the part of their largest region inside the default view); c (hover,
+  tooltip, F3 meter, benchmark) NOT started. Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
   (plan 2026-10-18-visual-overhaul → Task 27)
 
 ### Decision
+- Task 27 (map labels and extras), choices where the spec or plan left room (plan 2026-10-18-visual-overhaul → Task 27):
+  deposit chips sit above the city marker (plan: 16 px above), not below as spec 11.4 #15 words it, because the counters
+  occupy the space under the city; nation names are drawn beneath the link network, markers and counters (not on top
+  at layer 16) so those stay crisp; every other city's marker counts as an obstacle for city labels, so a label never
+  covers another city's dot; the nation-name anchor is computed from the part of the nation's largest region inside
+  the default view ([`labelPoints.ts`](./src/ui/map/geometry/labelPoints.ts), 3 tests), because the spec's rule put
+  Russia's name in Siberia, far off the default view; pills on the same screen edge slide apart.
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
   icons may be added beside labels) instead of exact x-positions; the zoom range is defined
   relative to the default fit (0.6x-24x) because canvas scale differs from the old SVG viewBox

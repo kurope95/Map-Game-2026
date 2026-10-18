@@ -19,6 +19,19 @@ describe("buildMapGeometry", () => {
     expect(maxY).toBeLessThanOrEqual(980);
   });
 
+  it("anchors every nation name inside the default view, even for Russia whose polygons run far beyond it", () => {
+    const [minX, minY, maxX, maxY] = geometry.regionBounds;
+    const padX = (maxX - minX) * 0.06;
+    const padY = (maxY - minY) * 0.06;
+    expect(geometry.nationLabels.size).toBeGreaterThanOrEqual(24);
+    for (const [countryId, { point }] of geometry.nationLabels) {
+      expect(point[0], `${countryId} x`).toBeGreaterThanOrEqual(minX - padX);
+      expect(point[0], `${countryId} x`).toBeLessThanOrEqual(maxX + padX);
+      expect(point[1], `${countryId} y`).toBeGreaterThanOrEqual(minY - padY);
+      expect(point[1], `${countryId} y`).toBeLessThanOrEqual(maxY + padY);
+    }
+  });
+
   it("returns the same cached geometry for the same region set", () => {
     expect(buildMapGeometry(state.regions, getStartingControllers(state))).toBe(geometry);
   });

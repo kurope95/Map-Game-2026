@@ -12,13 +12,20 @@ export function clearTextCache(): void {
   widths.clear();
 }
 
-/** Width of `text` in `fontSpec` (cached by font and text). The caller must already have set ctx.font to it. */
-export function textWidth(ctx: CanvasRenderingContext2D, fontSpec: string, text: string): number {
-  const key = `${fontSpec}|${text}`;
+/**
+ * Width of `text` in `fontSpec` with `letterSpacing` px added after every character (cached by font, spacing and
+ * text). Leaves ctx.font set to `fontSpec` and ctx.letterSpacing at 0.
+ */
+export function textWidth(ctx: CanvasRenderingContext2D, fontSpec: string, text: string, letterSpacing = 0): number {
+  const key = `${fontSpec}|${letterSpacing}|${text}`;
   let width = widths.get(key);
   if (width === undefined) {
     ctx.font = fontSpec;
+    const native = letterSpacing !== 0 && "letterSpacing" in ctx;
+    if (native) ctx.letterSpacing = `${letterSpacing}px`;
     width = ctx.measureText(text).width;
+    if (native) ctx.letterSpacing = "0px";
+    else width += letterSpacing * text.length;
     widths.set(key, width);
   }
   return width;

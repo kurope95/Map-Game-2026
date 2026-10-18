@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { interiorPoint } from "./labelPoints";
-import { pointInPolygon, type Polygon, type Ring } from "./polygon";
+import type { CountryId } from "../../../game/state/types";
+import { computeNationLabelPoints, interiorPoint } from "./labelPoints";
+import { bboxOf, multiPolygonArea, pointInPolygon, type Point, type Polygon, type Ring } from "./polygon";
+import type { RegionShape } from "./regionShapes";
 
 function circle(cx: number, cy: number, radius: number, vertices: number): Ring {
   const ring: Ring = [];
@@ -39,5 +41,48 @@ describe("interiorPoint", () => {
     expect(x).toBeGreaterThan(100);
     expect(y).toBeGreaterThan(100);
     expect(interiorPoint([], 24, [7, 8])).toEqual([7, 8]);
+  });
+});
+
+describe("computeNationLabelPoints with a view box", () => {
+  const rect = (x0: number, y0: number, x1: number, y1: number): Polygon => [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]];
+  const shape = (id: string, polygon: Polygon, point: Point): RegionShape => ({
+    id,
+    clipNumericId: 0,
+    polygon: [polygon],
+    bbox: bboxOf([polygon]),
+    point,
+    area: multiPolygonArea([polygon]),
+    usedFallback: false
+  });
+  const russia = (ids: string[]) => Object.fromEntries(ids.map((id) => [id, "RUSSIA" as CountryId]));
+  const view: [number, number, number, number] = [0, 0, 100, 100];
+
+  it("leaves a nation that lies inside the view exactly as it was", () => {
+    const regions = new Map([["a", shape("a", rect(10, 10, 60, 60), [30, 30])]]);
+    const plain = computeNationLabelPoints(regions, russia(["a"])).get("RUSSIA")!;
+    const withView = computeNationLabelPoints(regions, russia(["a"]), view).get("RUSSIA")!;
+    expect(withView).toEqual(plain);
+  });
+
+  it("anchors a huge region inside the view instead of deep outside it, and keeps its full area for the font size", () => {
+    const regions = new Map([["big", shape("big", rect(0, 0, 1000, 1000), [50, 50])]]);
+    const plain = computeNationLabelPoints(regions, russia(["big"])).get("RUSSIA")!;
+    expect(plain.point[0]).toBeGreaterThan(300);
+    const clipped = computeNationLabelPoints(regions, russia(["big"]), view).get("RUSSIA")!;
+    expect(clipped.point[0]).toBeGreaterThan(0);
+    expect(clipped.point[0]).toBeLessThan(100);
+    expect(clipped.area).toBe(plain.area);
+  });
+
+  it("picks the region with the largest visible part, not the largest overall", () => {
+    const regions = new Map([
+      ["far", shape("far", rect(60, 0, 1060, 1000), [80, 50])],
+      ["near", shape("near", rect(0, 0, 60, 100), [30, 50])]
+    ]);
+    const plain = computeNationLabelPoints(regions, russia(["far", "near"])).get("RUSSIA")!;
+    expect(plain.point[0]).toBeGreaterThan(60);
+    const clipped = computeNationLabelPoints(regions, russia(["far", "near"]), view).get("RUSSIA")!;
+    expect(clipped.point[0]).toBeLessThan(60);
   });
 });

@@ -61,6 +61,12 @@ function regionBoundsOf(regions: Map<string, RegionShape>): BBox {
   return [minX, minY, maxX, maxY];
 }
 
+function expandBox(box: BBox, fraction: number): BBox {
+  const padX = (box[2] - box[0]) * fraction;
+  const padY = (box[3] - box[1]) * fraction;
+  return [box[0] - padX, box[1] - padY, box[2] + padX, box[3] + padY];
+}
+
 let cachedKey: string | null = null;
 let cachedGeometry: MapGeometry | null = null;
 
@@ -84,7 +90,9 @@ export function buildMapGeometry(
   const edges = buildBoundaryEdges(built, lookup);
   const neighbors = neighborsFromEdges(built.keys(), edges);
   const shadeVariant = computeShadeVariants(regionIds, neighbors);
-  const nationLabels = computeNationLabelPoints(built, startingControllers);
+  const regionBounds = regionBoundsOf(built);
+  // Nation names are anchored in the default view (the region points plus a margin): Russia's polygons run far beyond it.
+  const nationLabels = computeNationLabelPoints(built, startingControllers, expandBox(regionBounds, 0.06));
   const graticule = buildGraticule();
 
   const geometry: MapGeometry = {
@@ -97,7 +105,7 @@ export function buildMapGeometry(
     shadeVariant,
     nationLabels,
     graticule,
-    regionBounds: regionBoundsOf(built),
+    regionBounds,
     buildMs: performance.now() - started
   };
 

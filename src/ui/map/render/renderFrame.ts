@@ -9,8 +9,10 @@ import type { MapViewProps } from "../MapView";
 import { drawOrderArrows } from "./layers/arrows";
 import { drawBorders } from "./layers/borders";
 import { cityScreenPoints, drawCityMarkers } from "./layers/cities";
+import { drawExtras } from "./layers/extras";
 import { drawFrontLine } from "./layers/front";
 import { drawHighlights } from "./layers/highlights";
+import { drawCityLabels, drawNationLabels } from "./layers/labels";
 import { drawLand } from "./layers/land";
 import { drawLinkNetwork, drawSelectionLinks, linkPairs } from "./layers/links";
 import { drawSupplyOverlay } from "./layers/overlays";
@@ -85,9 +87,11 @@ export function renderFrame(input: FrameInput): FrameHitData {
   );
   drawSupplyOverlay(ctx, geometry, derived, camera);
 
-  // screen space, layers 10-14 (Task 27 part b4 adds depot, deposits and labels)
+  // screen space, layers 10-16
   setScreenTransform(ctx, dpr);
   const cities = cityScreenPoints(geometry, camera);
+  // nation names (layer 16) sit beneath the links, markers and counters so those stay crisp over the big text
+  if (input.fontsReady) drawNationLabels(ctx, { state, geometry, camera, viewport, z: input.z });
   drawLinkNetwork(ctx, linkPairs(state.regions), cities, input.z);
   const pills = drawSelectionLinks(ctx, {
     state,
@@ -97,16 +101,24 @@ export function renderFrame(input: FrameInput): FrameHitData {
     hoverRegionId: input.hoverRegionId,
     fontsReady: input.fontsReady
   });
-  drawCityMarkers(ctx, cities, state, {
-    z: input.z,
-    viewport,
-    selectedRegionId,
-    linkedIds: toSet(selectedRegionId ? state.regions[selectedRegionId]?.adjacentRegionIds : undefined)
-  });
+  const linkedIds = toSet(selectedRegionId ? state.regions[selectedRegionId]?.adjacentRegionIds : undefined);
+  drawCityMarkers(ctx, cities, state, { z: input.z, viewport, selectedRegionId, linkedIds });
   const showcase = props.mode === "showcase";
   if (!showcase) drawOrderArrows(ctx, derived.arrows, cities, viewport);
   const counters = showcase ? [] : layoutCounters(derived.stacks, cities, input.z, input.expandedRegionId);
   drawCounters(ctx, counters, { state, derived, selectedUnitIds: toSet(props.selectedUnitIds), viewport });
+  const extras = drawExtras(ctx, { state, cities, viewport, z: input.z, fontsReady: input.fontsReady });
+  if (input.fontsReady) {
+    drawCityLabels(ctx, {
+      state,
+      cities,
+      viewport,
+      z: input.z,
+      selectedRegionId,
+      linkedIds,
+      obstacles: [...counters, ...extras, ...pills]
+    });
+  }
 
   return {
     counters,
