@@ -87,3 +87,20 @@ export function easeOutCubic(t: number): number {
 export function zoomScaleAtProgress(fromScale: number, toScale: number, t: number): number {
   return fromScale * (toScale / fromScale) ** easeOutCubic(t);
 }
+
+/**
+ * The camera after the viewport changed size: the world point that was at the center stays at the center, and the
+ * zoom stays the same multiple of the (new) fit scale.
+ */
+export function recenterOnResize(
+  camera: Camera,
+  previous: Viewport,
+  next: Viewport,
+  fitScale: number,
+  nextFitScale: number,
+  world: { width: number; height: number }
+): Camera {
+  const center = screenToWorld(camera, previous.width / 2, previous.height / 2);
+  const scale = camera.scale * (nextFitScale / fitScale);
+  return clampCamera({ scale, offsetX: next.width / 2 - center[0] * scale, offsetY: next.height / 2 - center[1] * scale }, next, world);
+}

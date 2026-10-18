@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Camera } from "../camera";
-import { hitTest, type FrameHitData } from "./hitTest";
+import { clickOutcome, hitTest, type FrameHitData } from "./hitTest";
 
 const camera: Camera = { scale: 1, offsetX: 0, offsetY: 0 };
 const emptyLookup = { regionAt: () => null };
@@ -73,5 +73,28 @@ describe("hitTest", () => {
 
   it("returns sea when nothing is hit", () => {
     expect(hitTest(500, 500, frame(), camera, emptyLookup)).toEqual({ kind: "sea" });
+  });
+});
+
+describe("clickOutcome (spec 11.3 click resolution)", () => {
+  it("selects the unit for a unit counter", () => {
+    expect(clickOutcome({ kind: "unit", unitId: "u1", regionId: "moscow" })).toEqual({ selectUnit: "u1" });
+  });
+
+  it("selects the region and expands the stack for a stack counter", () => {
+    expect(clickOutcome({ kind: "stack", regionId: "warsaw" })).toEqual({ selectRegion: "warsaw", expand: "warsaw" });
+  });
+
+  it("selects the region for a city or a polygon", () => {
+    expect(clickOutcome({ kind: "city", regionId: "lublin" })).toEqual({ selectRegion: "lublin" });
+    expect(clickOutcome({ kind: "region", regionId: "lublin" })).toEqual({ selectRegion: "lublin" });
+  });
+
+  it("only pans for an edge pill and keeps the selection", () => {
+    expect(clickOutcome({ kind: "pill", regionId: "poznan" })).toEqual({ focus: "poznan" });
+  });
+
+  it("does nothing for the sea (and the caller collapses any expanded stack)", () => {
+    expect(clickOutcome({ kind: "sea" })).toEqual({});
   });
 });

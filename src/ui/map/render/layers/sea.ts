@@ -18,6 +18,17 @@ export function drawFlatSea(ctx: CanvasRenderingContext2D, viewport: Viewport): 
   ctx.fillRect(0, 0, viewport.width, viewport.height);
 }
 
+/** The plain sea with "Preparing map…" on it, shown while the geometry is built. */
+export function drawPreparingMap(ctx: CanvasRenderingContext2D, viewport: Viewport, dpr: number): void {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawFlatSea(ctx, viewport);
+  ctx.fillStyle = "#9db1c5";
+  ctx.font = '14px Inter, "Segoe UI", sans-serif';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Preparing map…", viewport.width / 2, viewport.height / 2);
+}
+
 /** Spec 11.4 layer 1: base color, radial vignette, noise texture and a faint graticule. */
 export function drawSea(
   ctx: CanvasRenderingContext2D,

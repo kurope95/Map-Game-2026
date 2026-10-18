@@ -4,19 +4,18 @@ import {
   fitCamera,
   MAX_ZOOM,
   MIN_ZOOM,
-  screenToWorld,
-  zoomScaleAtProgress,
-  easeOutCubic,
+  recenterOnResize,
   type Camera,
   type Viewport
 } from "./camera";
+import { anchorTween, cameraTween, stepTween, tweenTargetScale, type Tween } from "./cameraTween";
 import { deriveMapData, type DerivedMapData } from "./derive";
 import { buildMapGeometry, type MapGeometry } from "./geometry/buildMapGeometry";
 import { WORLD } from "./geometry/projection";
-import { hitTest, type FrameHitData } from "./layout/hitTest";
+import { clickOutcome, hitTest, type FrameHitData } from "./layout/hitTest";
 import type { MapViewProps } from "./MapView";
 import { readStats, recordFrame } from "./perf/frameStats";
-import { drawFlatSea } from "./render/layers/sea";
+import { drawPreparingMap } from "./render/layers/sea";
 import { renderFrame } from "./render/renderFrame";
 import { clearTextCache } from "./render/text";
 import { getStartingControllers } from "./startingControllers";
@@ -27,7 +26,6 @@ const DRAG_THRESHOLD_PX = 5;
 const TOOLTIP_OFFSET = 14;
 const TOOLTIP_MARGIN = 8;
 const PERF_REFRESH_MS = 500;
-const TWEEN_MS = 140;
 const WHEEL_SENSITIVITY = 1.0015;
 export const BUTTON_ZOOM = 1.6;
 const FIT_PADDING = 40;
@@ -40,11 +38,6 @@ interface DragState {
   startOffsetY: number;
   active: boolean;
 }
-
-/** Zoom anchored on a screen point, or a move between two cameras (reset, focus). */
-type Tween =
-  | { kind: "anchor"; start: number; fromScale: number; toScale: number; ax: number; ay: number; worldX: number; worldY: number }
-  | { kind: "camera"; start: number; fromScale: number; toScale: number; fromCenter: [number, number]; toCenter: [number, number] };
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -239,71 +232,38 @@ export class MapController {
         this.fit();
       } else {
         // keep the world point at the viewport center, and the zoom relative to the fit
-        const center = screenToWorld(this.camera, previous.width / 2, previous.height / 2);
         const nextFit = fitCamera(this.geometry.regionBounds, this.viewport, FIT_PADDING).scale;
-        const scale = this.camera.scale * (nextFit / this.fitScale);
+        this.camera = recenterOnResize(this.camera, previous, this.viewport, this.fitScale, nextFit, WORLD);
         this.fitScale = nextFit;
-        this.camera = clampCamera(
-          { scale, offsetX: width / 2 - center[0] * scale, offsetY: height / 2 - center[1] * scale },
-          this.viewport,
-          WORLD
-        );
       }
     }
     this.requestRender();
   }
 
   private targetScale(): number {
-    return this.tween?.kind === "anchor" ? this.tween.toScale : this.camera.scale;
+    return tweenTargetScale(this.tween, this.camera);
   }
 
   private zoomTo(targetScale: number, anchorX: number, anchorY: number): void {
     if (!this.geometry || !this.hasFit) return;
     const toScale = clamp(targetScale, MIN_ZOOM * this.fitScale, MAX_ZOOM * this.fitScale);
-    const [worldX, worldY] = screenToWorld(this.camera, anchorX, anchorY);
-    this.tween = { kind: "anchor", start: performance.now(), fromScale: this.camera.scale, toScale, ax: anchorX, ay: anchorY, worldX, worldY };
+    this.tween = anchorTween(this.camera, toScale, anchorX, anchorY, performance.now());
     this.requestRender();
   }
 
   private tweenToCamera(target: Camera): void {
-    const cx = this.viewport.width / 2;
-    const cy = this.viewport.height / 2;
-    this.tween = {
-      kind: "camera",
-      start: performance.now(),
-      fromScale: this.camera.scale,
-      toScale: target.scale,
-      fromCenter: screenToWorld(this.camera, cx, cy),
-      toCenter: screenToWorld(target, cx, cy)
-    };
+    this.tween = cameraTween(this.camera, target, this.viewport, performance.now());
     this.requestRender();
   }
 
   /** Advances the easing for this frame; true while it is still running. */
-  private stepTween(now: number): boolean {
+  private advanceTween(now: number): boolean {
     const tween = this.tween;
     if (!tween) return false;
-    const t = clamp((now - tween.start) / TWEEN_MS, 0, 1);
-    if (tween.kind === "anchor") {
-      const scale = zoomScaleAtProgress(tween.fromScale, tween.toScale, t);
-      this.camera = clampCamera(
-        { scale, offsetX: tween.ax - tween.worldX * scale, offsetY: tween.ay - tween.worldY * scale },
-        this.viewport,
-        WORLD
-      );
-    } else {
-      const p = easeOutCubic(t);
-      const scale = tween.fromScale * (tween.toScale / tween.fromScale) ** p;
-      const centerX = tween.fromCenter[0] + (tween.toCenter[0] - tween.fromCenter[0]) * p;
-      const centerY = tween.fromCenter[1] + (tween.toCenter[1] - tween.fromCenter[1]) * p;
-      this.camera = clampCamera(
-        { scale, offsetX: this.viewport.width / 2 - centerX * scale, offsetY: this.viewport.height / 2 - centerY * scale },
-        this.viewport,
-        WORLD
-      );
-    }
-    if (t >= 1) this.tween = null;
-    return this.tween !== null;
+    const step = stepTween(tween, now, this.viewport);
+    this.camera = step.camera;
+    if (step.done) this.tween = null;
+    return !step.done;
   }
 
   // ---- interaction ----
@@ -399,33 +359,16 @@ export class MapController {
     this.zoomTo(this.targetScale() * WHEEL_SENSITIVITY ** -delta, x, y);
   };
 
-  /** Click resolution in the order of spec 11.3; any click that is not on a stack collapses the expanded stack. */
+  /** Applies the click outcome of spec 11.3; any click that is not on a stack collapses the expanded stack. */
   private handleClick(x: number, y: number): void {
     const props = this.props;
     const geometry = this.geometry;
     if (!props || !geometry) return;
-    const hit = hitTest(x, y, this.frameHit, this.camera, geometry.lookup);
-    let collapse = true;
-    switch (hit.kind) {
-      case "unit":
-        props.onSelectUnit?.(hit.unitId);
-        break;
-      case "stack":
-        props.onSelectRegion?.(hit.regionId);
-        this.expandedRegionId = hit.regionId;
-        collapse = false;
-        break;
-      case "city":
-      case "region":
-        props.onSelectRegion?.(hit.regionId);
-        break;
-      case "pill":
-        this.focusRegion(hit.regionId);
-        break;
-      case "sea":
-        break;
-    }
-    if (collapse) this.expandedRegionId = null;
+    const outcome = clickOutcome(hitTest(x, y, this.frameHit, this.camera, geometry.lookup));
+    if (outcome.selectUnit) props.onSelectUnit?.(outcome.selectUnit);
+    if (outcome.selectRegion) props.onSelectRegion?.(outcome.selectRegion);
+    if (outcome.focus) this.focusRegion(outcome.focus);
+    this.expandedRegionId = outcome.expand ?? null;
     this.requestRender();
   }
 
@@ -448,7 +391,7 @@ export class MapController {
     if ((window.devicePixelRatio || 1) !== this.dpr) this.syncSize();
 
     const hadTween = this.tween !== null;
-    const animating = this.stepTween(now);
+    const animating = this.advanceTween(now);
     if (hadTween) this.drawPending = true;
     // hover is hit-tested here, once per frame, against the boxes of the last draw
     const hoverChanged = this.updateHover(false);
@@ -552,14 +495,6 @@ export class MapController {
   }
 
   private drawPreparing(): void {
-    const { ctx, dpr, viewport } = this;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawFlatSea(ctx, viewport);
-    ctx.fillStyle = "#9db1c5";
-    ctx.font = '14px Inter, "Segoe UI", sans-serif';
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Preparing map…", viewport.width / 2, viewport.height / 2);
+    drawPreparingMap(this.ctx, this.viewport, this.dpr);
   }
 }
-

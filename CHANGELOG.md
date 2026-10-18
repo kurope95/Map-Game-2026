@@ -249,7 +249,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   name and bloc, "Occupied, originally …", units by side, fort and stability in [`tooltip.ts`](./src/ui/map/tooltip.ts)
   (11 tests) filled through a ref with escaped text and hidden while dragging, and the dev-only F3 frame meter in
   [`MapController.ts`](./src/ui/map/MapController.ts) and [`MapView.css`](./src/ui/map/MapView.css)); c2 (split
-  `MapController.ts`, now over the 400-line guideline) NOT started. Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
+  `MapController.ts`, which passed the 400-line guideline) in three steps: c2a DONE (pure helpers extracted with tests:
+  [`cameraTween.ts`](./src/ui/map/cameraTween.ts), `recenterOnResize` in [`camera.ts`](./src/ui/map/camera.ts), `clickOutcome` in
+  [`hitTest.ts`](./src/ui/map/layout/hitTest.ts) and `drawPreparingMap` in [`sea.ts`](./src/ui/map/render/layers/sea.ts); controller
+  565 -> 501 lines, behavior unchanged: `map-check.js` 18/18), c2b NOT started (`TooltipView` and `PerfMeter` out of the
+  controller), c2c NOT started (pointer input out of the controller). Work-package details: notes folder `task-27-workpackages.md`; the plan brief is Task 27 in the plan.**
   (plan 2026-10-18-visual-overhaul → Task 27)
 
 ### Decision

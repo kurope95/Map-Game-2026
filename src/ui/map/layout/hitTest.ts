@@ -67,3 +67,29 @@ export function hitTest(
   const regionId = lookup.regionAt(world[0], world[1]);
   return regionId === null ? { kind: "sea" } : { kind: "region", regionId };
 }
+
+export interface ClickOutcome {
+  selectUnit?: string;
+  selectRegion?: string;
+  /** The stack to expand. Any outcome without it collapses the currently expanded stack. */
+  expand?: string;
+  /** Pan the camera to this region without changing the selection (an off-screen link pill). */
+  focus?: string;
+}
+
+/** What a click on `hit` does (spec 11.3 click resolution); the controller applies it. */
+export function clickOutcome(hit: MapHit): ClickOutcome {
+  switch (hit.kind) {
+    case "unit":
+      return { selectUnit: hit.unitId };
+    case "stack":
+      return { selectRegion: hit.regionId, expand: hit.regionId };
+    case "city":
+    case "region":
+      return { selectRegion: hit.regionId };
+    case "pill":
+      return { focus: hit.regionId };
+    case "sea":
+      return {};
+  }
+}

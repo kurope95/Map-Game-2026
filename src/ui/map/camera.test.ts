@@ -5,6 +5,7 @@ import {
   clampCamera,
   easeOutCubic,
   fitCamera,
+  recenterOnResize,
   screenToWorld,
   worldToScreen,
   zoomAt,
@@ -93,5 +94,32 @@ describe("zoom easing", () => {
   it("exposes the spec zoom range", () => {
     expect(MIN_ZOOM).toBe(0.6);
     expect(MAX_ZOOM).toBe(24);
+  });
+});
+
+describe("recenterOnResize", () => {
+  const world = { width: 1600, height: 980 };
+  const before = { width: 1000, height: 700 };
+  const after = { width: 1400, height: 800 };
+  const start = { scale: 0.8, offsetX: 40, offsetY: 25 };
+
+  it("keeps the world point at the viewport center at the center", () => {
+    const center = screenToWorld(start, before.width / 2, before.height / 2);
+    const next = recenterOnResize(start, before, after, 0.5, 0.5, world);
+    const [x, y] = screenToWorld(next, after.width / 2, after.height / 2);
+    expect(x).toBeCloseTo(center[0], 6);
+    expect(y).toBeCloseTo(center[1], 6);
+    expect(next.scale).toBeCloseTo(0.8, 10);
+  });
+
+  it("keeps the zoom relative to the fit when the fit scale changes", () => {
+    const next = recenterOnResize(start, before, after, 0.5, 0.75, world);
+    expect(next.scale / 0.75).toBeCloseTo(start.scale / 0.5, 10);
+  });
+
+  it("clamps the result so the map cannot be lost", () => {
+    const far = { scale: 0.8, offsetX: -5000, offsetY: -5000 };
+    const next = recenterOnResize(far, before, after, 0.5, 0.5, world);
+    expect(next.offsetX).toBeGreaterThanOrEqual(-world.width * next.scale * 0.75 - 1e-9);
   });
 });
