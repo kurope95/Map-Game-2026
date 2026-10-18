@@ -310,6 +310,18 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `Window variant="popup"` whose production rows use `ResourceIcon` and whose recruit/upgrade/repair
   `Button`s keep every original `title`. All frozen geometry is unchanged.
   (plan 2026-10-18-visual-overhaul → Task 17)
+- Modal windows restyled in style C: [`DiplomacyWindow`](./src/ui/windows/diplomacy/DiplomacyWindow.tsx)
+  is a `Window variant="panel"` at its old 1380 px / top 52 box with counted `Tabs`, a `Flag` and
+  `Badge` on every country card, and kit action tiles whose costs read as `ResourceAmount`s (every
+  support-bar marker kept); [`DoctrineWindow`](./src/ui/windows/DoctrineWindow.tsx),
+  [`SaveLoadWindow`](./src/ui/windows/SaveLoadWindow.tsx), [`DefeatNotice`](./src/ui/windows/DefeatNotice.tsx)
+  and [`VictoryOverlay`](./src/ui/windows/VictoryOverlay.tsx) are kit modals with their old width,
+  z-order (200 / 210 / 80 / 150) and texts, plus the defeated nation's flag and the player's flag;
+  [`EconomyLogicMap`](./src/ui/windows/EconomyLogicMap.tsx) replaces all emoji with
+  `ResourceIcon`/`FACILITY_META`/`UnitSymbol` icons. [`Window`](./src/ui/kit/Window.tsx) gains an
+  optional `backdropClassName`, and [`FloatPanel.css`](./src/ui/panels/FloatPanel.css) drops the last
+  legacy `.float-panel` shell. No control moved or changed behavior.
+  (plan 2026-10-18-visual-overhaul → Task 18)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -429,6 +441,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with 4 sections and 19 `ResourceAmount`s; the facility pop-up is centered, bottom 862, has no
   horizontal overflow and keeps its upgrade title; no console errors.
   (plan 2026-10-18-visual-overhaul → Task 17)
+- Task 18: `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm test` 99/99, `npm run build`
+  OK (CSS 65.97 kB). Layout lock PASS at 1440x900 and 1920x1080 (20 probes, `missing: []`). In
+  headless Chrome at 1440x900 the diplomacy panel keeps its 1380 px / top 52 box (11 neutral cards,
+  3 counted tabs, 5 action tiles), doctrines 680 px in two columns with 18 cards, save/load 980 px
+  (`z 210`), the logic map 800 px (`z 10000`; 5 flows, 28 resource icons, 3 unit symbols, no emoji),
+  the defeat notice 540 px (`z 80`, Romania's flag) and a crafted save forced the victory overlay
+  520 px (`z 150`, Russia's flag); no console errors.
+  (plan 2026-10-18-visual-overhaul → Task 18)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

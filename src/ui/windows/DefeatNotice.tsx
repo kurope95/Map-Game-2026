@@ -1,31 +1,33 @@
+import { Button } from "../kit/Button";
+import { Window } from "../kit/Window";
 import { useGame } from "../session/GameProvider";
 import "./windows.css";
 
 export function DefeatNotice() {
-  const { latestDefeatAnnouncement, dismissedDefeatAnnouncement, setDismissedDefeatAnnouncement } = useGame();
+  const { gameState, latestDefeatAnnouncement, dismissedDefeatAnnouncement, setDismissedDefeatAnnouncement } = useGame();
 
   if (!latestDefeatAnnouncement || dismissedDefeatAnnouncement === latestDefeatAnnouncement) return null;
 
+  const defeatedCountry = Object.values(gameState.countries).find((country) =>
+    latestDefeatAnnouncement.startsWith(`${country.name} has been defeated.`)
+  );
+
   return (
-    <div className="defeat-notice-overlay">
-      <div className="defeat-notice" data-layout="defeat-notice">
-        <div className="defeat-notice__header">
-          COUNTRY DEFEATED
-        </div>
-        <div className="defeat-notice__body">
-          <div className="defeat-notice__title">
-            Strategic collapse confirmed
-          </div>
-          <div className="defeat-notice__message">
-            {latestDefeatAnnouncement}
-          </div>
-        </div>
-        <div className="defeat-notice__footer">
-          <button className="top-bar__btn top-bar__btn--primary" onClick={() => setDismissedDefeatAnnouncement(latestDefeatAnnouncement)}>
-            Continue
-          </button>
-        </div>
-      </div>
-    </div>
+    <Window
+      title="Country Defeated"
+      flag={defeatedCountry?.id}
+      variant="modal"
+      className="defeat-notice"
+      backdropClassName="defeat-notice-overlay"
+      layoutId="defeat-notice"
+      footer={
+        <Button variant="primary" onClick={() => setDismissedDefeatAnnouncement(latestDefeatAnnouncement)}>
+          Continue
+        </Button>
+      }
+    >
+      <div className="defeat-notice__title">Strategic collapse confirmed</div>
+      <div className="defeat-notice__message">{latestDefeatAnnouncement}</div>
+    </Window>
   );
 }

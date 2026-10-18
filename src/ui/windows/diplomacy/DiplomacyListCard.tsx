@@ -1,5 +1,7 @@
 import type { CountryDefinition } from "../../../game/state/types";
 import { canBlocUseTransit, getCountryDualTiltLabel, getCountryLeanBloc } from "../../../game/rules/diplomacy";
+import { Badge } from "../../kit/Badge";
+import { Flag } from "../../kit/Flag";
 import { useGame } from "../../session/GameProvider";
 
 export function DiplomacyListCard({ country }: { country: CountryDefinition }) {
@@ -17,10 +19,11 @@ export function DiplomacyListCard({ country }: { country: CountryDefinition }) {
       onClick={() => setSelectedDiplomacyCountryId(country.id)}
     >
       <div className="diplo-list-card__title-row">
+        <Flag countryId={country.id} width={20} />
         <span className="diplo-list-card__title">{country.name}</span>
-        <span className={`diplo-list-card__lean ${leanBloc === "EU_NATO" ? "diplo-list-card__lean--nato" : leanBloc === "BRICS" ? "diplo-list-card__lean--brics" : ""}`}>
+        <Badge tone={leanBloc === "EU_NATO" ? "nato" : leanBloc === "BRICS" ? "brics" : "neutral"}>
           {combinedTilt}
-        </span>
+        </Badge>
       </div>
       <div className="diplo-list-card__subline">
         {status.atWar ? "At war" : country.alignment === "neutral" ? "Neutral" : "Aligned"}

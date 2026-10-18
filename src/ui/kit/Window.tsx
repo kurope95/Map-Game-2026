@@ -13,6 +13,7 @@ interface WindowProps {
   onBackdropClick?: () => void;
   variant?: "panel" | "modal" | "popup";
   className?: string;
+  backdropClassName?: string;
   bodyClassName?: string;
   footer?: ReactNode;
   layoutId?: string;
@@ -28,6 +29,7 @@ export function Window({
   onBackdropClick,
   variant = "panel",
   className = "",
+  backdropClassName = "",
   bodyClassName = "",
   footer,
   layoutId,
@@ -61,7 +63,7 @@ export function Window({
 
   return (
     <div
-      className="win-backdrop"
+      className={`win-backdrop ${backdropClassName}`.trim()}
       data-layout={layoutId ? `${layoutId}-backdrop` : undefined}
       onClick={onBackdropClick ?? onClose}
     >

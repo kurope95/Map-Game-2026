@@ -1,66 +1,45 @@
-/* Classes that replace the inline styles of the modal windows. */
+/* Modal windows: shared kit shell plus per-window surfaces. */
 
 .window-close {
   background: none;
   border: none;
-  color: #8a9bb0;
+  color: var(--text-dim);
   font-size: 1.2rem;
   cursor: pointer;
 }
 
 /* ─── Defeat notice ─── */
 
-.defeat-notice-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(5, 10, 18, 0.58);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.win-backdrop.defeat-notice-overlay {
   z-index: 80;
+  background: rgba(5, 10, 18, 0.58);
 }
 
-.defeat-notice {
+.win--modal.defeat-notice {
   width: min(540px, calc(100vw - 32px));
-  border: 1px solid rgba(255, 215, 120, 0.35);
-  background: linear-gradient(180deg, rgba(23, 30, 40, 0.98), rgba(13, 18, 26, 0.98));
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-  border-radius: 14px;
-  overflow: hidden;
 }
 
-.defeat-notice__header {
-  padding: 14px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f2d36b;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-
-.defeat-notice__body {
-  padding: 18px;
-  color: #dbe6f2;
-  line-height: 1.5;
+.defeat-notice .win__body {
+  padding: 16px 18px;
 }
 
 .defeat-notice__title {
-  font-size: 1.05rem;
-  font-weight: 700;
   margin-bottom: 8px;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .defeat-notice__message {
-  font-size: 0.92rem;
-  color: #b7c4d3;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
 }
 
-.defeat-notice__footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 18px 18px;
-}
-
-/* ─── Battle report ─── */
+/* ─── Battle report (restyled in the turn-report task) ─── */
 
 .battle-report-overlay {
   position: fixed;
@@ -132,242 +111,152 @@
   padding: 12px 18px 18px;
 }
 
-/* ─── Victory / defeat overlay ─── */
+/* ─── Victory / defeat overlay (same z-order as before) ─── */
 
-.victory-overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.win-backdrop.victory-overlay {
   z-index: 150;
+  background: transparent;
 }
 
-.victory-overlay--victory {
-  background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.15), rgba(5, 10, 18, 0.85));
+.win-backdrop.victory-overlay--victory {
+  background: radial-gradient(ellipse at center, rgba(124, 196, 124, 0.15), rgba(5, 10, 18, 0.85));
 }
 
-.victory-overlay--defeat {
-  background: radial-gradient(ellipse at center, rgba(239, 68, 68, 0.15), rgba(5, 10, 18, 0.85));
+.win-backdrop.victory-overlay--defeat {
+  background: radial-gradient(ellipse at center, rgba(224, 96, 90, 0.15), rgba(5, 10, 18, 0.85));
 }
 
-.victory-overlay__panel {
+.win--modal.victory-overlay__panel {
   width: min(520px, calc(100vw - 40px));
-  background: linear-gradient(180deg, rgba(23, 30, 40, 0.98), rgba(13, 18, 26, 0.98));
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
-  border-radius: 16px;
-  overflow: hidden;
   text-align: center;
 }
 
-.victory-overlay__panel--victory {
-  border: 2px solid rgba(34, 197, 94, 0.5);
+.win--modal.victory-overlay__panel--victory {
+  border: 2px solid rgba(124, 196, 124, 0.5);
 }
 
-.victory-overlay__panel--defeat {
-  border: 2px solid rgba(239, 68, 68, 0.5);
+.win--modal.victory-overlay__panel--defeat {
+  border: 2px solid rgba(224, 96, 90, 0.5);
 }
 
-.victory-overlay__header {
-  padding: 24px;
+.victory-overlay__panel .win__body {
+  padding: 20px 24px;
 }
 
-.victory-overlay__header--victory {
-  background: linear-gradient(180deg, rgba(34, 197, 94, 0.15), transparent);
+.victory-overlay__panel--victory .win__title {
+  color: var(--good);
 }
 
-.victory-overlay__header--defeat {
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.15), transparent);
-}
-
-.victory-overlay__title {
-  font-size: 2rem;
-  font-weight: 900;
-  margin-bottom: 8px;
-}
-
-.victory-overlay__title--victory {
-  color: #22c55e;
-}
-
-.victory-overlay__title--defeat {
-  color: #ef4444;
+.victory-overlay__panel--defeat .win__title {
+  color: var(--bad);
 }
 
 .victory-overlay__message {
-  font-size: 1.1rem;
-  color: #b7c4d3;
+  color: var(--text);
+  font-size: var(--fs-md);
   line-height: 1.6;
 }
 
 .victory-overlay__meta {
-  font-size: 0.9rem;
-  color: #8a9bb0;
-  margin-top: 12px;
+  margin-top: 10px;
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
 }
 
-.victory-overlay__actions {
-  display: flex;
-  gap: 12px;
+.victory-overlay__panel .win__footer {
   justify-content: center;
-  padding: 0 24px 24px;
 }
 
-/* ─── Doctrine window ─── */
+/* ─── Doctrine window (same width rule as before) ─── */
 
-.doctrine-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+.win-backdrop.doctrine-backdrop {
   z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.doctrine-window {
+.win--modal.doctrine-window {
   width: min(680px, calc(100vw - 40px));
   max-height: 80vh;
-  overflow-y: auto;
-  background: linear-gradient(180deg, rgba(15, 22, 35, 0.99), rgba(8, 13, 22, 0.99));
-  border: 1px solid rgba(100, 150, 220, 0.3);
-  border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
-.doctrine-window__header {
-  padding: 14px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.doctrine-window__title {
-  color: #90cdf4;
-  font-weight: 800;
-  font-size: 1rem;
-  letter-spacing: 0.08em;
-}
-
-.doctrine-window__tools {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.doctrine-window .win__body {
+  padding: 14px 16px;
 }
 
 .doctrine-window__trade {
-  color: #f2d36b;
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gold);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .doctrine-window__grid {
-  padding: 16px 20px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
 
 .doctrine-card {
-  padding: 12px 14px;
-  border-radius: 10px;
-  opacity: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
 }
 
 .doctrine-card--owned {
-  border: 1px solid rgba(34, 197, 94, 0.4);
-  background: rgba(34, 197, 94, 0.06);
+  border-color: rgba(124, 196, 124, 0.4);
+  background: rgba(124, 196, 124, 0.06);
 }
 
 .doctrine-card--available {
-  border: 1px solid rgba(100, 150, 220, 0.3);
-  background: rgba(30, 60, 120, 0.3);
+  border-color: var(--line-strong);
 }
 
 .doctrine-card--unavailable {
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
-  opacity: 0.5;
+  opacity: 0.55;
 }
 
 .doctrine-card__head {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 6px;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .doctrine-card__name {
-  font-weight: 700;
-  font-size: 0.88rem;
-  color: #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
-.doctrine-card__name--owned {
-  color: #86efac;
-}
-
-.doctrine-card__category {
-  font-size: 0.7rem;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
-  padding: 1px 6px;
-  flex-shrink: 0;
-  margin-left: 8px;
-  border: 1px solid;
-}
-
-.doctrine-card__category--military {
-  color: #f87171;
-  border-color: #f8717144;
-}
-
-.doctrine-card__category--logistics {
-  color: #fb923c;
-  border-color: #fb923c44;
-}
-
-.doctrine-card__category--economy {
-  color: #4ade80;
-  border-color: #4ade8044;
+.doctrine-card__check {
+  flex: none;
+  color: var(--good);
 }
 
 .doctrine-card__description {
-  font-size: 0.78rem;
-  color: #94a3b8;
-  line-height: 1.5;
-  margin-bottom: 10px;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
 }
 
 .doctrine-card__requires {
-  font-size: 0.7rem;
-  color: #f59e0b;
-  margin-bottom: 8px;
+  color: var(--warn);
+  font-size: var(--fs-xs);
 }
 
 .doctrine-card__buy {
-  width: 100%;
-  padding: 6px 0;
-  border-radius: 6px;
-  border: none;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.doctrine-card__buy--ready {
-  background: rgba(94, 144, 234, 0.25);
-  color: #90cdf4;
-  cursor: pointer;
-}
-
-.doctrine-card__buy--poor {
-  background: rgba(255, 255, 255, 0.05);
-  color: #f87171;
-  cursor: not-allowed;
-}
-
-.doctrine-card__buy--locked {
-  background: rgba(255, 255, 255, 0.05);
-  color: #4a5568;
-  cursor: not-allowed;
+  align-self: flex-start;
+  margin-top: auto;
 }

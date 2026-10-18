@@ -1,3 +1,5 @@
+import { Button } from "../kit/Button";
+import { Window } from "../kit/Window";
 import { useGame } from "../session/GameProvider";
 import "./windows.css";
 
@@ -9,30 +11,32 @@ export function VictoryOverlay() {
   const won = victoryStatus === "player_victory";
 
   return (
-    <div className={`victory-overlay ${won ? "victory-overlay--victory" : "victory-overlay--defeat"}`}>
-      <div className={`victory-overlay__panel ${won ? "victory-overlay__panel--victory" : "victory-overlay__panel--defeat"}`} data-layout="victory">
-        <div className={`victory-overlay__header ${won ? "victory-overlay__header--victory" : "victory-overlay__header--defeat"}`}>
-          <div className={`victory-overlay__title ${won ? "victory-overlay__title--victory" : "victory-overlay__title--defeat"}`}>
-            {won ? "🏆 VICTORY" : "💀 DEFEAT"}
-          </div>
-          <div className="victory-overlay__message">
-            {won
-              ? `${playerCountry.name} has achieved total dominance! All enemy major powers have been defeated.`
-              : `${playerCountry.name} has fallen. The war is lost.`}
-          </div>
-          <div className="victory-overlay__meta">
-            Turn {gameState.turn} • {Object.values(gameState.countryStates).filter((s) => s.defeatedOnTurn !== undefined).length} nations defeated
-          </div>
-        </div>
-        <div className="victory-overlay__actions">
-          <button className="top-bar__btn top-bar__btn--primary" onClick={() => { setGameStarted(false); }}>
+    <Window
+      title={won ? "Victory" : "Defeat"}
+      flag={playerCountry.id}
+      variant="modal"
+      className={`victory-overlay__panel ${won ? "victory-overlay__panel--victory" : "victory-overlay__panel--defeat"}`}
+      backdropClassName={`victory-overlay ${won ? "victory-overlay--victory" : "victory-overlay--defeat"}`}
+      layoutId="victory"
+      footer={
+        <>
+          <Button variant="primary" onClick={() => { setGameStarted(false); }}>
             New Game
-          </button>
-          <button className="top-bar__btn top-bar__btn--secondary" onClick={() => handleLoadGame()}>
+          </Button>
+          <Button variant="secondary" onClick={() => handleLoadGame()}>
             Load Save
-          </button>
-        </div>
+          </Button>
+        </>
+      }
+    >
+      <div className="victory-overlay__message">
+        {won
+          ? `${playerCountry.name} has achieved total dominance! All enemy major powers have been defeated.`
+          : `${playerCountry.name} has fallen. The war is lost.`}
       </div>
-    </div>
+      <div className="victory-overlay__meta">
+        Turn {gameState.turn} • {Object.values(gameState.countryStates).filter((s) => s.defeatedOnTurn !== undefined).length} nations defeated
+      </div>
+    </Window>
   );
 }

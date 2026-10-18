@@ -1,5 +1,7 @@
-import type { DiplomacyActionType } from "../../../game/state/types";
+import type { DiplomacyActionType, StockpileKey } from "../../../game/state/types";
 import { getScaledDiplomacyActionDefinition } from "../../../game/rules/diplomacy";
+import { Badge } from "../../kit/Badge";
+import { ResourceAmount } from "../../kit/ResourceAmount";
 import { useGame } from "../../session/GameProvider";
 
 export function DiplomacyActions() {
@@ -17,7 +19,7 @@ export function DiplomacyActions() {
   if (!selectedDiplomacyCountry || !selectedDiplomacyState) return null;
 
   return (
-    <div className="diplomacy-actions-grid" style={{ marginBottom: "12px" }}>
+    <div className="diplomacy-actions-grid">
       {(["eliteBribery", "publicCampaign", "economicAid", "weedSmuggling", "securityPressure"] as DiplomacyActionType[]).map((actionType) => {
         const action = getScaledDiplomacyActionDefinition(actionType, diplomacyIntensity);
         const affordable = canAfford(action.cost);
@@ -27,7 +29,6 @@ export function DiplomacyActions() {
         const direction = playerBlocId === "BRICS" ? -1 : 1;
         const eliteDelta = action.eliteDelta * direction;
         const publicDelta = action.publicDelta * direction;
-        const costLabel = Object.entries(action.cost).map(([key, amount]) => `${amount} ${key}`).join(" • ");
 
         return (
           <button
@@ -39,14 +40,18 @@ export function DiplomacyActions() {
             <div className="diplo-action-tile__title">{action.label}</div>
             <div className="diplo-action-tile__desc">{action.description}</div>
             <div className="diplo-action-tile__effect-row">
-              <span className={`diplo-action-tile__effect ${eliteDelta >= 0 ? "diplo-action-tile__effect--nato" : "diplo-action-tile__effect--brics"}`}>
+              <Badge tone={eliteDelta >= 0 ? "nato" : "brics"}>
                 Elite {eliteDelta > 0 ? "+" : ""}{eliteDelta}
-              </span>
-              <span className={`diplo-action-tile__effect ${publicDelta >= 0 ? "diplo-action-tile__effect--nato" : "diplo-action-tile__effect--brics"}`}>
+              </Badge>
+              <Badge tone={publicDelta >= 0 ? "nato" : "brics"}>
                 Public {publicDelta > 0 ? "+" : ""}{publicDelta}
-              </span>
+              </Badge>
             </div>
-            <div className="diplo-action-tile__cost">{costLabel}</div>
+            <div className="diplo-action-tile__cost">
+              {Object.entries(action.cost).map(([resource, amount]) => (
+                <ResourceAmount key={resource} resource={resource as StockpileKey} amount={amount ?? 0} />
+              ))}
+            </div>
           </button>
         );
       })}

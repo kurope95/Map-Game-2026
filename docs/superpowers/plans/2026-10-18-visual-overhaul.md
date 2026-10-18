@@ -1091,10 +1091,10 @@ and `v` means vertical bands hoist to fly.
   buttons.
 - **Economy logic map:** emoji become `RESOURCE_META`/`FACILITY_META` icons.
 
-- [ ] **Step 1: Restyle.**
-- [ ] **Step 2: Run the layout compare at both sizes** (PASS) **and take screenshots** of each
+- [x] **Step 1: Restyle.**
+- [x] **Step 2: Run the layout compare at both sizes** (PASS) **and take screenshots** of each
   window. Force the victory overlay by loading a crafted save if needed.
-- [ ] **Step 3: Changelog, then commit** with the message `Restyle diplomacy, doctrines, save/load and notices`.
+- [x] **Step 3: Changelog, then commit** with the message `Restyle diplomacy, doctrines, save/load and notices`.
 
 ### Task 19: Turn report
 

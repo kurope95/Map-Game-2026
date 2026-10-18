@@ -84,15 +84,10 @@
     stockpile: () => layout("stockpile", () => q(".stockpile-popup")),
     facility: () => layout("facility", () => q(".facility-popup")),
     "global-units": () => layout("global-units", () => q(".global-units-panel")),
-    diplomacy: () => layout("diplomacy", () => [...document.querySelectorAll(".float-panel")].find((p) => (((p.querySelector(".float-panel__header") || {}).textContent) || "").trim().startsWith("Diplomacy")) || null),
-    doctrines: () => layout("doctrines", () => {
-      const header = [...document.querySelectorAll("span, h1, h2, h3, div")].find((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.includes("DOCTRINE UPGRADES")));
-      let overlay = header;
-      while (overlay && getComputedStyle(overlay).position !== "fixed") overlay = overlay.parentElement;
-      return overlay ? overlay.firstElementChild : null;
-    }),
-    "save-load": () => layout("save-load", () => q(".save-modal")),
-    "logic-map": () => layout("logic-map", () => q(".logic-map-modal")),
+    diplomacy: () => layout("diplomacy", () => q('[data-layout="diplomacy"]')),
+    doctrines: () => layout("doctrines", () => q('[data-layout="doctrines"]')),
+    "save-load": () => layout("save-load", () => q('[data-layout="save-load"]')),
+    "logic-map": () => layout("logic-map", () => q('[data-layout="logic-map"]')),
   };
   const itemKinds = { "top-bar": "children", "bottom-bar": "buttons", "map-controls": "buttons" };
 
@@ -166,7 +161,7 @@
   // Save/Load modal: close through its backdrop.
   if (await top("savegame")) {
     measure("save-load");
-    const backdrop = layout("save-load-backdrop", () => q(".save-modal-overlay"));
+    const backdrop = layout("save-load-backdrop", () => q('[data-layout="save-load-backdrop"]'));
     if (backdrop) await press(backdrop);
   } else {
     missing.push("save-load");
@@ -178,7 +173,7 @@
   if (logicMapButton) {
     await press(logicMapButton);
     measure("logic-map");
-    const backdrop = layout("logic-map-backdrop", () => q(".logic-map-overlay"));
+    const backdrop = layout("logic-map-backdrop", () => q('[data-layout="logic-map-backdrop"]'));
     if (backdrop) await press(backdrop);
   } else {
     missing.push("logic-map");
