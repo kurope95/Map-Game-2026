@@ -52,6 +52,8 @@ export interface NationLabelInput {
   camera: Camera;
   viewport: Viewport;
   z: number;
+  /** Showcase mode (spec 11.8): names stay on at every zoom level. */
+  alwaysVisible?: boolean;
 }
 
 /**
@@ -60,7 +62,7 @@ export interface NationLabelInput {
  */
 export function drawNationLabels(ctx: CanvasRenderingContext2D, input: NationLabelInput): void {
   const { state, geometry, camera, viewport } = input;
-  const fade = nationLabelFade(input.z);
+  const fade = input.alwaysVisible ? 1 : nationLabelFade(input.z);
   if (fade <= 0) return;
 
   const items: (NationLabelItem & { size: number; spacing: number })[] = [];

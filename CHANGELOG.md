@@ -259,6 +259,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   validate the stored JSON (turn, playerCountryId, regions, units) before the start screen offers
   Continue; `useGameSession` writes through the same constant. 4 tests.
   (plan 2026-10-18-visual-overhaul → Task 29)
+- Showcase mode on the canvas map ([`showcase.ts`](./src/ui/map/render/layers/showcase.ts)):
+  `getShowcaseHighlight` marks the hovered nation's starting territory (from the scenario controllers)
+  and dims every other region; the frame draws a 2 px `#f6e7b0` outline over the highlight and an
+  `rgba(0,0,0,.35)` wash elsewhere, and nation labels stay on at every zoom. 2 tests.
+  (plan 2026-10-18-visual-overhaul → Task 29)
 
 ### Decision
 - Task 27 (map labels and extras), choices where the spec or plan left room (plan 2026-10-18-visual-overhaul → Task 27):

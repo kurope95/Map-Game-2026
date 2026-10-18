@@ -18,6 +18,7 @@ import { drawLinkNetwork, drawSelectionLinks, linkPairs } from "./layers/links";
 import { drawSupplyOverlay } from "./layers/overlays";
 import { drawRegions } from "./layers/regions";
 import { drawSea } from "./layers/sea";
+import { drawShowcaseHighlight } from "./layers/showcase";
 import { drawCounters } from "./layers/units";
 import { setScreenTransform, setWorldTransform } from "./transforms";
 
@@ -63,6 +64,7 @@ function visibleWorldRect(camera: Camera, viewport: Viewport): BBox {
 export function renderFrame(input: FrameInput): FrameHitData {
   const { ctx, viewport, dpr, camera, geometry, derived, state, props } = input;
   const visible = visibleWorldRect(camera, viewport);
+  const showcase = props.mode === "showcase";
 
   // layers 1-9, world space
   drawSea(ctx, geometry, camera, viewport, dpr);
@@ -71,6 +73,9 @@ export function renderFrame(input: FrameInput): FrameHitData {
   drawRegions(ctx, geometry, derived, camera, visible, dpr);
   drawBorders(ctx, geometry, camera);
   drawFrontLine(ctx, geometry, derived, camera);
+  if (showcase && props.highlightCountryId) {
+    drawShowcaseHighlight(ctx, geometry, state, props.highlightCountryId, camera, visible);
+  }
   const selectedRegionId = props.selectedRegionId;
   drawHighlights(
     ctx,
@@ -91,7 +96,7 @@ export function renderFrame(input: FrameInput): FrameHitData {
   setScreenTransform(ctx, dpr);
   const cities = cityScreenPoints(geometry, camera);
   // nation names (layer 16) sit beneath the links, markers and counters so those stay crisp over the big text
-  if (input.fontsReady) drawNationLabels(ctx, { state, geometry, camera, viewport, z: input.z });
+  if (input.fontsReady) drawNationLabels(ctx, { state, geometry, camera, viewport, z: input.z, alwaysVisible: showcase });
   drawLinkNetwork(ctx, linkPairs(state.regions), cities, input.z);
   const pills = drawSelectionLinks(ctx, {
     state,
@@ -103,7 +108,6 @@ export function renderFrame(input: FrameInput): FrameHitData {
   });
   const linkedIds = toSet(selectedRegionId ? state.regions[selectedRegionId]?.adjacentRegionIds : undefined);
   drawCityMarkers(ctx, cities, state, { z: input.z, viewport, selectedRegionId, linkedIds });
-  const showcase = props.mode === "showcase";
   if (!showcase) drawOrderArrows(ctx, derived.arrows, cities, viewport);
   const counters = showcase ? [] : layoutCounters(derived.stacks, cities, input.z, input.expandedRegionId);
   drawCounters(ctx, counters, { state, derived, selectedUnitIds: toSet(props.selectedUnitIds), viewport });
