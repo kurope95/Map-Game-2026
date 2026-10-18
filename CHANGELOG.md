@@ -191,6 +191,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Files: [regionLookup.test.ts](./src/ui/map/geometry/regionLookup.test.ts) (3 tests),
   [boundaries.test.ts](./src/ui/map/geometry/boundaries.test.ts) (7 tests),
   [palette.geometry.test.ts](./src/ui/theme/palette.geometry.test.ts) (1 test)
+- Camera math [`camera.ts`](./src/ui/map/camera.ts): world/screen transforms, `fitCamera`,
+  pointer-anchored `zoomAt`, `clampCamera` (at least 25% of the world stays visible) and the
+  `zoomScaleAtProgress`/`easeOutCubic` easing pair, plus the `MIN_ZOOM`/`MAX_ZOOM` range
+  (0.6x-24x of the fit scale) from spec 11.3. Covered by
+  [`camera.test.ts`](./src/ui/map/camera.test.ts) (9 tests).
+  (plan 2026-10-18-visual-overhaul → Task 23)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -557,6 +563,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a shade variant, all 24 nation labels sit inside one of that nation's starting regions, and every
   geometrically adjacent pair of starting controllers has `rgbDistance ≥ 40`.
   (plan 2026-10-18-visual-overhaul → Task 22)
+- Task 23: `npm test` 144/144 (9 new camera tests), `npx tsc -p tsconfig.app.json --noEmit`
+  0 errors, `npm run build` OK. The transform round-trips within 1e-9, zooming holds the anchor
+  point within 1e-6 and clamps to the given range, fitting centers the bounds with padding,
+  clamping restores at least a quarter of the world from every direction, and the zoom easing hits
+  its endpoints while staying monotonic. (plan 2026-10-18-visual-overhaul → Task 23)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

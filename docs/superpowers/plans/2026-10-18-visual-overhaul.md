@@ -1482,7 +1482,7 @@ export function zoomScaleAtProgress(fromScale: number, toScale: number, t: numbe
 export function easeOutCubic(t: number): number;
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `screenToWorld(worldToScreen(p))` round-trips within 1e-9.
   - `zoomAt` keeps the world point under (sx, sy) fixed within 1e-6 and clamps to min and max.
   - `fitCamera` puts the bounds' center at the viewport's center, and both bounds dimensions fit
@@ -1490,8 +1490,8 @@ export function easeOutCubic(t: number): number;
   - `clampCamera`: after panning the world fully off the right edge, at least 25% of the world's
     width is visible again.
   - `zoomScaleAtProgress(1, 4, 0) === 1`, `(1, 4, 1) === 4`, and it is monotonic.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
-- [ ] **Step 3: Changelog, then commit** with the message `Add map camera math`.
+- [x] **Step 2: Run `npm test`.** Expect FAIL. Implement; expect PASS.
+- [x] **Step 3: Changelog, then commit** with the message `Add map camera math`.
 
 ### Task 24: Derived map data
 
