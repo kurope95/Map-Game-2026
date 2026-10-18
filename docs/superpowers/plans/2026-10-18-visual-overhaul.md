@@ -607,10 +607,10 @@ export function App(): JSX.Element; // <GameProvider><AppScreens /></GameProvide
 - Its root gets `data-layout` set to one of: `panel-region`, `panel-economy`, `panel-recruitment`,
   `panel-orders`, `panel-aiintel`, `panel-warstatus`, `panel-eventlog`.
 
-- [ ] **Step 1: Extract the panels and move their CSS.**
-- [ ] **Step 2: Run the type check, build, manual run** (open every tab) **and the layout compare.**
+- [x] **Step 1: Extract the panels and move their CSS.**
+- [x] **Step 2: Run the type check, build, manual run** (open every tab) **and the layout compare.**
   Expect PASS.
-- [ ] **Step 3: Changelog, then commit** with the message `Split bottom-tab panels`.
+- [x] **Step 3: Changelog, then commit** with the message `Split bottom-tab panels`.
 
 ### Task 10: Split the map-side windows
 

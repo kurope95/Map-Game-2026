@@ -2,37 +2,41 @@ import { getEntrenchmentBonus, getSupplyStatus, getVeterancyLevel } from "../../
 import { TheaterMap } from "../../TheaterMap";
 import { EconomyLogicMap } from "../../EconomyLogicMap";
 import { canBlocUseTransit, getCountryDualTiltLabel, getCountryLeanBloc, getCountryTiltLabel, getScaledDiplomacyActionDefinition, LEANING_THRESHOLD, TRANSIT_SUPPORT_THRESHOLD } from "../../../game/rules/diplomacy";
-import { FACILITY_BUILD_COSTS, UNIT_RECRUITMENT_COSTS, PROCESSING_RECIPES, CHEMICAL_PLANT_RECIPES, MUNITIONS_PLANT_RECIPE, EXTRACTION_FACILITY_RESOURCES, CIVILIAN_GOOD_RECIPES, getFacilityBuildRecipe, getFacilityRepairProfile, getFacilityUpgradeCost, getFortificationBuildProfile, getFortificationRepairProfile, getMilitaryProductionTurns, getReplenishmentCost, getUnitRecruitmentRecipe, MAX_UNIT_STRENGTH, FORTIFICATION_MAX_LEVEL } from "../../../game/content/economyRecipes";
+import { PROCESSING_RECIPES, CHEMICAL_PLANT_RECIPES, MUNITIONS_PLANT_RECIPE, EXTRACTION_FACILITY_RESOURCES, CIVILIAN_GOOD_RECIPES, getFacilityBuildRecipe, getFacilityRepairProfile, getFacilityUpgradeCost, getMilitaryProductionTurns, getReplenishmentCost, getUnitRecruitmentRecipe, MAX_UNIT_STRENGTH, UNIT_RECRUITMENT_COSTS } from "../../../game/content/economyRecipes";
 import { DOCTRINE_DEFINITIONS } from "../../../game/content/doctrines";
 import type { DiplomacyActionType } from "../../../game/state/types";
 import "./GameScreen.css";
-import "../../panels/FloatPanel.css";
-import "../../panels/EconomyPanels.css";
 import { BottomBar } from "../../hud/BottomBar";
 import { SupplyToggle } from "../../hud/SupplyToggle";
 import { ToastStack } from "../../hud/ToastStack";
 import { TopBar } from "../../hud/TopBar";
+import { AiIntelPanel } from "../../panels/AiIntelPanel";
+import { EconomyPanel } from "../../panels/EconomyPanel";
+import { EventLogPanel } from "../../panels/EventLogPanel";
+import { OrdersPanel } from "../../panels/OrdersPanel";
+import { RecruitmentPanel } from "../../panels/RecruitmentPanel";
+import { RegionPanel } from "../../panels/RegionPanel";
+import { WarStatusPanel } from "../../panels/WarStatusPanel";
 import { useGame } from "../../session/GameProvider";
 
 export function GameScreen() {
   const {
     gameState, setGameStarted, playerCountryId, selectedRegionId, setSelectedRegionId, selectedUnitIds,
-    combatReportOpen, setCombatReportOpen, lastEventLogSnapshot, lastBotDecision, bottomOpen, setBottomOpen,
-    activeTab, unitDrawerOpen, setUnitDrawerOpen, globalUnitsOpen, setGlobalUnitsOpen, stockpileOpen,
+    combatReportOpen, setCombatReportOpen, lastEventLogSnapshot, unitDrawerOpen, setUnitDrawerOpen, globalUnitsOpen, setGlobalUnitsOpen, stockpileOpen,
     setStockpileOpen, diplomacyOpen, setDiplomacyOpen, diplomacyTab, setDiplomacyTab, selectedDiplomacyCountryId,
     setSelectedDiplomacyCountryId, diplomacyIntensity, setDiplomacyIntensity, selectedFacilityId, setSelectedFacilityId, dismissedDefeatAnnouncement,
     setDismissedDefeatAnnouncement, logicMapOpen, setLogicMapOpen, doctrineOpen, setDoctrineOpen, showSupplyOverlay,
     saveLoadOpen, setSaveLoadOpen, saveLoadMode, saveSlots, selectedSaveSlotName, setSelectedSaveSlotName,
     saveSlotInput, setSaveSlotInput, playerCountry, playerBlocId, playerTurnActive, selectedRegion,
-    selectedCountry, controllerCountry, pridnestrovieDepotStatus, allPlayerUnits, unitsInRegion, validTargets,
-    addToast, victoryStatus, currentOrders, currentRecommendation, latestDefeatAnnouncement, diplomacyTargets,
+    allPlayerUnits, unitsInRegion, validTargets,
+    addToast, victoryStatus, latestDefeatAnnouncement, diplomacyTargets,
     diplomacyAlliesTargets, diplomacyEnemyTargets, diplomacyNeutralTargets, visibleDiplomacyTargets, diplomacySnapshot, selectedDiplomacyCountry,
     selectedDiplomacyState, selectedSaveSlot, saveToSlot, handleLoadGame, handleLoadSelectedSlot, handleLoadLegacyQuickSave,
     handleDeleteSelectedSlot, handleSelectRegion, handleSelectUnit, handleSelectUnitFromMap, handleSelectFacilityFromMap, handleHoldUnit,
-    handleCancelOrder, handleClearAllOrders, handleReplenishUnit, handlePurchaseDoctrine, canAfford, getMissingResources,
-    getBestOperationalFacility, handleDiplomacyAction, handleBuildFacility, handleUpgradeFacility, handleRepairFacility, handleBuildFortification,
-    handleUpgradeFortification, handleRepairFortification, handleRemoveFacility, handleRecruitUnit, handleCancelBuildOrder, handleToggleChemicalMode,
-    regionBuildOrders, getUnitOrder,
+    handleCancelOrder, handleReplenishUnit, handlePurchaseDoctrine, canAfford, getMissingResources,
+    getBestOperationalFacility, handleDiplomacyAction, handleUpgradeFacility, handleRepairFacility,
+    handleRecruitUnit, handleToggleChemicalMode,
+    getUnitOrder,
   } = useGame();
 
   function renderDiplomacyBar(channel: string, value: number) {
@@ -761,470 +765,13 @@ export function GameScreen() {
       </div>
 
       {/* FLOATING PANELS — each tab opens its own popup over the map */}
-      {bottomOpen && activeTab === "region" && (() => {
-        const economy = gameState.regionEconomies[selectedRegionId];
-        return (
-          <div className="float-panel float-panel--bottom-left">
-            <div className="float-panel__header">
-              <span>{selectedRegion.name}</span>
-              <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
-            </div>
-            <div className="float-panel__body" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div>
-                <div className="float-panel__row" style={{ paddingBottom: "6px", borderBottom: "1px solid rgba(255,255,255,0.1)", marginBottom: "6px" }}>
-                  <span className="float-panel__lbl">Controlled By:</span>
-                  <span style={{ fontWeight: 800, color: controllerCountry.blocId === 'BRICS' ? '#ff9a9d' : controllerCountry.blocId === 'EU_NATO' ? '#9dc2ff' : '#c7d0da', fontSize: "1.05rem" }}>
-                    {controllerCountry.blocId === 'BRICS' ? '🟥' : controllerCountry.blocId === 'EU_NATO' ? '🟦' : '⬜'} {controllerCountry.name}
-                  </span>
-                </div>
-                <div className="float-panel__row"><span className="float-panel__lbl">Core Territory</span><span>{selectedCountry.name}</span></div>
-                <div className="float-panel__row"><span className="float-panel__lbl">Terrain</span><span>{selectedRegion.terrain}</span></div>
-                <div className="float-panel__row"><span className="float-panel__lbl">Value</span><span>{selectedRegion.points} pts</span></div>
-                {selectedRegion.id === "chisinau-pridnestrovie" && (
-                  <>
-                    <div className="float-panel__row">
-                      <span className="float-panel__lbl">Depot</span>
-                      <span style={{ color: pridnestrovieDepotStatus.tone === "claimed" ? "#7fd98b" : pridnestrovieDepotStatus.tone === "claimable" ? "#f2d36b" : "#c0cad5" }}>
-                        {pridnestrovieDepotStatus.label}
-                      </span>
-                    </div>
-                    <div className="float-panel__subtle">{pridnestrovieDepotStatus.detail}</div>
-                  </>
-                )}
-                {economy && (
-                  <>
-                    <div className="float-panel__row"><span className="float-panel__lbl">Population</span><span>{economy.population.toLocaleString()}k</span></div>
-                    <div className="float-panel__row"><span className="float-panel__lbl">Stability</span><span style={{ color: economy.stability >= 70 ? "#8bc99a" : economy.stability >= 40 ? "#e8c96a" : "#ff6b6b" }}>{economy.stability}%</span></div>
-                    <div className="float-panel__row"><span className="float-panel__lbl">Recruitable</span><span>{economy.recruitablePool.toLocaleString()}</span></div>
-                    <div className="float-panel__row"><span className="float-panel__lbl">Build Slots</span><span>{economy.facilities.length}/{economy.buildingSlots}</span></div>
-                  </>
-                )}
-              </div>
-              <div>
-                <div className="economy-section__title" style={{ marginBottom: 4 }}>Deposits</div>
-                {!economy || economy.resourceDeposits.length === 0 ? (
-                  <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>None</span>
-                ) : (
-                  <div className="deposit-list">
-                    {economy.resourceDeposits.map((dep, i) => (
-                      <div key={i} className="deposit-item">
-                        <span className="deposit-item__type">{dep.type === "food" ? "Fertility" : dep.type}</span>
-                        <span className="deposit-item__richness">{"★".repeat(dep.richness)}{"☆".repeat(5 - dep.richness)}</span>
-                        {dep.type === "food" && <span style={{ fontSize: "0.55rem", color: "#8bc99a" }}>+{dep.richness * 15}%</span>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="economy-section__title" style={{ marginTop: 8, marginBottom: 4 }}>Adjacent</div>
-                <div style={{ fontSize: "0.65rem", color: "var(--muted)", lineHeight: 1.4 }}>
-                  {selectedRegion.adjacentRegionIds.map((id) => gameState.regions[id].name).join(" · ")}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {bottomOpen && activeTab === "economy" && (() => {
-        const economy = gameState.regionEconomies[selectedRegionId];
-        if (!economy) return null;
-        
-        const civilianFacilitiesList = ["farm", "mine", "oilWell", "powerPlant", "smelter", "civilianFactory", "syntheticRefinery", "chemicalPlant"];
-        const civFacilitiesBuilt = economy.facilities.filter(f => civilianFacilitiesList.includes(f.type));
-        const civOrders = regionBuildOrders.filter(o => {
-          if (o.type === "buildFacility" && o.facilityType) return civilianFacilitiesList.includes(o.facilityType);
-          if (o.type === "upgradeFacility" && o.facilityId) {
-            const fac = economy.facilities.find(f => f.id === o.facilityId);
-            return fac && civilianFacilitiesList.includes(fac.type);
-          }
-          if (o.type === "repairFacility" && o.facilityId) {
-            const fac = economy.facilities.find(f => f.id === o.facilityId);
-            return fac && civilianFacilitiesList.includes(fac.type);
-          }
-          return false;
-        });
-
-        return (
-          <div className="float-panel float-panel--bottom-center float-panel--wide">
-            <div className="float-panel__header">
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span>{selectedRegion.name} — Economy</span>
-                <button className="build-btn build-btn--cancel" style={{ padding: "4px 8px" }} onClick={() => setLogicMapOpen(true)}>📊 Logic Map</button>
-              </div>
-              <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
-            </div>
-            <div className="float-panel__body economy-tab">
-              {/* COL 1: Facilities (clickable) */}
-              <div className="economy-tab__col">
-                <div className="economy-section__title">Civilian Facilities</div>
-                {civFacilitiesBuilt.length === 0 ? (
-                  <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>No facilities built</span>
-                ) : (
-                  <div className="facility-list">
-                    {civFacilitiesBuilt.map((fac) => (
-                      <div
-                        key={fac.id}
-                        className={`facility-item facility-item--clickable ${fac.damaged ? "facility-item--damaged" : ""} ${selectedFacilityId === fac.id ? "facility-item--active" : ""}`}
-                        onClick={() => setSelectedFacilityId(selectedFacilityId === fac.id ? null : fac.id)}
-                      >
-                        <span className="facility-item__type">{fac.type}</span>
-                        <span className="facility-item__level">Lv.{fac.level}</span>
-                        {fac.chemicalMode && <span className="facility-item__mode">{fac.chemicalMode}</span>}
-                        {fac.damaged && <span className="facility-item__damaged">DMG</span>}
-                        <button className="facility-item__remove" title="Demolish" onClick={(e) => { e.stopPropagation(); handleRemoveFacility(selectedRegionId, fac.id); }}>✕</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                <div className="economy-section__title" style={{ marginTop: 12 }}>Build Status ({economy.facilities.length}/{economy.buildingSlots} Region Slots)</div>
-                {civOrders.length > 0 ? (
-                  <div className="build-queue" style={{ marginBottom: 6 }}>
-                    {civOrders.map((order) => (
-                      <div key={order.id} className="build-queue__item">
-                        <span className="build-queue__type">
-                          {order.type === "buildFacility"
-                            ? `Build ${order.facilityType}`
-                            : order.type === "repairFacility"
-                              ? `Repair ${economy.facilities.find((f) => f.id === order.facilityId)?.type ?? "facility"}`
-                              : `Upgrade ${economy.facilities.find((f) => f.id === order.facilityId)?.type ?? "facility"}`}
-                        </span>
-                        <span className="build-queue__progress">{order.turnsRemaining}/{order.totalTurns}t</span>
-                        <div className="build-queue__bar">
-                          <div className="build-queue__bar-fill" style={{ width: `${((order.totalTurns - order.turnsRemaining) / order.totalTurns) * 100}%` }} />
-                        </div>
-                        <button className="build-btn build-btn--cancel" onClick={() => handleCancelBuildOrder(order.id)} title="Cancel (refund)">✕</button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>No active construction</span>
-                )}
-              </div>
-              {/* COL 2: Build */}
-              <div className="economy-tab__col">
-                <div className="economy-section__title">Construct Facility</div>
-                {selectedRegion.controllerCountryId === playerCountryId && playerTurnActive && (
-                  <div className="build-actions">
-                    {economy.facilities.length + regionBuildOrders.filter((o) => o.type === "buildFacility").length < economy.buildingSlots ? (
-                      <div className="build-row">
-                        <div className="build-row__buttons">
-                          {FACILITY_BUILD_COSTS.filter(r => civilianFacilitiesList.includes(r.facilityType)).map((recipe) => {
-                            const extractableResources = EXTRACTION_FACILITY_RESOURCES[recipe.facilityType];
-                            if (extractableResources) {
-                              const hasDeposit = economy.resourceDeposits.some((d) => extractableResources.includes(d.type));
-                              if (!hasDeposit) return null;
-                            }
-
-                            const affordable = canAfford(recipe.cost);
-                            const missing = getMissingResources(recipe.cost);
-                            const costStr = Object.entries(recipe.cost).length > 0 ? Object.entries(recipe.cost).map(([k, v]) => `${k}: ${v}`).join(", ") : "Free";
-                            const titleStr = affordable ? `${costStr} — ${recipe.turns} turns` : `Missing: ${missing.join(", ")}\n(Cost: ${costStr} — ${recipe.turns} turns)`;
-                            return (
-                              <button key={recipe.facilityType} className={`build-btn ${affordable ? "" : "build-btn--disabled"}`} disabled={!affordable} onClick={() => handleBuildFacility(selectedRegionId, recipe.facilityType)} title={titleStr}>{recipe.facilityType} ({recipe.turns}t)</button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: "0.75rem", color: "#ff9a9d", padding: "10px 0" }}>Region building limit reached ({economy.buildingSlots} slots).</div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {bottomOpen && activeTab === "military" && (() => {
-        const economy = gameState.regionEconomies[selectedRegionId];
-        if (!economy) return null;
-        
-        const militaryFacilitiesList = ["barracks", "armorFactory", "airFactory", "munitionsPlant"];
-        const milFacilitiesBuilt = economy.facilities.filter(f => militaryFacilitiesList.includes(f.type));
-        const fort = economy.fortification;
-        const milBuildOrders = regionBuildOrders.filter(o => {
-          if (o.type === "buildFacility" && o.facilityType) return militaryFacilitiesList.includes(o.facilityType);
-          if (o.type === "upgradeFacility" && o.facilityId) {
-            const fac = economy.facilities.find(f => f.id === o.facilityId);
-            return fac && militaryFacilitiesList.includes(fac.type);
-          }
-          if (o.type === "repairFacility" && o.facilityId) {
-            const fac = economy.facilities.find(f => f.id === o.facilityId);
-            return fac && militaryFacilitiesList.includes(fac.type);
-          }
-          return false;
-        });
-        const fortOrders = regionBuildOrders.filter(o => o.type === "buildFortification" || o.type === "upgradeFortification" || o.type === "repairFortification");
-        const unitOrders = regionBuildOrders.filter(o => o.type === "recruitUnit" || o.type === "replenishUnit");
-
-        return (
-          <div className="float-panel float-panel--bottom-center float-panel--wide">
-            <div className="float-panel__header">
-              <span>{selectedRegion.name} — Recruitment & Military</span>
-              <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
-            </div>
-            <div className="float-panel__body economy-tab">
-              <div className="economy-tab__col">
-                <div className="economy-section__title">Military Facilities</div>
-                {milFacilitiesBuilt.length === 0 ? (
-                  <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>No facilities built</span>
-                ) : (
-                  <div className="facility-list">
-                    {milFacilitiesBuilt.map((fac) => (
-                      <div
-                        key={fac.id}
-                        className={`facility-item facility-item--clickable ${fac.damaged ? "facility-item--damaged" : ""} ${selectedFacilityId === fac.id ? "facility-item--active" : ""}`}
-                        onClick={() => setSelectedFacilityId(selectedFacilityId === fac.id ? null : fac.id)}
-                      >
-                        <span className="facility-item__type">{fac.type}</span>
-                        <span className="facility-item__level">Lv.{fac.level}</span>
-                        {fac.damaged && <span className="facility-item__damaged">DMG</span>}
-                        <button className="facility-item__remove" title="Demolish" onClick={(e) => { e.stopPropagation(); handleRemoveFacility(selectedRegionId, fac.id); }}>✕</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="economy-section__title" style={{ marginTop: 12 }}>Regional Fortification</div>
-                {!fort ? (
-                  <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>No fortification built</span>
-                ) : (
-                  <div className="facility-list">
-                    <div className={`facility-item ${fort.damaged ? "facility-item--damaged" : ""}`}>
-                      <span className="facility-item__type">fortification</span>
-                      <span className="facility-item__level">Lv.{fort.level}</span>
-                      <span className="facility-item__mode">HP {fort.health}/{fort.maxHealth}</span>
-                      {fort.damaged && <span className="facility-item__damaged">DMG</span>}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="economy-section__title" style={{ marginTop: 12 }}>Build & Recruit Queue ({economy.facilities.length}/{economy.buildingSlots} Region Slots)</div>
-                {milBuildOrders.length + fortOrders.length + unitOrders.length > 0 ? (
-                  <div className="build-queue" style={{ marginBottom: 6 }}>
-                    {[...milBuildOrders, ...fortOrders, ...unitOrders].map((order) => (
-                      <div key={order.id} className="build-queue__item">
-                        <span className="build-queue__type">
-                          {order.type === "recruitUnit"
-                            ? `Recruit ${order.unitType}`
-                            : order.type === "replenishUnit"
-                              ? `Replenish ${order.unitType}`
-                              : order.type === "buildFortification"
-                                ? "Build fortification"
-                                : order.type === "upgradeFortification"
-                                  ? "Upgrade fortification"
-                                  : order.type === "repairFortification"
-                                    ? "Repair fortification"
-                              : order.type === "buildFacility"
-                                ? `Build ${order.facilityType}`
-                                : order.type === "repairFacility"
-                                  ? `Repair ${economy.facilities.find((f) => f.id === order.facilityId)?.type ?? "facility"}`
-                                  : `Upgrade ${economy.facilities.find((f) => f.id === order.facilityId)?.type ?? "facility"}`}
-                        </span>
-                        <span className="build-queue__progress">{order.turnsRemaining}/{order.totalTurns}t</span>
-                        <div className="build-queue__bar">
-                          <div className="build-queue__bar-fill" style={{ width: `${((order.totalTurns - order.turnsRemaining) / order.totalTurns) * 100}%` }} />
-                        </div>
-                        <button className="build-btn build-btn--cancel" onClick={() => handleCancelBuildOrder(order.id)} title="Cancel (refund)">✕</button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>No active military production</span>
-                )}
-              </div>
-
-              <div className="economy-tab__col">
-                <div className="economy-section__title">Military Build Options</div>
-                {selectedRegion.controllerCountryId === playerCountryId && playerTurnActive && (
-                  <div className="build-actions">
-                    {economy.facilities.length + regionBuildOrders.filter((o) => o.type === "buildFacility").length < economy.buildingSlots ? (
-                      <div className="build-row">
-                        <span className="build-row__label" style={{ width: 60 }}>Facilities:</span>
-                        <div className="build-row__buttons">
-                          {FACILITY_BUILD_COSTS.filter(r => militaryFacilitiesList.includes(r.facilityType)).map((recipe) => {
-                            const affordable = canAfford(recipe.cost);
-                            const missing = getMissingResources(recipe.cost);
-                            const costStr = Object.entries(recipe.cost).length > 0 ? Object.entries(recipe.cost).map(([k, v]) => `${k}: ${v}`).join(", ") : "Free";
-                            const titleStr = affordable ? `${costStr} — ${recipe.turns} turns` : `Missing: ${missing.join(", ")}\n(Cost: ${costStr} — ${recipe.turns} turns)`;
-                            return (
-                              <button key={recipe.facilityType} className={`build-btn ${affordable ? "" : "build-btn--disabled"}`} disabled={!affordable} onClick={() => handleBuildFacility(selectedRegionId, recipe.facilityType)} title={titleStr}>{recipe.facilityType} ({recipe.turns}t)</button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: "0.75rem", color: "#ff9a9d", padding: "10px 0" }}>Region building limit reached ({economy.buildingSlots} slots).</div>
-                    )}
-                    <div className="build-row" style={{ marginTop: 8 }}>
-                      <span className="build-row__label" style={{ width: 60 }}>Units:</span>
-                      <div className="build-row__buttons">
-                        {UNIT_RECRUITMENT_COSTS.map((recipe) => {
-                            const bestFacility = getBestOperationalFacility(selectedRegionId, recipe.requiredFacility);
-                            const hasBuilding = bestFacility !== null;
-                            const recruitTurns = getMilitaryProductionTurns(recipe.turns, bestFacility?.level ?? 1);
-                          const affordable = canAfford(recipe.cost);
-                          const missing = getMissingResources(recipe.cost);
-                          const costStr = Object.entries(recipe.cost).map(([k, v]) => `${k}: ${v}`).join(", ");
-                          let titleStr = "";
-                          const dynamicTitleStr = `${costStr} - ${recruitTurns} turns`;
-                          const dynamicMissingTitleStr = `Missing: ${missing.join(", ")}\n(Cost: ${dynamicTitleStr})`;
-                          if (!hasBuilding) titleStr = `Requires: ${recipe.requiredFacility}`;
-                          else if (!affordable) titleStr = `Missing: ${missing.join(", ")}\n(Cost: ${costStr} - ${recruitTurns} turns)`;
-                          else titleStr = `${costStr} - ${recruitTurns} turns`;
-                          return (
-                            <button key={recipe.unitType} className={`build-btn ${hasBuilding && affordable ? "" : "build-btn--disabled"}`} disabled={!hasBuilding || !affordable} onClick={() => handleRecruitUnit(selectedRegionId, recipe.unitType)} title={hasBuilding ? (affordable ? dynamicTitleStr : dynamicMissingTitleStr) : titleStr}>{recipe.unitType} ({recruitTurns}t)</button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div className="build-row" style={{ marginTop: 8 }}>
-                      <span className="build-row__label" style={{ width: 60 }}>Fort:</span>
-                      <div className="build-row__buttons">
-                        {!fort ? (() => {
-                          const buildProfile = getFortificationBuildProfile(1);
-                          if (!buildProfile) return null;
-                          const affordable = canAfford(buildProfile.cost);
-                          const missing = getMissingResources(buildProfile.cost);
-                          const costStr = Object.entries(buildProfile.cost).map(([k, v]) => `${k}: ${v}`).join(", ");
-                          const titleStr = affordable ? `${costStr} - ${buildProfile.turns} turns` : `Missing: ${missing.join(", ")}\n(Cost: ${costStr} - ${buildProfile.turns} turns)`;
-                          return (
-                            <button className={`build-btn ${affordable ? "" : "build-btn--disabled"}`} disabled={!affordable} onClick={() => handleBuildFortification(selectedRegionId)} title={titleStr}>Build Fort (Lv.1)</button>
-                          );
-                        })() : (
-                          <>
-                            {fort.level < FORTIFICATION_MAX_LEVEL && (() => {
-                              const upgradeProfile = getFortificationBuildProfile(fort.level + 1);
-                              if (!upgradeProfile) return null;
-                              const affordable = canAfford(upgradeProfile.cost);
-                              const missing = getMissingResources(upgradeProfile.cost);
-                              const costStr = Object.entries(upgradeProfile.cost).map(([k, v]) => `${k}: ${v}`).join(", ");
-                              const titleStr = affordable ? `${costStr} - ${upgradeProfile.turns} turns` : `Missing: ${missing.join(", ")}\n(Cost: ${costStr} - ${upgradeProfile.turns} turns)`;
-                              return (
-                                <button className={`build-btn ${affordable ? "" : "build-btn--disabled"}`} disabled={!affordable} onClick={() => handleUpgradeFortification(selectedRegionId)} title={titleStr}>Upgrade Fort</button>
-                              );
-                            })()}
-                            {fort.health < fort.maxHealth && (() => {
-                              const repairProfile = getFortificationRepairProfile(fort.level, fort.health, fort.maxHealth);
-                              if (!repairProfile) return null;
-                              const affordable = canAfford(repairProfile.cost);
-                              const missing = getMissingResources(repairProfile.cost);
-                              const costStr = Object.entries(repairProfile.cost).map(([k, v]) => `${k}: ${v}`).join(", ");
-                              const titleStr = affordable ? `${costStr} - ${repairProfile.turns} turns` : `Missing: ${missing.join(", ")}\n(Cost: ${costStr} - ${repairProfile.turns} turns)`;
-                              return (
-                                <button className={`build-btn ${affordable ? "" : "build-btn--disabled"}`} disabled={!affordable} onClick={() => handleRepairFortification(selectedRegionId)} title={titleStr}>Repair Fort</button>
-                              );
-                            })()}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {bottomOpen && activeTab === "orders" && (
-        <div className="float-panel float-panel--bottom-center float-panel--wide">
-          <div className="float-panel__header">
-            <span>Orders — {playerCountry.name} ({currentOrders.length})</span>
-            <div style={{ display: "flex", gap: 6 }}>
-              {currentOrders.length > 0 && <button className="build-btn build-btn--cancel" onClick={handleClearAllOrders}>Clear All</button>}
-              <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
-            </div>
-          </div>
-          <div className="float-panel__body">
-            {currentOrders.length === 0 ? (
-              <p style={{ color: "var(--muted)", fontSize: "0.72rem" }}>No orders issued. Select a unit, then click an adjacent region.</p>
-            ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                {currentOrders.map((order) => {
-                  const unit = gameState.units[order.unitId];
-                  if (!unit) return null;
-                  const fromRegion = gameState.regions[unit.regionId];
-                  const toRegion = gameState.regions[order.targetRegionId];
-                  return (
-                    <span key={order.unitId} style={{ padding: "3px 8px", borderRadius: "3px", fontSize: "0.72rem", background: order.type === "attack" ? "rgba(255,80,80,0.15)" : "rgba(255,255,255,0.06)", border: "1px solid rgba(255,215,0,0.3)", color: unit.blocId === "BRICS" ? "#ff9a9d" : unit.blocId === "EU_NATO" ? "#9dc2ff" : "#c7d0da" }}>
-                      {unit.type} ({fromRegion?.name}) → {order.type} → {toRegion?.name}
-                      <span style={{ marginLeft: "6px", cursor: "pointer", color: "#ff6b6b" }} onClick={() => handleCancelOrder(order.unitId)}>✕</span>
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-            {lastEventLogSnapshot.length > 0 && (
-              <div style={{ marginTop: 8, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 6 }}>
-                <strong style={{ color: "#ff9a9d", fontSize: "0.72rem" }}>Last Turn Events:</strong>
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginTop: 4 }}>
-                  {lastEventLogSnapshot.slice(-8).map((evt, i) => (
-                    <span key={i} style={{ padding: "2px 6px", borderRadius: 3, fontSize: "0.68rem", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>
-                      {evt}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {bottomOpen && activeTab === "ai" && (
-        <div className="float-panel float-panel--bottom-center float-panel--wide">
-          <div className="float-panel__header">
-            <span>AI Intel</span>
-            <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
-          </div>
-          <div className="float-panel__body panel-grid panel-grid--cols-2">
-            <div className="panel-card">
-              <h4>AI Priority</h4>
-              {currentRecommendation ? (
-                <>
-                  <p>{currentRecommendation.reasoning}</p>
-                  <ul>{currentRecommendation.actions.map((a, i) => (<li key={`rec-${i}`}><strong>{gameState.regions[a.targetRegionId]?.name}</strong> ← {a.orderType} from {gameState.regions[a.fromRegionId]?.name} <em style={{ color: "var(--accent)" }}>(score {Math.round(a.score)})</em></li>))}</ul>
-                </>
-              ) : (
-                <p style={{ color: "var(--muted)" }}>Switch to this tab to compute AI recommendation.</p>
-              )}
-            </div>
-            <div className="panel-card">
-              <h4>Last AI Move</h4>
-              <p>{lastBotDecision === null ? "No AI move executed yet." : lastBotDecision.reasoning}</p>
-              {lastBotDecision && (<ul>{lastBotDecision.actions.map((a, i) => (<li key={`last-${i}`}><strong>{gameState.regions[a.targetRegionId]?.name}</strong> {a.orderType} (score {Math.round(a.score)})</li>))}</ul>)}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {bottomOpen && activeTab === "war" && (
-        <div className="float-panel float-panel--bottom-center float-panel--wide">
-          <div className="float-panel__header">
-            <span>War Status</span>
-            <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
-          </div>
-          <div className="float-panel__body panel-grid panel-grid--cols-4">
-            {Object.values(gameState.countries).map((country) => {
-              const status = gameState.countryStates[country.id];
-              return (<div className="panel-card" key={country.id}><p><span className={`war-dot ${status.atWar ? "war-dot--active" : "war-dot--inactive"}`} /><strong>{country.name}</strong> — {status.atWar ? `At war (turn ${status.activatedOnTurn})` : country.alignment === "neutral" ? "Neutral" : "Aligned, not at war"}</p></div>);
-            })}
-          </div>
-        </div>
-      )}
-
-      {bottomOpen && activeTab === "log" && (
-        <div className="float-panel float-panel--bottom-center">
-          <div className="float-panel__header">
-            <span>Event Log</span>
-            <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
-          </div>
-          <div className="float-panel__body panel-card">
-            <ul>{[...gameState.eventLog].slice(-12).reverse().map((entry, i) => (<li key={`${entry}-${i}`}>{entry}</li>))}</ul>
-          </div>
-        </div>
-      )}
+      <RegionPanel />
+      <EconomyPanel />
+      <RecruitmentPanel />
+      <OrdersPanel />
+      <AiIntelPanel />
+      <WarStatusPanel />
+      <EventLogPanel />
 
       <BottomBar />
 

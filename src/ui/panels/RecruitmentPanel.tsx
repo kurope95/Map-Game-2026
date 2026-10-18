@@ -1,0 +1,205 @@
+import "./FloatPanel.css";
+import "./EconomyPanels.css";
+import { FACILITY_BUILD_COSTS, UNIT_RECRUITMENT_COSTS, getMilitaryProductionTurns, getFortificationBuildProfile, getFortificationRepairProfile, FORTIFICATION_MAX_LEVEL } from "../../game/content/economyRecipes";
+import { useGame } from "../session/GameProvider";
+
+export function RecruitmentPanel() {
+  const {
+    gameState, bottomOpen, setBottomOpen, activeTab, selectedRegionId, selectedRegion, playerCountryId,
+    playerTurnActive, canAfford, getMissingResources, getBestOperationalFacility, handleBuildFacility,
+    handleRemoveFacility, handleCancelBuildOrder, handleRecruitUnit, handleBuildFortification,
+    handleUpgradeFortification, handleRepairFortification, selectedFacilityId, setSelectedFacilityId,
+    regionBuildOrders,
+  } = useGame();
+
+  if (!bottomOpen || activeTab !== "military") return null;
+
+  const economy = gameState.regionEconomies[selectedRegionId];
+  if (!economy) return null;
+
+  const militaryFacilitiesList = ["barracks", "armorFactory", "airFactory", "munitionsPlant"];
+  const milFacilitiesBuilt = economy.facilities.filter(f => militaryFacilitiesList.includes(f.type));
+  const fort = economy.fortification;
+  const milBuildOrders = regionBuildOrders.filter(o => {
+    if (o.type === "buildFacility" && o.facilityType) return militaryFacilitiesList.includes(o.facilityType);
+    if (o.type === "upgradeFacility" && o.facilityId) {
+      const fac = economy.facilities.find(f => f.id === o.facilityId);
+      return fac && militaryFacilitiesList.includes(fac.type);
+    }
+    if (o.type === "repairFacility" && o.facilityId) {
+      const fac = economy.facilities.find(f => f.id === o.facilityId);
+      return fac && militaryFacilitiesList.includes(fac.type);
+    }
+    return false;
+  });
+  const fortOrders = regionBuildOrders.filter(o => o.type === "buildFortification" || o.type === "upgradeFortification" || o.type === "repairFortification");
+  const unitOrders = regionBuildOrders.filter(o => o.type === "recruitUnit" || o.type === "replenishUnit");
+
+  return (
+    <div className="float-panel float-panel--bottom-center float-panel--wide" data-layout="panel-recruitment">
+      <div className="float-panel__header">
+        <span>{selectedRegion.name} — Recruitment & Military</span>
+        <button className="float-panel__close" onClick={() => setBottomOpen(false)}>✕</button>
+      </div>
+      <div className="float-panel__body economy-tab">
+        <div className="economy-tab__col">
+          <div className="economy-section__title">Military Facilities</div>
+          {milFacilitiesBuilt.length === 0 ? (
+            <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>No facilities built</span>
+          ) : (
+            <div className="facility-list">
+              {milFacilitiesBuilt.map((fac) => (
+                <div
+                  key={fac.id}
+                  className={`facility-item facility-item--clickable ${fac.damaged ? "facility-item--damaged" : ""} ${selectedFacilityId === fac.id ? "facility-item--active" : ""}`}
+                  onClick={() => setSelectedFacilityId(selectedFacilityId === fac.id ? null : fac.id)}
+                >
+                  <span className="facility-item__type">{fac.type}</span>
+                  <span className="facility-item__level">Lv.{fac.level}</span>
+                  {fac.damaged && <span className="facility-item__damaged">DMG</span>}
+                  <button className="facility-item__remove" title="Demolish" onClick={(e) => { e.stopPropagation(); handleRemoveFacility(selectedRegionId, fac.id); }}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="economy-section__title" style={{ marginTop: 12 }}>Regional Fortification</div>
+          {!fort ? (
+            <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>No fortification built</span>
+          ) : (
+            <div className="facility-list">
+              <div className={`facility-item ${fort.damaged ? "facility-item--damaged" : ""}`}>
+                <span className="facility-item__type">fortification</span>
+                <span className="facility-item__level">Lv.{fort.level}</span>
+                <span className="facility-item__mode">HP {fort.health}/{fort.maxHealth}</span>
+                {fort.damaged && <span className="facility-item__damaged">DMG</span>}
+              </div>
+            </div>
+          )}
+
+          <div className="economy-section__title" style={{ marginTop: 12 }}>Build & Recruit Queue ({economy.facilities.length}/{economy.buildingSlots} Region Slots)</div>
+          {milBuildOrders.length + fortOrders.length + unitOrders.length > 0 ? (
+            <div className="build-queue" style={{ marginBottom: 6 }}>
+              {[...milBuildOrders, ...fortOrders, ...unitOrders].map((order) => (
+                <div key={order.id} className="build-queue__item">
+                  <span className="build-queue__type">
+                    {order.type === "recruitUnit"
+                      ? `Recruit ${order.unitType}`
+                      : order.type === "replenishUnit"
+                        ? `Replenish ${order.unitType}`
+                        : order.type === "buildFortification"
+                          ? "Build fortification"
+                          : order.type === "upgradeFortification"
+                            ? "Upgrade fortification"
+                            : order.type === "repairFortification"
+                              ? "Repair fortification"
+                            : order.type === "buildFacility"
+                              ? `Build ${order.facilityType}`
+                              : order.type === "repairFacility"
+                                ? `Repair ${economy.facilities.find((f) => f.id === order.facilityId)?.type ?? "facility"}`
+                                : `Upgrade ${economy.facilities.find((f) => f.id === order.facilityId)?.type ?? "facility"}`}
+                  </span>
+                  <span className="build-queue__progress">{order.turnsRemaining}/{order.totalTurns}t</span>
+                  <div className="build-queue__bar">
+                    <div className="build-queue__bar-fill" style={{ width: `${((order.totalTurns - order.turnsRemaining) / order.totalTurns) * 100}%` }} />
+                  </div>
+                  <button className="build-btn build-btn--cancel" onClick={() => handleCancelBuildOrder(order.id)} title="Cancel (refund)">✕</button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>No active military production</span>
+          )}
+        </div>
+
+        <div className="economy-tab__col">
+          <div className="economy-section__title">Military Build Options</div>
+          {selectedRegion.controllerCountryId === playerCountryId && playerTurnActive && (
+            <div className="build-actions">
+              {economy.facilities.length + regionBuildOrders.filter((o) => o.type === "buildFacility").length < economy.buildingSlots ? (
+                <div className="build-row">
+                  <span className="build-row__label" style={{ width: 60 }}>Facilities:</span>
+                  <div className="build-row__buttons">
+                    {FACILITY_BUILD_COSTS.filter(r => militaryFacilitiesList.includes(r.facilityType)).map((recipe) => {
+                      const affordable = canAfford(recipe.cost);
+                      const missing = getMissingResources(recipe.cost);
+                      const costStr = Object.entries(recipe.cost).length > 0 ? Object.entries(recipe.cost).map(([k, v]) => `${k}: ${v}`).join(", ") : "Free";
+                      const titleStr = affordable ? `${costStr} — ${recipe.turns} turns` : `Missing: ${missing.join(", ")}\n(Cost: ${costStr} — ${recipe.turns} turns)`;
+                      return (
+                        <button key={recipe.facilityType} className={`build-btn ${affordable ? "" : "build-btn--disabled"}`} disabled={!affordable} onClick={() => handleBuildFacility(selectedRegionId, recipe.facilityType)} title={titleStr}>{recipe.facilityType} ({recipe.turns}t)</button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: "0.75rem", color: "#ff9a9d", padding: "10px 0" }}>Region building limit reached ({economy.buildingSlots} slots).</div>
+              )}
+              <div className="build-row" style={{ marginTop: 8 }}>
+                <span className="build-row__label" style={{ width: 60 }}>Units:</span>
+                <div className="build-row__buttons">
+                  {UNIT_RECRUITMENT_COSTS.map((recipe) => {
+                      const bestFacility = getBestOperationalFacility(selectedRegionId, recipe.requiredFacility);
+                      const hasBuilding = bestFacility !== null;
+                      const recruitTurns = getMilitaryProductionTurns(recipe.turns, bestFacility?.level ?? 1);
+                    const affordable = canAfford(recipe.cost);
+                    const missing = getMissingResources(recipe.cost);
+                    const costStr = Object.entries(recipe.cost).map(([k, v]) => `${k}: ${v}`).join(", ");
+                    let titleStr = "";
+                    const dynamicTitleStr = `${costStr} - ${recruitTurns} turns`;
+                    const dynamicMissingTitleStr = `Missing: ${missing.join(", ")}\n(Cost: ${dynamicTitleStr})`;
+                    if (!hasBuilding) titleStr = `Requires: ${recipe.requiredFacility}`;
+                    else if (!affordable) titleStr = `Missing: ${missing.join(", ")}\n(Cost: ${costStr} - ${recruitTurns} turns)`;
+                    else titleStr = `${costStr} - ${recruitTurns} turns`;
+                    return (
+                      <button key={recipe.unitType} className={`build-btn ${hasBuilding && affordable ? "" : "build-btn--disabled"}`} disabled={!hasBuilding || !affordable} onClick={() => handleRecruitUnit(selectedRegionId, recipe.unitType)} title={hasBuilding ? (affordable ? dynamicTitleStr : dynamicMissingTitleStr) : titleStr}>{recipe.unitType} ({recruitTurns}t)</button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="build-row" style={{ marginTop: 8 }}>
+                <span className="build-row__label" style={{ width: 60 }}>Fort:</span>
+                <div className="build-row__buttons">
+                  {!fort ? (() => {
+                    const buildProfile = getFortificationBuildProfile(1);
+                    if (!buildProfile) return null;
+                    const affordable = canAfford(buildProfile.cost);
+                    const missing = getMissingResources(buildProfile.cost);
+                    const costStr = Object.entries(buildProfile.cost).map(([k, v]) => `${k}: ${v}`).join(", ");
+                    const titleStr = affordable ? `${costStr} - ${buildProfile.turns} turns` : `Missing: ${missing.join(", ")}\n(Cost: ${costStr} - ${buildProfile.turns} turns)`;
+                    return (
+                      <button className={`build-btn ${affordable ? "" : "build-btn--disabled"}`} disabled={!affordable} onClick={() => handleBuildFortification(selectedRegionId)} title={titleStr}>Build Fort (Lv.1)</button>
+                    );
+                  })() : (
+                    <>
+                      {fort.level < FORTIFICATION_MAX_LEVEL && (() => {
+                        const upgradeProfile = getFortificationBuildProfile(fort.level + 1);
+                        if (!upgradeProfile) return null;
+                        const affordable = canAfford(upgradeProfile.cost);
+                        const missing = getMissingResources(upgradeProfile.cost);
+                        const costStr = Object.entries(upgradeProfile.cost).map(([k, v]) => `${k}: ${v}`).join(", ");
+                        const titleStr = affordable ? `${costStr} - ${upgradeProfile.turns} turns` : `Missing: ${missing.join(", ")}\n(Cost: ${costStr} - ${upgradeProfile.turns} turns)`;
+                        return (
+                          <button className={`build-btn ${affordable ? "" : "build-btn--disabled"}`} disabled={!affordable} onClick={() => handleUpgradeFortification(selectedRegionId)} title={titleStr}>Upgrade Fort</button>
+                        );
+                      })()}
+                      {fort.health < fort.maxHealth && (() => {
+                        const repairProfile = getFortificationRepairProfile(fort.level, fort.health, fort.maxHealth);
+                        if (!repairProfile) return null;
+                        const affordable = canAfford(repairProfile.cost);
+                        const missing = getMissingResources(repairProfile.cost);
+                        const costStr = Object.entries(repairProfile.cost).map(([k, v]) => `${k}: ${v}`).join(", ");
+                        const titleStr = affordable ? `${costStr} - ${repairProfile.turns} turns` : `Missing: ${missing.join(", ")}\n(Cost: ${costStr} - ${repairProfile.turns} turns)`;
+                        return (
+                          <button className={`build-btn ${affordable ? "" : "build-btn--disabled"}`} disabled={!affordable} onClick={() => handleRepairFortification(selectedRegionId)} title={titleStr}>Repair Fort</button>
+                        );
+                      })()}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

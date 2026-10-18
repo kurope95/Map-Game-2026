@@ -101,6 +101,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `data-layout` (`top-bar`, `bottom-bar`, `map-stage`, `supply-toggle`) and `data-layout-key` on every top-bar
   and bottom-tab control, with the exact keys the legacy capture produced.
   (plan 2026-10-18-visual-overhaul → Task 8)
+- Bottom-tab panel components [`RegionPanel`](./src/ui/panels/RegionPanel.tsx),
+  [`EconomyPanel`](./src/ui/panels/EconomyPanel.tsx), [`RecruitmentPanel`](./src/ui/panels/RecruitmentPanel.tsx),
+  [`OrdersPanel`](./src/ui/panels/OrdersPanel.tsx), [`AiIntelPanel`](./src/ui/panels/AiIntelPanel.tsx),
+  [`WarStatusPanel`](./src/ui/panels/WarStatusPanel.tsx) and [`EventLogPanel`](./src/ui/panels/EventLogPanel.tsx).
+  They are prop-less, read `useGame()`, render only when their tab is open, and their roots carry `data-layout`
+  `panel-region`, `panel-economy`, `panel-recruitment`, `panel-orders`, `panel-aiintel`, `panel-warstatus` and
+  `panel-eventlog`. (plan 2026-10-18-visual-overhaul → Task 9)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -152,16 +159,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `.toast-stack` / `.toast--info|success|warning|danger` with identical values. (The `@media (max-width: 1100px)`
   block holds only landing-page rules, so it has no shell part to move.)
   (plan 2026-10-18-visual-overhaul → Task 8)
-- **Task 9 STATUS: PARTIAL (part a of 2 done, part b NOT started).** Part a: the `.float-panel*`, `.panel-grid`,
-  `.panel-card`, `.war-dot` and `.region-strip` rules ([`FloatPanel.css`](./src/ui/panels/FloatPanel.css), 190
-  lines) and the `.economy-*`, `.deposit-*`, `.facility-item*`/`.facility-list`, `.build-*` and `.capture-*`
-  rules ([`EconomyPanels.css`](./src/ui/panels/EconomyPanels.css), 262 lines) moved verbatim out of
-  [`styles.css`](./src/ui/styles.css) (445 lines; a chunk-level check against git found nothing lost or added);
-  `GameScreen.tsx` imports both files for now. Part b (extract `RegionPanel`, `EconomyPanel`,
-  `RecruitmentPanel`, `OrdersPanel`, `AiIntelPanel`, `WarStatusPanel`, `EventLogPanel` into `src/ui/panels/`
-  with `data-layout="panel-*"`) is NOT started. Part a is verified in the browser: the computed-style and box
-  fingerprint of 18 UI states (3,392 elements) is identical to before the move; the layout lock and the walk-
-  through were not rerun for part a. The session hit its usage limit here.
+- Task 9 moved the bottom-tab panels out of [`GameScreen.tsx`](./src/ui/screens/game/GameScreen.tsx) in two steps.
+  First the `.float-panel*`, `.panel-grid`, `.panel-card`, `.war-dot` and `.region-strip` rules
+  ([`FloatPanel.css`](./src/ui/panels/FloatPanel.css), 190 lines) and the `.economy-*`, `.deposit-*`,
+  `.facility-item*`/`.facility-list`, `.build-*` and `.capture-*` rules
+  ([`EconomyPanels.css`](./src/ui/panels/EconomyPanels.css), 262 lines) moved verbatim out of
+  [`styles.css`](./src/ui/styles.css) (445 lines; a chunk-level check against git found nothing lost or added).
+  Then the seven IIFE blocks (465 lines) became the component calls listed above, and `GameScreen.tsx` dropped
+  the imports and `useGame()` names that only the panels used; each panel imports the CSS it needs. The JSX
+  moved verbatim — a line-by-line comparison against the previous commit found no differences apart from
+  indentation and the new `data-layout` attributes.
   (plan 2026-10-18-visual-overhaul → Task 9)
 
 ### Verified
@@ -207,6 +214,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   computed-style and box fingerprint of 18 UI states (3,392 elements, taken before and after) is identical; the
   only differences are the 20 class renames of the supply toggle and the toast. (The fingerprint tool lives in
   the session notes folder, not in the repo.) (plan 2026-10-18-visual-overhaul → Task 8)
+- Task 9: `npm test` 88/88, `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm run build`,
+  `npm run check:layers`, `npm run smoke` and `npm run balance-check` ("Balance check passed") all pass.
+  Layout lock PASS at 1440x900 (20 probes, `missing: []`). The extraction was also checked mechanically: the
+  seven extracted JSX bodies match the removed blocks line for line. A headless-Chrome walk-through started as
+  Russia, selected a Moscow infantry (9 move targets), ordered a move to Saint Petersburg (toast shown, Orders
+  panel showed the order and its cancel cleared it), pressed End Turn (turn 2, battle report opened and
+  dismissed), and opened all seven tabs with their expected headers and no console errors (only the
+  pre-existing `favicon.ico` 404). (plan 2026-10-18-visual-overhaul → Task 9)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
