@@ -42,6 +42,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (LF everywhere, CRLF for `.bat` so `launch.bat` labels keep working).
 - [`CLAUDE.md`](./CLAUDE.md): agreed direction (deep grand strategy, turn-based, single player,
   keep main-screen control layout, smooth pan/zoom), commands, code layout, git and changelog rules.
+- Round 1 design spec [`2026-10-18-visual-overhaul-design.md`](./docs/superpowers/specs/2026-10-18-visual-overhaul-design.md):
+  split `App.tsx`/`styles.css`, style C ("painted strategy map") restyle with frozen main-screen
+  layout, new start screen and turn report, Canvas 2D map with per-region controller colors,
+  occupation stripes, front line, link lines, NATO counters and a ≤ 8 ms frame budget.
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
