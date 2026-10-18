@@ -1,4 +1,5 @@
 import type { CountryDefinition, CountryId, CountryState } from "../game/state/types";
+import { getDifficulty, getStartingStatus } from "./screens/start/briefing";
 import "./LandingPage.css";
 
 interface NationCard {
@@ -19,36 +20,6 @@ const tierLabel: Record<CountryDefinition["tier"], string> = {
   middle: "Middle",
   minor: "Minor"
 };
-
-function getStartingStatus(card: NationCard): string {
-  if (card.state.atWar) {
-    return "At war";
-  }
-
-  const scriptedTurnRule = card.country.warEntryRules.find((rule) => rule.type === "scripted_turn");
-  if (scriptedTurnRule && scriptedTurnRule.type === "scripted_turn") {
-    return `Joins turn ${scriptedTurnRule.turn}`;
-  }
-
-  if (card.country.alignment === "aligned_non_belligerent") {
-    return "Aligned reserve";
-  }
-
-  return "Neutral";
-}
-
-function getDifficulty(card: NationCard): string {
-  if (card.country.alignment === "neutral") {
-    return "Very hard";
-  }
-  if (card.country.tier === "major") {
-    return "Easy";
-  }
-  if (card.country.tier === "middle") {
-    return "Medium";
-  }
-  return "Hard";
-}
 
 function getBlocGroup(card: NationCard): "BRICS" | "NEUTRAL" | "EU_NATO" {
   if (card.country.blocId === "BRICS") {
@@ -107,10 +78,10 @@ export function LandingPage({
                       <div>
                         <div className="nation-card__name">{card.country.name}</div>
                         <div className="nation-card__meta">
-                          {tierLabel[card.country.tier]} · {getDifficulty(card)}
+                          {tierLabel[card.country.tier]} · {getDifficulty(card.country)}
                         </div>
                       </div>
-                      <span className="nation-card__badge">{getStartingStatus(card)}</span>
+                      <span className="nation-card__badge">{getStartingStatus(card.country, card.state)}</span>
                     </div>
 
                     <div className="nation-card__stats">

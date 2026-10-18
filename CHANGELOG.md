@@ -250,6 +250,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   tests. **Not done in Task 27 or 28: the benchmark with real requestAnimationFrame deltas (the pane only draws while
   the Claude window is in front); see the Task 28 Verified entry.**
   (plan 2026-10-18-visual-overhaul → Task 27)
+- Nation briefing logic for the start screen ([`briefing.ts`](./src/ui/screens/start/briefing.ts)):
+  `getNationBriefing` reads a nation's bloc, tier, difficulty pips, opening status, capital, region
+  and key-city counts, units by type and war-entry text from the game state; `getStartingStatus` and
+  `getDifficulty` moved out of `LandingPage.tsx` unchanged. 4 tests.
+  (plan 2026-10-18-visual-overhaul → Task 29)
 
 ### Decision
 - Task 27 (map labels and extras), choices where the spec or plan left room (plan 2026-10-18-visual-overhaul → Task 27):
