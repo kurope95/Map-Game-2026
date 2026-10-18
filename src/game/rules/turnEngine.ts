@@ -11,6 +11,7 @@ import {
 import { resetAllyTargetClaims } from "../ai/allyCoordination";
 import { resolveOrders } from "./orderResolution";
 import { processEconomy } from "./economyEngine";
+import { hasBlocPathToRegion } from "./strategicDepot";
 
 function getControllerBlocId(state: GameState, controllerCountryId: CountryId): BlocId | undefined {
   return state.countries[controllerCountryId].blocId;
@@ -251,32 +252,6 @@ function applyCountryDefeatIfNeeded(state: GameState, defeatedCountryId: Country
   }
 
   return defeatCountry(state, defeatedCountryId, conquerorCountryId);
-}
-
-function hasBlocPathToRegion(state: GameState, countryId: CountryId, targetRegionId: string): boolean {
-  const blocId = state.countries[countryId].blocId;
-  const capitalRegionId = state.countries[countryId].capitalRegionId;
-  if (!blocId || !state.regions[capitalRegionId] || !state.regions[targetRegionId]) {
-    return false;
-  }
-
-  const visited = new Set<string>();
-  const queue = [capitalRegionId];
-  while (queue.length > 0) {
-    const regionId = queue.shift()!;
-    if (visited.has(regionId)) continue;
-    const region = state.regions[regionId];
-    if (region.controllerBlocId !== blocId) continue;
-    if (regionId === targetRegionId) return true;
-    visited.add(regionId);
-    for (const adjacentId of region.adjacentRegionIds) {
-      if (!visited.has(adjacentId)) {
-        queue.push(adjacentId);
-      }
-    }
-  }
-
-  return false;
 }
 
 function claimPridnestrovieDepot(state: GameState): GameState {

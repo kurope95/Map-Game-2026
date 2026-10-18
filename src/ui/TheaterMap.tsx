@@ -5,6 +5,7 @@ import { geoGraticule10, geoMercator, geoPath, type GeoProjection } from "d3-geo
 import countries50m from "world-atlas/countries-50m.json";
 import { CountryId, GameState, UnitDefinition } from "../game/state/types";
 import { europeCountryIds, theaterMapLayout, theaterMapSize } from "../game/content/regionGeo";
+import { getPridnestrovieDepotStatus } from "../game/rules/strategicDepot";
 
 interface TheaterMapProps {
   state: GameState;
@@ -222,63 +223,6 @@ function getSupplyIndicator(unit: UnitDefinition) {
     return { fill: "#d5d96b", stroke: "rgba(220, 230, 120, 0.9)" };
   }
   return null;
-}
-
-function hasBlocPathToRegion(state: GameState, countryId: CountryId, targetRegionId: string): boolean {
-  const blocId = state.countries[countryId].blocId;
-  const capitalRegionId = state.countries[countryId].capitalRegionId;
-  if (!blocId || !state.regions[capitalRegionId] || !state.regions[targetRegionId]) {
-    return false;
-  }
-
-  const visited = new Set<string>();
-  const queue = [capitalRegionId];
-  while (queue.length > 0) {
-    const regionId = queue.shift()!;
-    if (visited.has(regionId)) continue;
-    const region = state.regions[regionId];
-    if (region.controllerBlocId !== blocId) continue;
-    if (regionId === targetRegionId) return true;
-    visited.add(regionId);
-    for (const adjacentId of region.adjacentRegionIds) {
-      if (!visited.has(adjacentId)) {
-        queue.push(adjacentId);
-      }
-    }
-  }
-
-  return false;
-}
-
-function getPridnestrovieDepotStatus(state: GameState) {
-  if (state.history.claimedStrategicDepots.includes("pridnestrovie-depot")) {
-    return { tone: "claimed" as const, label: "Claimed" };
-  }
-
-  const depotRegion = state.regions["chisinau-pridnestrovie"];
-  const odesaRegion = state.regions["odesa"];
-  if (!depotRegion || !odesaRegion) {
-    return { tone: "locked" as const, label: "Unavailable" };
-  }
-
-  if (!depotRegion.controllerBlocId || depotRegion.controllerBlocId !== odesaRegion.controllerBlocId) {
-    return { tone: "locked" as const, label: "Locked" };
-  }
-
-  const claimantCountryId =
-    depotRegion.controllerBlocId === "EU_NATO"
-      ? depotRegion.controllerCountryId
-      : odesaRegion.controllerCountryId;
-
-  if (state.countries[claimantCountryId].blocId !== depotRegion.controllerBlocId) {
-    return { tone: "locked" as const, label: "Locked" };
-  }
-
-  if (!hasBlocPathToRegion(state, claimantCountryId, depotRegion.id)) {
-    return { tone: "locked" as const, label: "Bridge needed" };
-  }
-
-  return { tone: "claimable" as const, label: "Claimable" };
 }
 
 function areStringArraysEqual(left: string[], right: string[]) {

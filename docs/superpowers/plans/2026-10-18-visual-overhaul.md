@@ -370,7 +370,7 @@ export function hasBlocPathToRegion(state: GameState, countryId: CountryId, targ
 export function getPridnestrovieDepotStatus(state: GameState): DepotStatus; // labels and details exactly as App.tsx:116-145
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - "locked at start": expect
     `{ tone: "locked", label: "Locked", detail: "One bloc must control both Tiraspol and Odesa." }`.
   - "claimed once seized": push `"pridnestrovie-depot"` to `history.claimedStrategicDepots`, then
@@ -380,10 +380,10 @@ export function getPridnestrovieDepotStatus(state: GameState): DepotStatus; // l
     `"A land path from the claimant capital to Tiraspol is required."`.
   - "claimable with a land path": set every region to `RUSSIA`/`BRICS`, then expect
     `{ tone: "claimable", label: "Claimable", detail: "Russia can now seize the depot." }`.
-- [ ] **Step 2: Run `npm test`.** Expect FAIL.
-- [ ] **Step 3: Implement** by moving `App.tsx:90-145`, then remove the three old copies.
-- [ ] **Step 4: Run** `npm test`, `npm run smoke` and `npm run balance-check`. Expect PASS.
-- [ ] **Step 5: Run the layout compare.** Expect PASS. Then changelog, then commit
+- [x] **Step 2: Run `npm test`.** Expect FAIL.
+- [x] **Step 3: Implement** by moving `App.tsx:90-145`, then remove the three old copies.
+- [x] **Step 4: Run** `npm test`, `npm run smoke` and `npm run balance-check`. Expect PASS.
+- [x] **Step 5: Run the layout compare.** Expect PASS. Then changelog, then commit
   `Extract strategic depot status into one module`.
 
 ### Task 6: Pure player actions

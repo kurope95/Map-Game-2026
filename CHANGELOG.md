@@ -77,6 +77,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   point fixes, empty until Task 21) and `getRegionGeoPoint()`; tested in
   [`regionGeo.test.ts`](./src/game/content/regionGeo.test.ts).
   (plan 2026-10-18-visual-overhaul → Task 4)
+- [`strategicDepot.ts`](./src/game/rules/strategicDepot.ts): the single home of `hasBlocPathToRegion` and
+  `getPridnestrovieDepotStatus` (with its `detail` text), covered by
+  [`strategicDepot.test.ts`](./src/game/rules/strategicDepot.test.ts) (9 tests: locked, claimed,
+  bridge needed, claimable, unavailable, claimant mismatch, path search).
+  (plan 2026-10-18-visual-overhaul → Task 5)
 
 ### Decision
 - Spec refinements made while planning: the layout lock compares bar controls by order and row (so
@@ -101,6 +106,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   imports UI code ([`createInitialState.ts`](./src/game/state/createInitialState.ts) and
   [`TheaterMap.tsx`](./src/ui/TheaterMap.tsx) now import it from there).
   (plan 2026-10-18-visual-overhaul → Task 4)
+- The depot path and status code that was copied three times ([`turnEngine.ts`](./src/game/rules/turnEngine.ts),
+  [`App.tsx`](./src/app/App.tsx), [`TheaterMap.tsx`](./src/ui/TheaterMap.tsx)) now imports the one copy in
+  `strategicDepot.ts`; behavior is unchanged (the map's copy only differed in label wording, and the map
+  reads just `.tone`). (plan 2026-10-18-visual-overhaul → Task 5)
 
 ### Verified
 - Baseline on `main` before improvements: `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
@@ -123,6 +132,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   "Map validation passed for 63 regions", layout lock PASS at 1440x900 (full reload; the dev server's
   hot reload of the moved module threw a transient `lon` error that a reload clears).
   (plan 2026-10-18-visual-overhaul → Task 4)
+- Task 5: `npm test` 40/40, `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm run build`,
+  `npm run check:layers`, `npm run smoke` and `npm run balance-check` passed; layout lock PASS at 1440x900;
+  browser walk-through (start, move order, End Turn and report, all 8 tabs, no console errors) passed and
+  the Region panel for Tiraspol still shows `Depot: Locked` with its detail text.
+  (plan 2026-10-18-visual-overhaul → Task 5)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 
