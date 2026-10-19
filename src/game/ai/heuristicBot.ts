@@ -1,4 +1,4 @@
-import { getValidTargets, issueOrder } from "../rules/orderResolution";
+import { getValidTargets, isRegionOpenForCountryTransit, issueOrder } from "../rules/orderResolution";
 import { BlocId, CountryId, DiplomacyActionType, FacilityType, GameState, Order, StockpileKey, UnitType } from "../state/types";
 import {
   FACILITY_BUILD_COSTS,
@@ -1155,6 +1155,23 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
           new Set(reinforcementTargets.map((entry) => entry.regionId))
         )
       : null;
+  // Staging line for the primary objective: friendly ground adjacent to the
+  // objective where attackers can mass. A non-belligerent ally's territory is
+  // excluded because attacks launched from it are blocked.
+  const stagingDestinations = new Set<string>();
+  if (primaryObjective) {
+    const objective = state.regions[primaryObjective];
+    if (objective.controllerCountryId === countryId) stagingDestinations.add(primaryObjective);
+    for (const adjacentId of objective.adjacentRegionIds) {
+      const adjacent = state.regions[adjacentId];
+      if (!adjacent) continue;
+      if (!isRegionOpenForCountryTransit(state, countryId, blocId, adjacentId, { ignoreStacking: true })) continue;
+      if (adjacent.controllerCountryId !== countryId && state.countryStates[adjacent.controllerCountryId]?.atWar !== true) continue;
+      stagingDestinations.add(adjacentId);
+    }
+  }
+  const stagingDistances: RouteDistances | null =
+    stagingDestinations.size > 0 ? buildRouteDistances(state, countryId, stagingDestinations) : null;
 
   const actions: BotAction[] = [];
   const claimedTargetCounts = new Map<string, number>();
@@ -1168,6 +1185,8 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
     orderType: "move" | "attack" | "airSupport" | "bombard" | "missileStrike";
     score: number;
     reasons: string[];
+    /** Counts toward the per-objective staging cap when assigned. */
+    isPrimaryStaging?: boolean;
   }
 
   const allCandidates: CandidateAction[] = [];
@@ -1302,6 +1321,9 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
     }
 
     // Land units: original logic below
+    let hasAttackCandidate = false;
+    let hasReinforcementCandidate = false;
+    let hasMarchCandidate = false;
     const sourceFront = frontlineByRegionId.get(unit.regionId);
     const sourceDeficit = sourceFront ? sourceFront.desiredDefenders - sourceFront.defendingUnits.length : 0;
     const canLeaveRegion = !reservedUnits.has(unit.id) || (sourceFront?.surplus ?? 0) > 0;
@@ -1341,6 +1363,7 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
           routeDistances
         );
         adjacentReinforcementTargets.add(`${unit.id}:${targetId}`);
+        hasReinforcementCandidate = true;
         allCandidates.push({
           unitId: unit.id,
           fromRegionId: unit.regionId,
@@ -1406,6 +1429,7 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
       );
 
       attackTargetCaps.set(targetId, Math.max(attackTargetCaps.get(targetId) ?? 1, targetCap));
+      hasAttackCandidate = true;
 
       allCandidates.push({
         unitId: unit.id,
@@ -1470,6 +1494,7 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
           remainingDistance * AI_ROUTE_WEIGHTS.reinforcementMarchPerHop +
           supplyAdjustment;
 
+        hasMarchCandidate = true;
         allCandidates.push({
           unitId: unit.id,
           fromRegionId: unit.regionId,
@@ -1531,16 +1556,55 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
         ],
       });
     }
+
+    // Mass for the primary objective: a surplus unit with no attack, adjacent
+    // reinforcement or march candidate marches toward the staging line so the
+    // next attack goes in with weight instead of trickling.
+    if (
+      stagingDistances &&
+      primaryObjective &&
+      !hasAttackCandidate &&
+      !hasReinforcementCandidate &&
+      !hasMarchCandidate
+    ) {
+      for (const targetId of moves) {
+        if (getRouteProgress(stagingDistances, unit.regionId, targetId) <= 0) continue;
+        const targetSupplied = suppliedRegionIds.has(targetId) && state.regions[targetId].controllerBlocId === unit.blocId;
+        if (criticallyUnsupplied && !targetSupplied) continue;
+        const remainingDistance = getRouteDistance(stagingDistances, targetId);
+        const score =
+          AI_ROUTE_WEIGHTS.primaryStagingBase +
+          primaryObjectiveBonus * 0.2 -
+          remainingDistance * AI_ROUTE_WEIGHTS.primaryStagingPerHop;
+
+        allCandidates.push({
+          unitId: unit.id,
+          fromRegionId: unit.regionId,
+          targetRegionId: targetId,
+          orderType: "move",
+          score,
+          reasons: [
+            `Stages for the attack on ${state.regions[primaryObjective].name}; ${remainingDistance} hop${remainingDistance === 1 ? "" : "s"} to the staging line.`,
+            targetSupplied
+              ? "Staging move stays inside the capital supply network."
+              : "Staging move ends outside the capital supply network.",
+          ],
+          isPrimaryStaging: true,
+        });
+      }
+    }
   }
 
   allCandidates.sort((left, right) => right.score - left.score);
 
   const assignedUnits = new Set<string>();
+  let claimedStagingCount = 0;
   for (const candidate of allCandidates) {
     if (assignedUnits.has(candidate.unitId)) continue;
     // A negative score means every option for this unit is worse than staying
     // put. Holding preserves the unit instead of feeding it into a lost fight.
     if (candidate.score < 0) continue;
+    if (candidate.isPrimaryStaging && claimedStagingCount >= primaryObjectiveAttackCap) continue;
     if (candidate.orderType === "attack") {
       const unit = state.units[candidate.unitId];
       const allyDefer = shouldDeferAttackToAlly(
@@ -1574,6 +1638,9 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
     assignedUnits.add(candidate.unitId);
     if (candidate.orderType === "attack") {
       claimedTargetCounts.set(candidate.targetRegionId, (claimedTargetCounts.get(candidate.targetRegionId) ?? 0) + 1);
+    }
+    if (candidate.isPrimaryStaging) {
+      claimedStagingCount += 1;
     }
   }
 

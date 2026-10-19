@@ -36,6 +36,19 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Primary-objective staging in [`heuristicBot.ts`](./src/game/ai/heuristicBot.ts): a route field is
+  built toward the friendly transit regions bordering `primaryObjective` (the objective itself only
+  when friendly-controlled); surplus land units with no attack, adjacent-reinforcement or march
+  candidate gain a `move` candidate for each step that reduces distance to that staging line, scored
+  `primaryStagingBase (24) + primaryObjectiveBonus * 0.2 - remainingDistance * 6`. Assignment is
+  capped at `primaryObjectiveAttackCap` units (minimum 3), so the AI masses for one deliberate push
+  instead of trickling. Staging regions must be own-controlled or held by a country at war; neutral
+  allied territory is skipped because attacks launched from it are blocked.
+  (plan 2026-10-19-ai-pathfinding → Task 5)
+- Tests for primary-objective staging: with Tallinn as the only hostile border, a spare unit in
+  Moscow moves onto the Saint Petersburg staging line; a second test sets the cap to 3 and raises
+  `primaryStagingBase` so every spare becomes a candidate, then asserts exactly 3 units stage.
+  (plan 2026-10-19-ai-pathfinding → Task 5)
 - Multi-hop reinforcement marches in [`heuristicBot.ts`](./src/game/ai/heuristicBot.ts): each turn one
   route field is built from the regions with a defender deficit (`reinforcementTargets`); surplus
   land units whose region can spare them gain a `move` candidate for every legal step that reduces
@@ -313,6 +326,19 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- Staging candidates score by the target's distance to the staging line, not by the unit's own
+  distance (same destination-distance reading as the march radius). Cost if wrong: the score decays
+  with the remaining route, which is the intended pull toward the staging line.
+  (plan 2026-10-19-ai-pathfinding → Task 5)
+- Staging ground must be own-controlled or controlled by a country already at war; neutral allied
+  territory is excluded even when transit is legal. Cost if wrong: the AI will not pre-position in
+  an ally that has not entered the war yet, which matches the rule that attacks from such a host
+  are blocked. (plan 2026-10-19-ai-pathfinding → Task 5)
+- The cap test temporarily sets `primaryObjectiveAttackCap` to 3 and `primaryStagingBase` to 100 and
+  restores both in `finally`. At natural weights deterministic noise leaves only one or two staging
+  candidates per turn, so Russia's cap of 5 never binds and the assertion would be vacuous. Cost if
+  wrong: tests in the file run sequentially, so no other test observes the mutation.
+  (plan 2026-10-19-ai-pathfinding → Task 5)
 - March radius is measured at the destination: a step is eligible when the target's remaining
   distance to the front is at most `maxMarchDistance` (6), so a unit 7 hops out can still take the
   step that brings it within 6. The plan says only `distance <= maxMarchDistance`, and the
@@ -702,6 +728,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- AI primary-objective staging (Task 5): `npx tsc -p tsconfig.app.json --noEmit` and
+  `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm run build` OK; `npm run check:layers`
+  PASS; `npm test` 348/348 in 44 files; `npm run smoke` passed RUSSIA, ROMANIA and AUSTRIA;
+  `npm run balance-check` "Balance check passed"; `npm run check-war-entry` passed. Both staging
+  tests were watched fail with the staging branch disabled (0 staged units), then pass after
+  restoring it. (plan 2026-10-19-ai-pathfinding → Task 5)
 - AI reinforcement marches (Task 4): `npx tsc -p tsconfig.app.json --noEmit` and
   `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm run build` OK; `npm run check:layers`
   PASS; `npm test` 346/346 in 44 files; `npm run smoke` passed RUSSIA, ROMANIA and AUSTRIA;

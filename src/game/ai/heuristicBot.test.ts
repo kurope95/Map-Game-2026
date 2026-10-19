@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createInitialState } from "../state/createInitialState";
 import { evaluateWarEntryRules } from "../rules/turnEngine";
 import { getValidTargets } from "../rules/orderResolution";
-import { AI_NATIONAL_GOALS } from "../content/aiObjectives";
+import { AI_COUNTRY_PROFILES, AI_NATIONAL_GOALS, AI_ROUTE_WEIGHTS } from "../content/aiObjectives";
 import { planCountryTurn, type BotAction } from "./heuristicBot";
 import { buildRouteDistances } from "./pathfinding";
 import type { CountryId, GameState } from "../state/types";
@@ -30,6 +30,64 @@ function withController(state: GameState, regionId: string, countryId: CountryId
 
 function relocateUnit(state: GameState, unitId: string, regionId: string): GameState {
   return { ...state, units: { ...state.units, [unitId]: { ...state.units[unitId], regionId } } };
+}
+
+function cloneUnit(state: GameState, templateUnitId: string, unitId: string, regionId: string): GameState {
+  return {
+    ...state,
+    units: {
+      ...state.units,
+      [unitId]: { ...state.units[templateUnitId], id: unitId, regionId },
+    },
+  };
+}
+
+// Mirrors the desired-defender formula in getCountryFrontlineData. Filling
+// every deficit keeps the reinforcement march out of the way, so a spare unit
+// is free to stage for the primary objective.
+function garrisonDeficits(state: GameState): GameState {
+  let next = state;
+  let cloneIndex = 0;
+  for (let pass = 0; pass < 4; pass += 1) {
+    const blocId = next.countries.RUSSIA.blocId;
+    const deficits = Object.values(next.regions)
+      .filter((region) => region.controllerCountryId === "RUSSIA")
+      .map((region) => {
+        const hostileAdjacents = region.adjacentRegionIds.filter((adjacentId) => {
+          const adjacent = next.regions[adjacentId];
+          return (
+            adjacent.controllerBlocId !== undefined &&
+            adjacent.controllerBlocId !== blocId &&
+            next.countryStates[adjacent.controllerCountryId]?.atWar === true
+          );
+        }).length;
+        const defenders = Object.values(next.units).filter(
+          (unit) =>
+            unit.countryId === "RUSSIA" &&
+            (unit.type === "infantry" || unit.type === "armor") &&
+            unit.regionId === region.id
+        ).length;
+        const isKey = region.isCapital || region.isKeyCity;
+        const desired = Math.max(
+          isKey ? 1 : 0,
+          (hostileAdjacents > 0 ? Math.min(3, 1 + hostileAdjacents + (isKey ? 1 : 0)) : isKey ? 1 : 0) - 1
+        );
+        return { regionId: region.id, deficit: Math.max(0, desired - defenders) };
+      })
+      .filter((entry) => entry.deficit > 0);
+    if (deficits.length === 0) break;
+    for (const { regionId, deficit } of deficits) {
+      for (let i = 0; i < deficit; i += 1) {
+        next = cloneUnit(next, "ru-inf-1", `test-garrison-${cloneIndex++}`, regionId);
+      }
+    }
+  }
+  return next;
+}
+
+// Tallinn becomes Russia's only hostile border, hence its primary objective.
+function onlyTallinnHostile(state: GameState): GameState {
+  return withController(withController(state, "gdansk", "MOLDOVA"), "kaunas", "MOLDOVA");
 }
 
 function actionFor(state: GameState, countryId: CountryId, unitId: string): BotAction {
@@ -205,6 +263,52 @@ describe("planCountryTurn reinforcement marches", () => {
 
     const distances = buildRouteDistances(state, "RUSSIA", new Set([threatenedId!]));
     expect(distances.distances.get(action.targetRegionId)!).toBeLessThan(distances.distances.get("kursk")!);
+  });
+
+  it("stages a spare unit toward its primary objective", () => {
+    let state = fresh();
+    state = onlyTallinnHostile(state);
+    state = garrisonDeficits(state);
+    state = cloneUnit(state, "ru-inf-1", "spare-unit", "moscow");
+
+    const action = actionFor(state, "RUSSIA", "spare-unit");
+    const stagingReason = action.reasons.find((reason) => reason.includes("Stages for the attack on Tallinn"));
+
+    expect(action.orderType).toBe("move");
+    expect(stagingReason).toBeDefined();
+
+    const stagingDistances = buildRouteDistances(state, "RUSSIA", new Set(["saint-petersburg"]));
+    expect(stagingDistances.distances.get(action.targetRegionId)!).toBeLessThan(
+      stagingDistances.distances.get("moscow")!
+    );
+  });
+
+  it("stages no more units than the primary objective attack cap", () => {
+    let state = fresh();
+    state = onlyTallinnHostile(state);
+    state = garrisonDeficits(state);
+    for (let i = 0; i < 10; i += 1) {
+      state = cloneUnit(state, "ru-inf-1", `spare-${i}`, "moscow");
+    }
+
+    // Raise the staging weight so every spare becomes a staging candidate; the
+    // cap is what then decides how many actually stage.
+    const profile = AI_COUNTRY_PROFILES.RUSSIA!;
+    const routeWeights = AI_ROUTE_WEIGHTS as { primaryStagingBase: number };
+    const originalCap = profile.primaryObjectiveAttackCap;
+    const originalBase = routeWeights.primaryStagingBase;
+    profile.primaryObjectiveAttackCap = 3;
+    routeWeights.primaryStagingBase = 100;
+    try {
+      const staged = planCountryTurn(state, "RUSSIA").actions.filter((action) =>
+        action.reasons.some((reason) => reason.includes("Stages for the attack"))
+      );
+
+      expect(staged).toHaveLength(3);
+    } finally {
+      profile.primaryObjectiveAttackCap = originalCap;
+      routeWeights.primaryStagingBase = originalBase;
+    }
   });
 
   it("does not march a critically unsupplied unit out of supply", () => {

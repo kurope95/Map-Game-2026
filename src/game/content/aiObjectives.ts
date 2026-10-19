@@ -14,6 +14,8 @@ export const AI_ROUTE_WEIGHTS = {
   maxMarchDistance: 6,
   reinforcementMarchBase: 24,
   reinforcementMarchPerHop: 6,
+  primaryStagingBase: 24,
+  primaryStagingPerHop: 6,
 } as const;
 
 export interface AiCountryProfile {
