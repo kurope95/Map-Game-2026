@@ -36,6 +36,29 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- AI unit replenishment in [`heuristicBot.ts`](./src/game/ai/heuristicBot.ts): a damaged unit with
+  an operational recruitment facility in its region queues the same `replenishUnit` order shape the
+  player action produces, before any new recruitment. Candidates are ordered by weakest strength
+  ratio, then frontline presence, then unit id. (plan 2026-10-19-gameplay-qol-batch → Task 2)
+- AI civilian facility repair: damaged non-military facilities (farm, mine, oil well, power plant,
+  smelter, refinery, synthetic refinery, chemical plant, civilian factory) are repaired after the
+  existing military-repair branch, skipping facilities already pending repair.
+  (plan 2026-10-19-gameplay-qol-batch → Task 2)
+- AI facility upgrades in [`heuristicBot.ts`](./src/game/ai/heuristicBot.ts): level 1–2, undamaged,
+  not-already-upgrading facilities are scored military production first while preparing, then the
+  extractor/processor matching a current food/steel/fuel shortage, then power and civilian
+  industry, and the first affordable candidate is queued. Capped at one upgrade per economy turn
+  and placed after the recruitment ladder so upgrades cannot starve unit production.
+  (plan 2026-10-19-gameplay-qol-batch → Task 2)
+- AI doctrine purchases: at most one per `aiEconomyTurn`, first definition in
+  [`doctrines.ts`](./src/game/content/doctrines.ts) order whose prerequisites are owned and whose
+  cost leaves a 10-point trade reserve, bought through the pure `purchaseDoctrine` action.
+  (plan 2026-10-19-gameplay-qol-batch → Task 2)
+- Tests for the new AI spending and deterministic ids:
+  [`aiEconomyTurn.test.ts`](./src/game/ai/aiEconomyTurn.test.ts) covers slot accounting,
+  replenishment, civilian repair priority, upgrades, doctrines and determinism;
+  [`economyEngine.test.ts`](./src/game/rules/economyEngine.test.ts) pins deterministic completed
+  unit and facility ids. (plan 2026-10-19-gameplay-qol-batch → Task 2)
 - Core noding reshuffle (plan 2026-10-19-gameplay-qol-batch → Task 1): 15 directed adjacency edits
   across 16 regions in [`regions.ts`](./src/game/content/regions.ts) — Moscow–Kazan and
   Bryansk–Minsk cut; Warsaw–Minsk cut, Warsaw–Kaunas added; Berlin–Essen cut, Berlin–Hannover
@@ -344,6 +367,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- The AI upgrade branch is capped at one upgrade per economy turn and placed after the
+  recruitment ladder rather than within the facility ladder. Without the cap the 10-turn balance
+  sweep queued roughly 1,400 upgrades across 24 nations and eliminated Ukraine on turn 8; with the
+  cap it passes. Cost if wrong: the AI upgrades more slowly than a player who optimizes upgrades.
+  (2026-10-19-gameplay-qol-batch-design.md)
+- AI army and economy ids are deterministic. The seeded harness substitutes a deterministic
+  `Math.random` stream, so random id suffixes coupled unrelated systems: a single new order shifted
+  which diplomacy actions every nation took later. Deterministic ids make the harness measure
+  behavior rather than call counts. Cost if wrong: ids are predictable, which only matters if a
+  save format or UI relies on opacity. (2026-10-19-gameplay-qol-batch-design.md)
 - Saves carry their own adjacency and have no save-version field, so a noding change would strand
   old campaigns on the old graph. Rather than bumping a save version, loading now calls
   `migrateSaveAdjacency`, which rebuilds both adjacency maps from current content and leaves every
@@ -500,6 +533,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (2026-10-19-start-screen-polish-design.md)
 
 ### Changed
+- AI build-slot accounting: `findBuildRegion` and `totalSlotsRemaining` now count pending
+  `buildFacility` orders in a region as occupied slots, matching the player rule in
+  [`playerActions.ts`](./src/game/rules/playerActions.ts), so the AI can no longer double-book a
+  region. (plan 2026-10-19-gameplay-qol-batch → Task 2)
+- AI economy order ids and completed unit/facility ids are deterministic (`...-t<turn>-<sequence>`)
+  instead of using a `Math.random()` suffix, in [`heuristicBot.ts`](./src/game/ai/heuristicBot.ts)
+  and [`economyEngine.ts`](./src/game/rules/economyEngine.ts). The seeded balance harness replaces
+  `Math.random` with a deterministic stream, so random suffixes made every added order shift later
+  AI diplomacy rolls and destabilize unrelated nations in the 10-turn sweep.
+  (plan 2026-10-19-gameplay-qol-batch → Task 2)
 - Generated satellite links touched by the reshuffle: Kazan's Oka split inherits only
   `nizhny-novgorod`; Nizhny Novgorod's split inherits only `kazan`; Minsk's central belt inherits
   only `gomel`; Saint Petersburg's Neva corridor inherits only `moscow`; Tallinn's Narva satellite
@@ -761,6 +804,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- AI spending (plan 2026-10-19-gameplay-qol-batch → Task 2): `npx tsc -p tsconfig.app.json
+  --noEmit` 0 errors; `npm run check:layers` PASS; `npm test` 372/372 in 48 files;
+  `npm run smoke` passed RUSSIA, ROMANIA, AUSTRIA; `npm run balance-check` "Balance check passed
+  for all playable nations"; `npm run build` OK.
 - Noding cleanup (plan 2026-10-19-gameplay-qol-batch → Task 1): `npm run validate-map` passed for
   63 regions; `npm run check:layers` PASS; `npx tsc -p tsconfig.app.json --noEmit` 0 errors;
   `npm test` 358/358 in 46 files (10 new noding/migration tests); `npm run check-war-entry` passed;

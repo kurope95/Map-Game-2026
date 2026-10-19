@@ -330,7 +330,9 @@ export function processEconomy(state: GameState, countryId: CountryId): GameStat
         if (order.type === "recruitUnit" && order.unitType) {
           // Create new unit
           const blocId = state.countries[countryId].blocId ?? "BRICS";
-          const unitId = `${countryId.toLowerCase()}-${order.unitType}-t${state.turn}-${Math.random().toString(36).slice(2, 6)}`;
+          // Deterministic ids keep the seeded balance harness stable when build orders change:
+          // a random suffix would shift every later Math.random consumer (AI diplomacy).
+          const unitId = `${countryId.toLowerCase()}-${order.unitType}-t${state.turn}-${Object.keys(units).length}`;
           const region = state.regions[order.regionId];
           units[unitId] = {
             id: unitId,
@@ -354,9 +356,10 @@ export function processEconomy(state: GameState, countryId: CountryId): GameStat
           }
         }
         if (order.type === "buildFacility" && order.facilityType) {
-          const facId = `fac-${order.regionId}-${order.facilityType}-t${state.turn}-${Math.random().toString(36).slice(2, 6)}`;
           const regionEcon = regionEconomies[order.regionId];
           if (regionEcon) {
+            // Deterministic id, for the same reason as the unit id above.
+            const facId = `fac-${order.regionId}-${order.facilityType}-t${state.turn}-${regionEcon.facilities.length}`;
             regionEconomies[order.regionId] = {
               ...regionEcon,
               facilities: [

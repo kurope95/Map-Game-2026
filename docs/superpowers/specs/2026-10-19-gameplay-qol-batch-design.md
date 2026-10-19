@@ -66,18 +66,24 @@ All changes stay inside `aiEconomyTurn`; the existing priority ladder, reserve p
    repair for damaged non-military facilities (farm, mine, oil well, power plant, smelter,
    refinery, synthetic refinery, chemical plant, civilian factory) when no repair is pending.
    Extraction facilities are free to repair, so this mostly costs queue time.
-5. **Facility upgrades.** One upgrade branch after the new-facility ladder and before the
-   civilian-factory branch. Candidates are facilities with `level < 3`, not damaged, and not
-   already pending an upgrade. Score military production facilities highest when the country is
-   at war or preparing, then the extractor/processor matching a current shortage (food, steel,
-   fuel), then power and civilian industry. Try candidates in score order and queue the first
-   affordable one with `getFacilityUpgradeCost` + the build recipe's turns. No new resource
-   reserve beyond the existing policy.
+5. **Facility upgrades.** One upgrade branch after the new-facility and recruitment ladders and
+   before the civilian-factory branch, capped at one upgrade per `aiEconomyTurn` (upgrades are a
+   long-term investment; without the cap the per-iteration loop spent every free slot on them and
+   the 10-turn balance sweep failed). Candidates are facilities with `level < 3`, not damaged,
+   and not already pending an upgrade. Score military production facilities highest when the
+   country is at war or preparing, then the extractor/processor matching a current shortage
+   (food, steel, fuel), then power and civilian industry. Try candidates in score order and queue
+   the first affordable one with `getFacilityUpgradeCost` + the build recipe's turns. No new
+   resource reserve beyond the existing policy.
 
 ### Determinism
 
 No new randomness is introduced. Candidate sorts use stable keys and unit/facility ids as final
-tie-breakers. The existing `Math.random()` order ids are unchanged.
+tie-breakers. AI economy order ids and completed unit/facility ids are now deterministic
+(`t<turn>-<sequence>` instead of a `Math.random()` suffix). The seeded balance harness replaces
+`Math.random` with a deterministic stream, so a random suffix made every added order shift the
+later AI diplomacy choices; deterministic ids keep those simulations stable when the economy
+changes.
 
 ### Tests
 

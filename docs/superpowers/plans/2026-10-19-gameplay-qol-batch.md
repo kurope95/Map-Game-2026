@@ -142,8 +142,10 @@ Run each new test and confirm RED for the missing behavior.
 - Insert doctrine purchase before the loop (one per call).
 - Insert replenishment branch before `needsImmediateFrontlineReinforcement` recruitment.
 - Insert civilian-repair branch immediately after the military-facility repair branch.
-- Insert upgrade branch after the air-factory build and before infantry recruitment (so it
-  competes only once the force structure exists).
+- Insert upgrade branch after the infantry/armor/MLRS/fighter recruitment blocks and before the
+  civilian-factory branch, capped at one upgrade per `aiEconomyTurn`. Both guards are required for
+  the balance sweep: upgrades placed before recruitment (or uncapped) starve unit production and
+  eliminated a nation in the 10-turn run. (Ruling recorded during execution.)
 - Keep all existing branches and their order otherwise unchanged.
 
 ### Step 2.3 — Gates and commit

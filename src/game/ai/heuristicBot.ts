@@ -1,14 +1,19 @@
 import { getValidTargets, isRegionOpenForCountryTransit, issueOrder } from "../rules/orderResolution";
-import { BlocId, CountryId, DiplomacyActionType, FacilityType, GameState, Order, StockpileKey, UnitType } from "../state/types";
+import { BlocId, CountryId, DiplomacyActionType, FacilityType, GameState, Order, StockpileKey, UnitDefinition, UnitType } from "../state/types";
 import {
   FACILITY_BUILD_COSTS,
   FORTIFICATION_MAX_LEVEL,
+  MAX_UNIT_STRENGTH,
   UNIT_RECRUITMENT_COSTS,
   getFacilityRepairProfile,
+  getFacilityUpgradeCost,
   getFortificationBuildProfile,
   getFortificationRepairProfile,
   getMilitaryProductionTurns,
+  getReplenishmentCost,
 } from "../content/economyRecipes";
+import { DOCTRINE_DEFINITIONS } from "../content/doctrines";
+import { purchaseDoctrine } from "../rules/playerActions";
 import { applyDiplomacyAction, getCountryLeanBloc } from "../rules/diplomacy";
 import { AI_COUNTRY_PROFILES, AI_NATIONAL_GOALS, AI_ROUTE_WEIGHTS, AI_STRATEGY_WEIGHTS } from "../content/aiObjectives";
 import { recordAllyAttackClaims, shouldDeferAttackToAlly } from "./allyCoordination";
@@ -385,6 +390,7 @@ function queueEconomyOrder(state: GameState, countryId: CountryId, order: GameSt
 }
 
 function createEconomyOrder(
+  state: GameState,
   countryId: CountryId,
   regionId: string,
   turns: number,
@@ -396,13 +402,19 @@ function createEconomyOrder(
         chemicalMode?: GameState["economyBuildOrders"][CountryId][number]["chemicalMode"];
       }
     | { type: "recruitUnit"; unitType: NonNullable<GameState["economyBuildOrders"][CountryId][number]["unitType"]> }
+    | {
+        type: "replenishUnit";
+        unitId: NonNullable<GameState["economyBuildOrders"][CountryId][number]["unitId"]>;
+        unitType: NonNullable<GameState["economyBuildOrders"][CountryId][number]["unitType"]>;
+      }
+    | { type: "upgradeFacility"; facilityId: NonNullable<GameState["economyBuildOrders"][CountryId][number]["facilityId"]> }
     | { type: "repairFacility"; facilityId: NonNullable<GameState["economyBuildOrders"][CountryId][number]["facilityId"]> }
     | { type: "buildFortification" }
     | { type: "upgradeFortification" }
     | { type: "repairFortification" }
 ): GameState["economyBuildOrders"][CountryId][number] {
   return {
-    id: `ai-${countryId.toLowerCase()}-${details.type}-${Math.random().toString(36).slice(2, 7)}`,
+    id: `ai-${countryId.toLowerCase()}-${details.type}-t${state.turn}-${state.economyBuildOrders[countryId]?.length ?? 0}`,
     countryId,
     regionId,
     turnsRemaining: turns,
@@ -452,9 +464,36 @@ function getSuppliedRegionIds(state: GameState, countryId: CountryId): Set<strin
   return supplied;
 }
 
+const AI_DOCTRINE_TRADE_RESERVE = 10;
+const MILITARY_FACILITY_TYPES = new Set<FacilityType>(["barracks", "armorFactory", "airFactory", "munitionsPlant"]);
+
+/** Buys at most one doctrine: first definition in list order that is owned-prerequisite-ready and
+ * affordable above the trade-point reserve. Selection is deterministic and uses the same pure
+ * action the player does. */
+function tryPurchaseDoctrine(state: GameState, countryId: CountryId): GameState {
+  const owned = state.doctrineUpgrades?.[countryId] ?? [];
+  const tradePoints = state.countryStockpiles[countryId].tradePoints;
+  const candidate = DOCTRINE_DEFINITIONS.find(
+    (definition) =>
+      !owned.includes(definition.id) &&
+      (definition.requires ?? []).every((requirement) => owned.includes(requirement)) &&
+      tradePoints >= definition.cost + AI_DOCTRINE_TRADE_RESERVE
+  );
+  if (!candidate) return state;
+
+  const result = purchaseDoctrine(state, countryId, candidate.id);
+  return result.ok ? result.state : state;
+}
+
 export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState {
   let currentState = state;
   const profile = AI_COUNTRY_PROFILES[countryId];
+
+  currentState = tryPurchaseDoctrine(currentState, countryId);
+
+  // At most one facility upgrade per economy turn: upgrades are a long-term investment, and the
+  // per-iteration loop would otherwise spend every free slot on them.
+  let facilityUpgradeQueued = false;
 
   const country = state.countries[countryId];
   const maxQueues = country.tier === "major" ? 4 : country.tier === "middle" ? 3 : 2;
@@ -481,9 +520,21 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
       break;
     }
 
+    // Pending facility builds occupy a slot exactly like built facilities (the player rule in
+    // queueFacilityBuild counts them), so the AI must not double-book a region.
+    const pendingBuildCountByRegion = new Map<string, number>();
+    for (const order of pendingBuilds) {
+      if (order.type !== "buildFacility") continue;
+      pendingBuildCountByRegion.set(order.regionId, (pendingBuildCountByRegion.get(order.regionId) ?? 0) + 1);
+    }
+
     const findBuildRegion = (predicate: (regionId: string) => boolean) =>
       myEconomies
-        .filter(({ regionId, economy }) => predicate(regionId) && economy.facilities.length < economy.buildingSlots)
+        .filter(
+          ({ regionId, economy }) =>
+            predicate(regionId) &&
+            economy.facilities.length + (pendingBuildCountByRegion.get(regionId) ?? 0) < economy.buildingSlots
+        )
         .sort((left, right) => right.economy.buildingSlots - left.economy.buildingSlots)[0];
 
     const findRecruitRegion = (facilityType: FacilityType) =>
@@ -598,7 +649,12 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
     const foodDepositCount = myRegionIds.filter((regionId) => regionHasDeposit(regionId, "food")).length;
     const desiredFarmCount = Math.max(1, Math.min(country.tier === "major" ? 3 : 2, foodDepositCount || 1));
     const totalSlotsRemaining = myEconomies.reduce(
-      (sum, { economy }) => sum + Math.max(0, economy.buildingSlots - economy.facilities.length),
+      (sum, { regionId, economy }) =>
+        sum +
+        Math.max(
+          0,
+          economy.buildingSlots - economy.facilities.length - (pendingBuildCountByRegion.get(regionId) ?? 0)
+        ),
       0
     );
     const needsImmediateFrontlineReinforcement = atWar && militaryPreparationAllowed && effectiveInfantryCount < Math.max(3, frontlineRegionIds.length + threatenedCoreRegions + 1);
@@ -642,7 +698,7 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
       return queueEconomyOrder(
         currentState,
         countryId,
-        createEconomyOrder(countryId, regionId, recipe.turns, { ...recipe.cost }, { type: "buildFacility", facilityType, chemicalMode })
+        createEconomyOrder(currentState, countryId, regionId, recipe.turns, { ...recipe.cost }, { type: "buildFacility", facilityType, chemicalMode })
       );
     };
 
@@ -657,6 +713,7 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
         currentState,
         countryId,
         createEconomyOrder(
+          currentState,
           countryId,
           regionId,
           getMilitaryProductionTurns(recipe.turns, sourceFacility.level),
@@ -672,7 +729,7 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
       return queueEconomyOrder(
         currentState,
         countryId,
-        createEconomyOrder(countryId, regionId, repairProfile.turns, { ...repairProfile.cost }, { type: "repairFacility", facilityId })
+        createEconomyOrder(currentState, countryId, regionId, repairProfile.turns, { ...repairProfile.cost }, { type: "repairFacility", facilityId })
       );
     };
 
@@ -682,7 +739,7 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
       return queueEconomyOrder(
         currentState,
         countryId,
-        createEconomyOrder(countryId, regionId, buildProfile.turns, { ...buildProfile.cost }, { type: "buildFortification" })
+        createEconomyOrder(currentState, countryId, regionId, buildProfile.turns, { ...buildProfile.cost }, { type: "buildFortification" })
       );
     };
 
@@ -692,7 +749,7 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
       return queueEconomyOrder(
         currentState,
         countryId,
-        createEconomyOrder(countryId, regionId, buildProfile.turns, { ...buildProfile.cost }, { type: "upgradeFortification" })
+        createEconomyOrder(currentState, countryId, regionId, buildProfile.turns, { ...buildProfile.cost }, { type: "upgradeFortification" })
       );
     };
 
@@ -702,7 +759,7 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
       return queueEconomyOrder(
         currentState,
         countryId,
-        createEconomyOrder(countryId, regionId, repairProfile.turns, { ...repairProfile.cost }, { type: "repairFortification" })
+        createEconomyOrder(currentState, countryId, regionId, repairProfile.turns, { ...repairProfile.cost }, { type: "repairFortification" })
       );
     };
 
@@ -728,6 +785,18 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
           damagedMilitaryFacility.facility.id,
           damagedMilitaryFacility.facility.type,
           damagedMilitaryFacility.facility.level
+        );
+      }
+    }
+
+    if (!nextState) {
+      const damagedCivilianFacility = damagedFacilities.find(({ facility }) => !MILITARY_FACILITY_TYPES.has(facility.type));
+      if (damagedCivilianFacility) {
+        nextState = repairFacility(
+          damagedCivilianFacility.regionId,
+          damagedCivilianFacility.facility.id,
+          damagedCivilianFacility.facility.type,
+          damagedCivilianFacility.facility.level
         );
       }
     }
@@ -776,6 +845,53 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
         nextState = upgradeFortification(
           upgradeableFrontFort.regionId,
           upgradeableFrontFort.economy.fortification!.level
+        );
+      }
+    }
+
+    if (!nextState && militaryPreparationAllowed) {
+      // Repairing an existing unit is cheaper than recruiting a replacement, so it precedes both
+      // emergency and planned recruitment. Candidates are ordered by weakest strength ratio, then
+      // by frontline presence, then by id, keeping the choice deterministic.
+      const pendingReplenishUnitIds = new Set(
+        pendingBuilds
+          .filter((order) => order.type === "replenishUnit" && order.unitId)
+          .map((order) => order.unitId!)
+      );
+      const replenishCandidates: Array<{
+        unit: UnitDefinition;
+        cost: Partial<Record<StockpileKey, number>>;
+        turns: number;
+      }> = [];
+      for (const unit of myUnits) {
+        if (pendingReplenishUnitIds.has(unit.id)) continue;
+        const recipe = getUnitRecipe(unit.type);
+        if (!recipe) continue;
+        const sourceFacility = currentState.regionEconomies[unit.regionId]?.facilities
+          .filter((facility) => facility.type === recipe.requiredFacility && !facility.damaged)
+          .sort((left, right) => right.level - left.level)[0];
+        if (!sourceFacility) continue;
+        const replenish = getReplenishmentCost(unit.type, unit.strength, sourceFacility.level);
+        if (!replenish) continue;
+        replenishCandidates.push({ unit, cost: replenish.cost, turns: replenish.turns });
+      }
+      replenishCandidates.sort((left, right) => {
+        const leftRatio = left.unit.strength / MAX_UNIT_STRENGTH[left.unit.type];
+        const rightRatio = right.unit.strength / MAX_UNIT_STRENGTH[right.unit.type];
+        const leftFrontline = frontlineRegionIds.includes(left.unit.regionId) ? 0 : 1;
+        const rightFrontline = frontlineRegionIds.includes(right.unit.regionId) ? 0 : 1;
+        return leftRatio - rightRatio || leftFrontline - rightFrontline || left.unit.id.localeCompare(right.unit.id);
+      });
+      const candidate = replenishCandidates[0];
+      if (candidate && canAffordWithReserve(currentState, countryId, candidate.cost)) {
+        nextState = queueEconomyOrder(
+          currentState,
+          countryId,
+          createEconomyOrder(currentState, countryId, candidate.unit.regionId, candidate.turns, { ...candidate.cost }, {
+            type: "replenishUnit",
+            unitId: candidate.unit.id,
+            unitType: candidate.unit.type,
+          })
         );
       }
     }
@@ -850,6 +966,60 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
     if (!nextState && militaryPreparationAllowed && desiredFighters > 0 && effectiveFighterCount < desiredFighters) {
       const airFactoryRegion = findRecruitRegion("airFactory");
       if (airFactoryRegion) nextState = recruitUnit("fighter", airFactoryRegion.regionId);
+    }
+
+    if (!nextState && !facilityUpgradeQueued) {
+      // One upgrade branch after the new-facility and recruitment ladders. Military production
+      // facilities come first while the country is preparing, then the extractor or processor
+      // matching a current shortage, then power and civilian industry. Putting it after
+      // recruitment keeps upgrades from starving unit production.
+      const pendingUpgradeFacilityIds = new Set(
+        pendingBuilds
+          .filter((order) => order.type === "upgradeFacility" && order.facilityId)
+          .map((order) => order.facilityId!)
+      );
+      const upgradeCandidates = myEconomies
+        .flatMap(({ regionId, economy }) =>
+          economy.facilities
+            .filter((facility) => facility.level < 3 && !facility.damaged && !pendingUpgradeFacilityIds.has(facility.id))
+            .map((facility) => ({ regionId, facility }))
+        )
+        .map((entry) => {
+          const military = MILITARY_FACILITY_TYPES.has(entry.facility.type);
+          const shortage =
+            (entry.facility.type === "farm" && stockpile.food < foodThreshold) ||
+            ((entry.facility.type === "mine" || entry.facility.type === "smelter") && needsSteel) ||
+            ((entry.facility.type === "oilWell" ||
+              entry.facility.type === "refinery" ||
+              entry.facility.type === "syntheticRefinery") &&
+              needsFuel);
+          const score =
+            military && militaryPreparationAllowed ? 3 : shortage ? 2 : entry.facility.type === "powerPlant" ? 1 : 0;
+          return { ...entry, score };
+        })
+        .sort(
+          (left, right) =>
+            right.score - left.score ||
+            left.facility.level - right.facility.level ||
+            left.regionId.localeCompare(right.regionId) ||
+            left.facility.id.localeCompare(right.facility.id)
+        );
+
+      for (const candidate of upgradeCandidates) {
+        const recipe = getFacilityRecipe(candidate.facility.type);
+        const upgradeCost = getFacilityUpgradeCost(candidate.facility.type, candidate.facility.level);
+        if (!recipe || !upgradeCost || !canAffordWithReserve(currentState, countryId, upgradeCost)) continue;
+        nextState = queueEconomyOrder(
+          currentState,
+          countryId,
+          createEconomyOrder(currentState, countryId, candidate.regionId, recipe.turns, { ...upgradeCost }, {
+            type: "upgradeFacility",
+            facilityId: candidate.facility.id,
+          })
+        );
+        facilityUpgradeQueued = true;
+        break;
+      }
     }
 
     if (!nextState && stockpile.tradePoints > 12 && totalSlotsRemaining > 0) {
