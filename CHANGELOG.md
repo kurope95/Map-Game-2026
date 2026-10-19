@@ -435,7 +435,8 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   only their own regions because the NEUTRAL bloc is not an alliance. The check runs when the order is
   queued, like all economy orders, so an order already queued still completes if the region changes
   hands. Cost if wrong: a unit can still be restored in an ally's city; the strict version is one line in
-  `canReplenishIn` plus a balance retune.
+  `canReplenishIn` plus a balance retune. Marek saw these numbers and confirmed the bloc reading
+  (2026-10-19).
 - The attack preview labels loss figures as an estimate, not a promise: the range is the
   resolver's band base times its ±15% seeded variance and its clamps, cut to whole units by the
   resolver's rounding, computed without drawing a random number. The ratio, support, fort and modifier parts mirror the resolver exactly. Cost if

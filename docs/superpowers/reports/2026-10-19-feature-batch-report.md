@@ -404,7 +404,8 @@ failed first.
   held by Pridnestrovie; 84 of the 91 replenishments the unmodified 10-turn balance sweep made outside a
   unit's own country, the other 7 were Hungary's) and made `npm run balance-check` fail (Slovakia
   eliminated on turn 10), so the bloc reading, which is also what the supply rule treats as friendly,
-  shipped. Switching to own-country-only is one line plus a balance retune.
+  shipped. Switching to own-country-only is one line plus a balance retune. Marek saw these numbers
+  and confirmed the bloc reading.
 - **Cancelling a queued build** refunds everything until the first End Turn after queuing and then
   `floor(committed × turnsRemaining / totalTurns)` per resource (`getCancelRefund` in `buildRefund.ts`);
   the cancel buttons show the share and a toast reports what came back. The AI never cancels.
