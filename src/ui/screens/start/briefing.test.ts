@@ -66,4 +66,48 @@ describe("getNationBriefing", () => {
     expect(briefing.enemyBelligerentCount).toBe(0);
     expect(briefing.enemyMajorLabels).toEqual([]);
   });
+
+  it("names Russia's key cities in scenario order", () => {
+    const briefing = getNationBriefing(state, "RUSSIA");
+
+    expect(briefing.keyCityNames).toEqual([
+      "Saint Petersburg",
+      "Nizhny Novgorod",
+      "Rostov-on-Don",
+      "Kazan"
+    ]);
+  });
+
+  it("lists Russia's border countries with the at-war ones first", () => {
+    const briefing = getNationBriefing(state, "RUSSIA");
+
+    expect(briefing.borders.map((border) => border.name)).toEqual([
+      "Baltic Federation",
+      "Novorossia",
+      "Poland",
+      "Belarus",
+      "Finland"
+    ]);
+    expect(briefing.borders.filter((border) => border.atWar).map((border) => border.name)).toEqual([
+      "Baltic Federation",
+      "Novorossia",
+      "Poland"
+    ]);
+  });
+
+  it("lists Austria's borders, with Germany at war", () => {
+    const briefing = getNationBriefing(state, "AUSTRIA");
+
+    expect(briefing.borders.length).toBeGreaterThan(0);
+    expect(briefing.borders.filter((border) => border.atWar).map((border) => border.name)).toEqual([
+      "Germany"
+    ]);
+  });
+
+  it("splits Russia's starting forces into typed counts", () => {
+    const briefing = getNationBriefing(state, "RUSSIA");
+
+    expect(briefing.unitCounts.reduce((total, entry) => total + entry.count, 0)).toBe(9);
+    expect(briefing.unitCounts).toContainEqual({ type: "infantry", count: 4 });
+  });
 });

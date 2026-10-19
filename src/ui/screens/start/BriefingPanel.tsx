@@ -2,6 +2,8 @@ import { Badge, type BadgeTone } from "../../kit/Badge";
 import { Button } from "../../kit/Button";
 import { Flag } from "../../kit/Flag";
 import { StatRow } from "../../kit/StatRow";
+import { UnitSymbol } from "../../kit/UnitSymbol";
+import { UNIT_TYPE_LABELS } from "../../kit/unitSymbols";
 import type { NationBriefing } from "./briefing";
 import "./BriefingPanel.css";
 
@@ -52,10 +54,32 @@ export function BriefingPanel({ briefing, continueLabel, onStart, onContinue, on
           label="Territory"
           value={`${briefing.regionCount} regions · ${briefing.keyCityCount} key cities`}
         />
+        {briefing.keyCityNames.length > 0 && (
+          <div className="start-briefing__substat">
+            Key cities · {briefing.keyCityNames.join(" · ")}
+          </div>
+        )}
         <StatRow
           className="start-briefing__forces"
           label="Starting forces"
-          value={briefing.unitSummary}
+          value={
+            briefing.unitCounts.length > 0 ? (
+              <span className="start-briefing__force-row">
+                {briefing.unitCounts.map(({ type, count }) => (
+                  <span
+                    key={type}
+                    className="start-briefing__force"
+                    title={`${count} ${UNIT_TYPE_LABELS[type]}`}
+                  >
+                    <UnitSymbol type={type} size={18} />
+                    <span>{count}</span>
+                  </span>
+                ))}
+              </span>
+            ) : (
+              briefing.unitSummary
+            )
+          }
         />
       </div>
 
@@ -73,6 +97,24 @@ export function BriefingPanel({ briefing, continueLabel, onStart, onContinue, on
           </div>
         )}
       </div>
+
+      {briefing.borders.length > 0 && (
+        <div className="start-briefing__borders">
+          <div className="start-briefing__war-label">Borders</div>
+          <div className="start-briefing__chips">
+            {briefing.borders.map((border) => (
+              <span
+                key={border.countryId}
+                className={`start-briefing__chip start-briefing__chip--${BLOC_TONE[border.blocLabel]}${
+                  border.atWar ? " start-briefing__chip--war" : ""
+                }`}
+              >
+                {border.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="start-briefing__actions">
         <Button variant="primary" size="lg" onClick={onStart} data-layout="start-button">

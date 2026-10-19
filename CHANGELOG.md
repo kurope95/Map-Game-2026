@@ -268,6 +268,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Start-screen scenario summary ([`scenarioOverview.ts`](./src/ui/screens/start/scenarioOverview.ts)):
   `getScenarioOverview` counts nations, city-regions (by starting controller) and nations at war per
   bloc, so the masthead and the columns share one source of truth. 3 tests.
+- Start-screen polish spec [`2026-10-19-start-screen-polish-design.md`](./docs/superpowers/specs/2026-10-19-start-screen-polish-design.md):
+  records the six review changes (content-height columns, scroll fade, rail composition, key
+  cities/borders, selected-map highlight, unit-symbol force counts), their rationale and the
+  browser verification, so a later agent can tell what was intentional.
+- Noding analysis [`2026-10-19-noding-reshuffle-analysis.md`](./docs/superpowers/specs/2026-10-19-noding-reshuffle-analysis.md):
+  graph facts (103 regions, 227 edges, one component, one bridge), the generator cause of the
+  redundant links, the tested 15-edit core reshuffle and the wider probe. **Analysis only: no
+  adjacency was changed and no stage is approved.**
 
 ### Decision
 - Task 27 (map labels and extras), choices where the spec or plan left room (plan 2026-10-18-visual-overhaul → Task 27):
@@ -361,6 +369,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   absolute budget check (`average <= idle + 1 ms`, provisional for 120 Hz) stays open for Marek's
   visible-window run. Cost if wrong: the recorded table is a relative result, not a pass/fail at 8 ms.
   (plan 2026-10-18-visual-overhaul → Task 30)
+- **Start-screen short-height policy:** hide the theatre panel below 900 px of viewport height
+  instead of letting the right rail scroll. The clipped panel was the defect; its 35/25/43 bloc
+  totals are already in the three column footers, and hiding it keeps the briefing's actions
+  fully visible at 1335x747. Cost if wrong: a purely informational overview is lost on short
+  screens, with no action affected.
+  (2026-10-19-start-screen-polish-design.md)
 
 ### Changed
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
@@ -550,6 +564,26 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Briefing styles moved out of `StartScreen.css` (424 lines) into
   [`BriefingPanel.css`](./src/ui/screens/start/BriefingPanel.css), keeping both files well under the
   400-line signal.
+- Start-screen briefing now names the nation's key cities and lists every bordering country as a
+  bloc-toned chip, with a red ring on at-war borders. Borders come from the scenario's starting
+  controllers and are sorted at-war first, so they describe the start of the campaign, not later
+  occupations. Starting forces render as `UnitSymbol` icons with counts instead of a sentence.
+  (2026-10-19-start-screen-polish-design.md)
+  Files: [briefing.ts](./src/ui/screens/start/briefing.ts),
+  [BriefingPanel.tsx](./src/ui/screens/start/BriefingPanel.tsx),
+  [BriefingPanel.css](./src/ui/screens/start/BriefingPanel.css),
+  [briefing.test.ts](./src/ui/screens/start/briefing.test.ts) (4 tests)
+- Start-screen columns size to their content instead of stretching to the tallest column; the
+  Neutral column gets a gradient scroll fade while more cards remain. The right rail uses
+  `space-between` so the theatre panel sits on the bottom edge on tall screens. The selected
+  nation's showcase highlight gets a stronger dim, a cream fill and a `2.5 / scale` outline.
+  `selectedBriefing` is memoized so hovering does not rebuild every briefing.
+  (2026-10-19-start-screen-polish-design.md)
+  Files: [StartScreen.css](./src/ui/screens/start/StartScreen.css),
+  [StartScreen.tsx](./src/ui/screens/start/StartScreen.tsx),
+  [NationColumn.tsx](./src/ui/screens/start/NationColumn.tsx),
+  [TheatrePanel.css](./src/ui/screens/start/TheatrePanel.css),
+  [showcase.ts](./src/ui/map/render/layers/showcase.ts)
 
 ### Fixed
 - `npm run check-war-entry` expected one lost Polish key city for the Czech Republic to join, but the
@@ -856,6 +890,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and `npm run build` OK (CSS 70.63 kB, JS 1,314.68 kB). Screenshots at 1440x900 and 1920x1080
   checked: masthead stats, bloc rules and footers, compact briefing, enemy details, theatre share
   bar and column accents all render; the selected card, badges and start button use the kit tokens.
+- Start-screen polish: `npx tsc -p tsconfig.app.json --noEmit` 0 errors, `npm test -- --run`
+  311/311 (41 files, including the 4 new briefing tests), `npm run build` OK (CSS 72.26 kB,
+  JS 1,317.74 kB). Headless Chrome at 1335x747, 1440x900 and 1920x1080 reports no console errors;
+  the right rail fits at every size (594/594, 747/747, 927/927 px), the theatre panel is hidden
+  only at 1335x747, and the Neutral column scrolls with its fade only at that size.
+  `npm run smoke` and `npm run balance-check` were not run because nothing under `src/game/`
+  changed. (2026-10-19-start-screen-polish-design.md)
 
 ## [0.1.0] - 2026-10-18 (legacy snapshot, `legacy` branch)
 

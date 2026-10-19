@@ -5,6 +5,19 @@ import type {
   GameState,
   UnitType
 } from "../../../game/state/types";
+import { getStartingControllers } from "../../map/startingControllers";
+
+export interface BorderCountry {
+  countryId: CountryId;
+  name: string;
+  blocLabel: "BRICS" | "EU NATO" | "Neutral";
+  atWar: boolean;
+}
+
+export interface UnitCount {
+  type: UnitType;
+  count: number;
+}
 
 export interface NationBriefing {
   countryId: CountryId;
@@ -17,6 +30,9 @@ export interface NationBriefing {
   capitalName: string;
   regionCount: number;
   keyCityCount: number;
+  keyCityNames: string[];
+  borders: BorderCountry[];
+  unitCounts: UnitCount[];
   unitSummary: string;
   warEntryText: string;
   enemyBlocLabel: "BRICS" | "EU NATO" | null;
@@ -108,21 +124,69 @@ function getWarEntryText(state: GameState, country: CountryDefinition): string {
     .join(" ");
 }
 
-function getUnitSummary(state: GameState, countryId: CountryId): string {
+function getUnitCounts(state: GameState, countryId: CountryId): UnitCount[] {
   const counts = new Map<UnitType, number>();
   for (const unit of Object.values(state.units)) {
     if (unit.countryId !== countryId) continue;
     counts.set(unit.type, (counts.get(unit.type) ?? 0) + 1);
   }
 
-  const parts = UNIT_SUMMARY_PARTS.flatMap((part) => {
+  return UNIT_SUMMARY_PARTS.flatMap((part) => {
     const count = counts.get(part.type) ?? 0;
-    if (count === 0) return [];
+    return count === 0 ? [] : [{ type: part.type, count }];
+  });
+}
+
+function getUnitSummary(counts: UnitCount[]): string {
+  const parts = counts.map(({ type, count }) => {
+    const part = UNIT_SUMMARY_PARTS.find((candidate) => candidate.type === type);
+    if (!part) return `${count}`;
     const suffix = part.plural && count > 1 ? "s" : "";
-    return [`${count} ${part.label}${suffix}`];
+    return `${count} ${part.label}${suffix}`;
   });
 
   return parts.length === 0 ? "No units" : parts.join(" · ");
+}
+
+function getKeyCityNames(state: GameState, country: CountryDefinition): string[] {
+  return country.keyRegionIds.flatMap((regionId) => {
+    const name = state.regions[regionId]?.name;
+    return name ? [name] : [];
+  });
+}
+
+function getBorderCountries(
+  state: GameState,
+  country: CountryDefinition
+): BorderCountry[] {
+  const controllers = getStartingControllers(state);
+  const countryIds = new Set<CountryId>();
+
+  for (const regionId of country.startingRegionIds) {
+    const region = state.regions[regionId];
+    if (!region) continue;
+    for (const neighborId of region.adjacentRegionIds) {
+      const controllerId = controllers[neighborId];
+      if (controllerId && controllerId !== country.id) {
+        countryIds.add(controllerId);
+      }
+    }
+  }
+
+  return [...countryIds]
+    .map((countryId) => {
+      const other = state.countries[countryId];
+      return {
+        countryId,
+        name: other.name,
+        blocLabel: getBlocLabel(other),
+        atWar: Boolean(state.countryStates[countryId]?.atWar)
+      };
+    })
+    .sort(
+      (left, right) =>
+        Number(right.atWar) - Number(left.atWar) || left.name.localeCompare(right.name)
+    );
 }
 
 function getEnemySummary(
@@ -156,6 +220,7 @@ export function getNationBriefing(state: GameState, countryId: CountryId): Natio
   const country = state.countries[countryId];
   const countryState = state.countryStates[countryId];
   const difficulty = getDifficulty(country);
+  const unitCounts = getUnitCounts(state, countryId);
 
   return {
     countryId,
@@ -168,7 +233,10 @@ export function getNationBriefing(state: GameState, countryId: CountryId): Natio
     capitalName: state.regions[country.capitalRegionId]?.name ?? country.capitalRegionId,
     regionCount: country.startingRegionIds.length,
     keyCityCount: country.keyRegionIds.length,
-    unitSummary: getUnitSummary(state, countryId),
+    keyCityNames: getKeyCityNames(state, country),
+    borders: getBorderCountries(state, country),
+    unitCounts,
+    unitSummary: getUnitSummary(unitCounts),
     warEntryText: getWarEntryText(state, country),
     ...getEnemySummary(state, country)
   };

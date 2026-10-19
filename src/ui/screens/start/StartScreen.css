@@ -16,7 +16,7 @@
 .start-screen__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(9, 11, 13, 0.62);
+  background: rgba(9, 11, 13, 0.58);
   pointer-events: none;
 }
 
@@ -128,14 +128,16 @@
 .start-screen__grid {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) 300px;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) clamp(300px, 23vw, 380px);
   gap: 14px;
   min-height: 0;
 }
 
 .start-column {
+  align-self: start;
   display: flex;
   flex-direction: column;
+  max-height: 100%;
   min-height: 0;
   background: rgba(14, 17, 20, 0.74);
   border: 1px solid var(--line);
@@ -159,7 +161,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  padding: 11px 12px;
+  padding: 11px 19px;
   border-bottom: 1px solid var(--line);
   font-family: var(--font-display);
   font-size: var(--fs-md);
@@ -190,6 +192,13 @@
   text-transform: none;
 }
 
+.start-column__scroll {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .start-column__body {
   display: flex;
   flex: 1 1 auto;
@@ -200,12 +209,22 @@
   overflow-y: auto;
 }
 
+.start-column__fade {
+  position: absolute;
+  right: 1px;
+  bottom: 0;
+  left: 1px;
+  height: 26px;
+  background: linear-gradient(180deg, rgba(14, 17, 20, 0), rgba(14, 17, 20, 0.96));
+  pointer-events: none;
+}
+
 .start-column__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 7px 12px;
+  padding: 7px 19px;
   border-top: 1px solid var(--line);
   color: var(--text-faint);
   font-size: var(--fs-xs);
@@ -303,7 +322,16 @@
 .start-screen__sidebar {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 14px;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-height: 800px) {
+  .start-screen__sidebar {
+    gap: 10px;
+  }
 }
 

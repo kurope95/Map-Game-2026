@@ -41,7 +41,10 @@ export function StartScreen() {
     [gameState]
   );
   const overview = useMemo(() => getScenarioOverview(gameState), [gameState]);
-  const selectedBriefing = getNationBriefing(gameState, playerCountryId);
+  const selectedBriefing = useMemo(
+    () => getNationBriefing(gameState, playerCountryId),
+    [gameState, playerCountryId]
+  );
   const continueLabel = autosave
     ? `Autosave · ${autosave.state.countries[autosave.countryId]?.name ?? autosave.countryId}, turn ${autosave.turn}`
     : null;

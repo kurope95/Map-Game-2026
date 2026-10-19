@@ -2,7 +2,7 @@
 
 .start-theatre {
   flex: 0 0 auto;
-  padding: 12px;
+  padding: 12px 14px;
   background: rgba(14, 17, 20, 0.55);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
@@ -107,4 +107,12 @@
   color: var(--text-faint);
   font-size: var(--fs-xs);
   line-height: 1.4;
+}
+
+/* Below this height the briefing alone fills the rail. The panel's bloc totals are repeated in the
+   three column footers, so dropping it costs no information and keeps the briefing fully visible. */
+@media (max-height: 899px) {
+  .start-theatre {
+    display: none;
+  }
 }

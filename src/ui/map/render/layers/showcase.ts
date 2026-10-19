@@ -46,15 +46,21 @@ export function drawShowcaseHighlight(
     return paths.get(id) ?? null;
   };
 
-  ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+  ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
   for (const id of dimmedRegionIds) {
+    const path = usable(id);
+    if (path) ctx.fill(path, "evenodd");
+  }
+
+  ctx.fillStyle = "rgba(246, 231, 176, 0.12)";
+  for (const id of highlightedRegionIds) {
     const path = usable(id);
     if (path) ctx.fill(path, "evenodd");
   }
 
   ctx.lineJoin = "round";
   ctx.strokeStyle = "#f6e7b0";
-  ctx.lineWidth = 2 / scale;
+  ctx.lineWidth = 2.5 / scale;
   ctx.setLineDash([]);
   for (const id of highlightedRegionIds) {
     const path = usable(id);

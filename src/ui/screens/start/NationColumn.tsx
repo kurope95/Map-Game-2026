@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import type { CountryId } from "../../../game/state/types";
 import type { NationBriefing } from "./briefing";
 import { NationCard } from "./NationCard";
@@ -23,22 +24,49 @@ export function NationColumn({
   onSelectCountry,
   onHoverCountry
 }: NationColumnProps) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [showFade, setShowFade] = useState(false);
+
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+
+    const update = () => {
+      const scrollable = body.scrollHeight > body.clientHeight + 1;
+      const atEnd = body.scrollTop + body.clientHeight >= body.scrollHeight - 2;
+      setShowFade(scrollable && !atEnd);
+    };
+
+    update();
+    body.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(body);
+
+    return () => {
+      body.removeEventListener("scroll", update);
+      observer.disconnect();
+    };
+  }, [nations.length]);
+
   return (
     <section className={`start-column start-column--${modifier}`}>
       <header className="start-column__header">
         <span>{label}</span>
         <span className="start-column__count">{nations.length} nations</span>
       </header>
-      <div className="start-column__body">
-        {nations.map((briefing) => (
-          <NationCard
-            key={briefing.countryId}
-            briefing={briefing}
-            selected={briefing.countryId === selectedCountryId}
-            onSelect={() => onSelectCountry(briefing.countryId)}
-            onHover={onHoverCountry}
-          />
-        ))}
+      <div className="start-column__scroll">
+        <div className="start-column__body" ref={bodyRef}>
+          {nations.map((briefing) => (
+            <NationCard
+              key={briefing.countryId}
+              briefing={briefing}
+              selected={briefing.countryId === selectedCountryId}
+              onSelect={() => onSelectCountry(briefing.countryId)}
+              onHover={onHoverCountry}
+            />
+          ))}
+        </div>
+        {showFade && <div className="start-column__fade" aria-hidden="true" />}
       </div>
       <footer className="start-column__footer">
         <span>{regionCount} regions</span>
