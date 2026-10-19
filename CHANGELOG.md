@@ -36,6 +36,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- AI pathfinding design [`2026-10-19-ai-pathfinding-design.md`](./docs/superpowers/specs/2026-10-19-ai-pathfinding-design.md)
+  and implementation plan [`2026-10-19-ai-pathfinding.md`](./docs/superpowers/plans/2026-10-19-ai-pathfinding.md):
+  a recomputed distance field over the existing transit rules so the AI can march toward distant
+  national goals, allied shield goals, lost homeland and threatened fronts without replacing the
+  hard-coded focus rules. Design only at this point; no AI behavior changed.
+  (plan 2026-10-19-ai-pathfinding → Tasks 1–6)
 - Standalone git repo pushed to https://github.com/kurope95/Map-Game-2026: `legacy` branch freezes
   the pre-improvement game, `main` carries all improvements. Added [`.gitignore`](./.gitignore)
   (node_modules, dist, .tmp-check, local settings) and [`.gitattributes`](./.gitattributes)
