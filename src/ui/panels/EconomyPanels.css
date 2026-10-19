@@ -172,6 +172,11 @@
   gap: 4px;
 }
 
+.economy-repeat {
+  display: flex;
+  margin-bottom: 6px;
+}
+
 /* ─── Build queue ─── */
 
 .build-queue {

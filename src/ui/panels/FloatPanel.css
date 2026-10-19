@@ -207,6 +207,74 @@
   color: var(--bad);
 }
 
+/* ─── Construction queue (Orders panel) ─── */
+
+.orders-panel__construction {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.orders-panel__construction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.construction-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 4px 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: var(--fs-xs);
+}
+
+.construction-row__main {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.construction-row__desc {
+  flex: none;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.construction-row__region {
+  overflow: hidden;
+  color: var(--text-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.construction-row__cost {
+  flex: none;
+  color: var(--text-dim);
+}
+
+.construction-row__turns {
+  flex: none;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.construction-row .btn--ghost {
+  padding: 2px 4px;
+  color: var(--text-faint);
+}
+
+.construction-row .btn--ghost:hover:not(:disabled) {
+  background: transparent;
+  color: var(--bad);
+}
+
 .orders-panel__events {
   margin-top: 10px;
   padding-top: 8px;

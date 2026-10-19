@@ -5,14 +5,17 @@ import { UnitSymbol } from "../kit/UnitSymbol";
 import { Window } from "../kit/Window";
 import { NATION_COLORS } from "../theme/palette";
 import { useGame } from "../session/GameProvider";
+import { committedCostLabel, describeBuildOrder } from "./buildOrderText";
 
 export function OrdersPanel() {
   const {
-    gameState, bottomOpen, setBottomOpen, activeTab, playerCountry, currentOrders,
-    handleClearAllOrders, handleCancelOrder, lastEventLogSnapshot,
+    gameState, bottomOpen, setBottomOpen, activeTab, playerCountry, playerCountryId, currentOrders,
+    handleClearAllOrders, handleCancelOrder, handleCancelBuildOrder, lastEventLogSnapshot,
   } = useGame();
 
   if (!bottomOpen || activeTab !== "orders") return null;
+
+  const constructionOrders = gameState.economyBuildOrders[playerCountryId] ?? [];
 
   return (
     <Window
@@ -49,6 +52,35 @@ export function OrdersPanel() {
               </span>
             );
           })}
+        </div>
+      )}
+      {constructionOrders.length > 0 && (
+        <div className="orders-panel__construction">
+          <strong className="orders-panel__events-title">Construction queue ({constructionOrders.length})</strong>
+          <div className="orders-panel__construction-list">
+            {constructionOrders.map((order) => (
+              <div key={order.id} className="construction-row">
+                <span className="construction-row__main">
+                  <span className="construction-row__desc">
+                    {describeBuildOrder(order, gameState.regionEconomies[order.regionId]?.facilities ?? [])}
+                  </span>
+                  <span className="construction-row__region">
+                    {gameState.regions[order.regionId]?.name ?? order.regionId}
+                  </span>
+                </span>
+                <span className="construction-row__cost">{committedCostLabel(order)}</span>
+                <span className="construction-row__turns">{order.turnsRemaining}/{order.totalTurns}t</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={X}
+                  title="Cancel (refund)"
+                  aria-label="Cancel (refund)"
+                  onClick={() => handleCancelBuildOrder(order.id)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {lastEventLogSnapshot.length > 0 && (

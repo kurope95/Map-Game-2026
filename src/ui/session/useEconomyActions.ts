@@ -2,15 +2,24 @@ import type { Dispatch, SetStateAction } from "react";
 import { canAfford as stockpileCanAfford, cancelBuildOrder, demolishFacility, getBestOperationalFacility as findBestOperationalFacility, getMissingResources as getStockpileShortfall, getOperationalFacilities as findOperationalFacilities, purchaseDoctrine, queueFacilityBuild, queueFacilityRepair, queueFacilityUpgrade, queueFortificationBuild, queueFortificationRepair, queueFortificationUpgrade, queueUnitRecruit, queueUnitReplenish, toggleChemicalMode, type ActionResult } from "../../game/rules/playerActions";
 import type { CountryId, DoctrineUpgradeId, FacilityType, GameState, StockpileKey, UnitType } from "../../game/state/types";
 import type { AddToast } from "./useToasts";
+import type { LastFacilityBuild } from "./lastFacilityBuild";
 
 interface EconomyActionsOptions {
   gameState: GameState;
   setGameState: Dispatch<SetStateAction<GameState>>;
   playerCountryId: CountryId;
   addToast: AddToast;
+  /** Remembers a successful build so the Economy panel can offer a one-click repeat. */
+  rememberFacilityBuild: (build: LastFacilityBuild) => void;
 }
 
-export function useEconomyActions({ gameState, setGameState, playerCountryId, addToast }: EconomyActionsOptions) {
+export function useEconomyActions({
+  gameState,
+  setGameState,
+  playerCountryId,
+  addToast,
+  rememberFacilityBuild,
+}: EconomyActionsOptions) {
   function applyAction(result: ActionResult) {
     if (result.ok) setGameState(result.state);
     if (result.toast) addToast(result.toast.message, result.toast.tone);
@@ -33,7 +42,10 @@ export function useEconomyActions({ gameState, setGameState, playerCountryId, ad
   }
 
   function handleBuildFacility(regionId: string, facilityType: FacilityType) {
-    applyAction(queueFacilityBuild(gameState, playerCountryId, regionId, facilityType));
+    const result = queueFacilityBuild(gameState, playerCountryId, regionId, facilityType);
+    applyAction(result);
+    // Only a queue that actually succeeded becomes the repeat target.
+    if (result.ok) rememberFacilityBuild({ regionId, facilityType });
   }
 
   function handleUpgradeFacility(facilityId: string, regionId: string) {

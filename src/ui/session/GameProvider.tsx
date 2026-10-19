@@ -27,6 +27,7 @@ function useGameValue() {
     setGameState: session.setGameState,
     playerCountryId: session.playerCountryId,
     addToast,
+    rememberFacilityBuild: ui.setLastFacilityBuild,
   });
   const diplomacy = useDiplomacy({
     gameState: session.gameState,

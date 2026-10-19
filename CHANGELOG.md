@@ -36,6 +36,22 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Repeat-last-build in the Economy panel: a successful facility build is remembered for the
+  session ([`useUiState.ts`](./src/ui/session/useUiState.ts)) and the Construct column offers
+  `Repeat: <Facility> (<Region>)` above the recipe list. The button is enabled only during the
+  player's turn while the remembered region is still player-controlled; slot and resource legality
+  stays with `queueFacilityBuild`. ([`EconomyPanel.tsx`](./src/ui/panels/EconomyPanel.tsx),
+  plan 2026-10-19-gameplay-qol-batch → Task 3)
+- Construction queue in the Orders panel: every pending `economyBuildOrders[playerCountryId]`
+  entry is listed with a human-readable description (build/upgrade/repair/recruit/replenish/
+  fortification), region name, committed resources, `turnsRemaining/totalTurns` and a cancel
+  button that refunds through the existing `cancelBuildOrder` action.
+  ([`OrdersPanel.tsx`](./src/ui/panels/OrdersPanel.tsx), plan 2026-10-19-gameplay-qol-batch → Task 3)
+- Pure helpers and tests for the QoL affordances:
+  [`buildOrderText.ts`](./src/ui/panels/buildOrderText.ts) formats order descriptions and committed
+  costs, [`lastFacilityBuild.ts`](./src/ui/session/lastFacilityBuild.ts) owns the remembered-build
+  type and `canRepeatFacilityBuild`; 11 tests cover every order type, cost formatting and the
+  disabled reasons. (plan 2026-10-19-gameplay-qol-batch → Task 3)
 - AI unit replenishment in [`heuristicBot.ts`](./src/game/ai/heuristicBot.ts): a damaged unit with
   an operational recruitment facility in its region queues the same `replenishUnit` order shape the
   player action produces, before any new recruitment. Candidates are ordered by weakest strength
@@ -367,6 +383,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- Repeat-last-build is session-only and is not written to localStorage. A remembered build that
+  survived a save or campaign load would be more confusing than useful, and the button is disabled
+  whenever the remembered region is no longer player-controlled. Cost if wrong: the convenience
+  disappears after a page reload, which costs one manual click.
+  (2026-10-19-gameplay-qol-batch-design.md)
 - The AI upgrade branch is capped at one upgrade per economy turn and placed after the
   recruitment ladder rather than within the facility ladder. Without the cap the 10-turn balance
   sweep queued roughly 1,400 upgrades across 24 nations and eliminated Ukraine on turn 8; with the
@@ -804,6 +825,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- Economy QoL (plan 2026-10-19-gameplay-qol-batch → Task 3): `npx tsc -p tsconfig.app.json
+  --noEmit` and `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm test` 383/383 in 50
+  files; headless Chrome at 1440x900: building a Farm shows `Repeat: Farm (Moscow)`, repeating it
+  queues a second Farm in Moscow, the Orders panel lists `Construction queue (2)` (including
+  `4 Coal` committed for a Power plant), and cancelling a row drops the count immediately; layout
+  capture at 1440x900 and 1920x1080 both print `Layout lock: PASS`.
 - AI spending (plan 2026-10-19-gameplay-qol-batch → Task 2): `npx tsc -p tsconfig.app.json
   --noEmit` 0 errors; `npm run check:layers` PASS; `npm test` 372/372 in 48 files;
   `npm run smoke` passed RUSSIA, ROMANIA, AUSTRIA; `npm run balance-check` "Balance check passed

@@ -8,12 +8,14 @@ import { ProgressBar } from "../kit/ProgressBar";
 import { Window } from "../kit/Window";
 import { FACILITY_META } from "../kit/resources";
 import { useGame } from "../session/GameProvider";
+import { canRepeatFacilityBuild } from "../session/lastFacilityBuild";
 
 export function EconomyPanel() {
   const {
     gameState, bottomOpen, setBottomOpen, activeTab, selectedRegionId, selectedRegion, playerCountryId,
     playerTurnActive, canAfford, getMissingResources, handleBuildFacility, handleRemoveFacility,
     handleCancelBuildOrder, setLogicMapOpen, selectedFacilityId, setSelectedFacilityId, regionBuildOrders,
+    lastFacilityBuild,
   } = useGame();
 
   if (!bottomOpen || activeTab !== "economy") return null;
@@ -23,6 +25,13 @@ export function EconomyPanel() {
 
   const civilianFacilitiesList = ["farm", "mine", "oilWell", "powerPlant", "smelter", "civilianFactory", "syntheticRefinery", "chemicalPlant"];
   const civFacilitiesBuilt = economy.facilities.filter(f => civilianFacilitiesList.includes(f.type));
+  const lastBuildRegion = lastFacilityBuild ? gameState.regions[lastFacilityBuild.regionId] : undefined;
+  const canRepeatLastBuild = canRepeatFacilityBuild(
+    lastFacilityBuild,
+    lastBuildRegion,
+    playerCountryId,
+    playerTurnActive
+  );
   const civOrders = regionBuildOrders.filter(o => {
     if (o.type === "buildFacility" && o.facilityType) return civilianFacilitiesList.includes(o.facilityType);
     if (o.type === "upgradeFacility" && o.facilityId) {
@@ -113,6 +122,25 @@ export function EconomyPanel() {
       {/* COL 2: Build */}
       <div className="economy-tab__col">
         <div className="economy-section__title">Construct Facility</div>
+        {lastFacilityBuild && (
+          <div className="economy-repeat">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={!canRepeatLastBuild}
+              title={
+                canRepeatLastBuild
+                  ? `Queue another ${FACILITY_META[lastFacilityBuild.facilityType].label} in ${lastBuildRegion?.name ?? lastFacilityBuild.regionId}`
+                  : !playerTurnActive
+                    ? "Only during your turn"
+                    : "That region is no longer under your control"
+              }
+              onClick={() => handleBuildFacility(lastFacilityBuild.regionId, lastFacilityBuild.facilityType)}
+            >
+              Repeat: {FACILITY_META[lastFacilityBuild.facilityType].label} ({lastBuildRegion?.name ?? lastFacilityBuild.regionId})
+            </Button>
+          </div>
+        )}
         {selectedRegion.controllerCountryId === playerCountryId && playerTurnActive && (
           <div className="build-actions">
             {economy.facilities.length + regionBuildOrders.filter((o) => o.type === "buildFacility").length < economy.buildingSlots ? (

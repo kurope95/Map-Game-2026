@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { LastFacilityBuild } from "./lastFacilityBuild";
 import type { BottomTab } from "./types";
 
 function tabs(orderCount: number): { id: BottomTab; label: string }[] {
@@ -24,6 +25,7 @@ export function useUiState() {
   const [logicMapOpen, setLogicMapOpen] = useState(false);
   const [doctrineOpen, setDoctrineOpen] = useState(false);
   const [showSupplyOverlay, setShowSupplyOverlay] = useState(false);
+  const [lastFacilityBuild, setLastFacilityBuild] = useState<LastFacilityBuild | null>(null);
 
   return {
     bottomOpen,
@@ -44,6 +46,8 @@ export function useUiState() {
     setDoctrineOpen,
     showSupplyOverlay,
     setShowSupplyOverlay,
+    lastFacilityBuild,
+    setLastFacilityBuild,
     tabs,
   };
 }
