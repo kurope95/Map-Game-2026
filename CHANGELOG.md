@@ -870,6 +870,20 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- Review follow-up for the attack preview and the Repeat button (plan 2026-10-19-gameplay-qol-batch → Tasks 3
+  and 4): `npx tsc -p tsconfig.app.json --noEmit` and `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors;
+  `npm test` 430/430 in 53 files (20 new: 8 estimator-against-resolver tests, 8 fixture and 4 tooltip and
+  Repeat-guard tests, written first and seen failing); `npm run check:layers` PASS; `npm run smoke`,
+  `npm run balance-check`, `npm run check-war-entry` and `npm run validate-map` pass; `npm run build` OK.
+  Resolver probe before the fix (Odesa at turn 1, level 3 fort, 400 spread seeds per case): captures 0/400 for
+  every setup the tooltip called likely or decisive; without the fort, "decisive" captured 65% and 78%. After the
+  fix the estimator's fort health after the assault (23, 19 and 13), the capture frequency (within 7 points over
+  300 seeds) and the loss ranges (enclosing all 240 observed outcomes per case) agree with the resolver. Browser
+  (dev build, stand-in requestAnimationFrame): hovering Odesa shows `no capture this turn, the fort holds`,
+  `Fort Lv.3: 24 → 19/24, holds` for infantry plus armor and `24 → 23/24` for the infantry alone; with the
+  infantry's attack already queued the armor alone shows the same combined estimate and "Counts 1 attack already
+  queued"; hovering and opening a panel with a selection caused 0 map renders; after building a Farm the Economy
+  panel offers `Repeat: Farm (Moscow)` and after loading a save it does not.
 - Attack odds preview (plan 2026-10-19-gameplay-qol-batch → Task 4): `npx tsc -p
   tsconfig.app.json --noEmit` and `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm run
   check:layers` PASS; `npm test` 410/410 in 52 files; `npm run smoke` passed RUSSIA, ROMANIA,
