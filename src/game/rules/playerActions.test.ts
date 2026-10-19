@@ -17,6 +17,7 @@ import {
 import type { CountryId, CountryStockpile, Facility, GameState, RegionEconomy, RegionFortification } from "../state/types";
 import {
   canAfford,
+  canReplenishIn,
   cancelBuildOrder,
   demolishFacility,
   getBestOperationalFacility,
@@ -344,6 +345,49 @@ describe("queueUnitReplenish", () => {
   it("tells the player a full-strength unit needs nothing", () => {
     const state = withUnit(fresh(), INFANTRY, { strength: MAX_UNIT_STRENGTH.infantry });
     expect(queueUnitReplenish(state, RU, INFANTRY, ids)).toEqual({ ok: false, toast: { message: "Unit is already at full strength", tone: "info" } });
+  });
+
+  /** The unit stands in `regionId`, which has a working barracks, so only the region's holder can be the problem. */
+  const stationedIn = (state: GameState, regionId: string): GameState => {
+    const barracks: Facility = { id: `${regionId}-test-barracks`, type: "barracks", level: 1, regionId, damaged: false };
+    const economy = state.regionEconomies[regionId];
+    return withUnit(withEconomy(state, regionId, { facilities: [...economy.facilities, barracks] }), INFANTRY, { regionId });
+  };
+
+  it("refuses a unit standing in an enemy-held region, even beside a working barracks", () => {
+    const state = withStockpile(stationedIn(weak(fresh()), "berlin"), RU, 999);
+    expect(state.regions.berlin.controllerBlocId).not.toBe(state.countries[RU].blocId);
+    expect(queueUnitReplenish(state, RU, INFANTRY, ids)).toEqual({
+      ok: false,
+      toast: { message: "Replenishing needs a region held by your country or your bloc (Berlin)", tone: "warning" },
+    });
+  });
+
+  it("refuses a unit standing in a neutral-held region", () => {
+    const base = fresh();
+    const neutralRegion = Object.values(base.regions).find((region) => base.countries[region.controllerCountryId].blocId === "NEUTRAL")!;
+    const state = withStockpile(stationedIn(weak(base), neutralRegion.id), RU, 999);
+    expect(queueUnitReplenish(state, RU, INFANTRY, ids)).toEqual({
+      ok: false,
+      toast: { message: `Replenishing needs a region held by your country or your bloc (${neutralRegion.name})`, tone: "warning" },
+    });
+  });
+
+  it("allows a region held by an ally of the same bloc, like Tiraspol for Russia", () => {
+    const state = withStockpile(stationedIn(weak(fresh()), "chisinau-pridnestrovie"), RU, 999);
+    expect(state.regions["chisinau-pridnestrovie"].controllerCountryId).toBe("PRIDNESTROVIE");
+    const result = expectOk(queueUnitReplenish(state, RU, INFANTRY, ids));
+    expect(ordersOf(result.state)[0]).toMatchObject({ type: "replenishUnit", unitId: INFANTRY, regionId: "chisinau-pridnestrovie" });
+  });
+
+  it("gives a neutral country only the regions it holds itself, since a neutral bloc is not an alliance", () => {
+    const base = fresh();
+    const neutral = Object.values(base.countries).find((country) => country.blocId === "NEUTRAL")!;
+    const otherNeutralRegion = Object.values(base.regions).find(
+      (region) => region.controllerCountryId !== neutral.id && base.countries[region.controllerCountryId].blocId === "NEUTRAL"
+    )!;
+    expect(canReplenishIn(base, neutral.id, otherNeutralRegion.id)).toBe(false);
+    expect(canReplenishIn(base, neutral.id, neutral.capitalRegionId)).toBe(true);
   });
 
   it("asks for the required facility in the unit's region", () => {

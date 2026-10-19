@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MAX_UNIT_STRENGTH } from "../content/economyRecipes";
 import { DOCTRINE_DEFINITIONS } from "../content/doctrines";
 import { createInitialState } from "../state/createInitialState";
-import type { EconomyBuildOrder, Facility, FacilityType, GameState } from "../state/types";
+import type { CountryId, EconomyBuildOrder, Facility, FacilityType, GameState } from "../state/types";
 import { aiEconomyTurn } from "./heuristicBot";
 
 const COUNTRY = "ROMANIA" as const;
@@ -147,6 +147,23 @@ function orders(state: GameState): EconomyBuildOrder[] {
   return state.economyBuildOrders[COUNTRY] ?? [];
 }
 
+/** The first unit stands in another region that has a working barracks and is held by `holder`. */
+function withDamagedUnitAbroad(state: GameState, holder: CountryId): GameState {
+  const regionId = Object.keys(state.regions).find((id) => id !== REGION)!;
+  return {
+    ...state,
+    regions: {
+      ...state.regions,
+      [regionId]: { ...state.regions[regionId], controllerCountryId: holder, controllerBlocId: state.countries[holder].blocId },
+    },
+    regionEconomies: {
+      ...state.regionEconomies,
+      [regionId]: { ...state.regionEconomies[regionId], facilities: [{ ...facility("abroad-barracks", "barracks"), regionId }] },
+    },
+    units: { ...state.units, "test-inf-0": { ...state.units["test-inf-0"], regionId } },
+  };
+}
+
 describe("aiEconomyTurn slot accounting", () => {
   it("does not choose a region whose only free slot is held by a pending build", () => {
     // No power plant exists; the old lookup would pick Bucharest even though the pending farm
@@ -201,6 +218,37 @@ describe("aiEconomyTurn replenishment", () => {
     const next = aiEconomyTurn(state, COUNTRY);
 
     expect(orders(next).filter((order) => order.type === "replenishUnit")).toHaveLength(0);
+  });
+
+  // Bucharest has its own barracks, so the AI has no reason to build one first; only the unit's
+  // region (and who holds it) decides whether it gets replenished.
+  const abroadFacilities = () => [facility("power-1", "powerPlant"), facility("farm-1", "farm"), facility("barracks-1", "barracks", 3)];
+
+  const replenishOrdersWhenHeldBy = (holder: CountryId) =>
+    orders(aiEconomyTurn(withDamagedUnitAbroad(fixture({ facilities: abroadFacilities(), unitStrengths: [3] }), holder), COUNTRY)).filter(
+      (order) => order.type === "replenishUnit"
+    );
+
+  it("does not replenish a unit standing in a neutral-held region", () => {
+    expect(replenishOrdersWhenHeldBy(QUIET_CONTROLLER)).toHaveLength(0);
+  });
+
+  it("does not replenish a unit standing in an enemy-bloc region", () => {
+    expect(replenishOrdersWhenHeldBy("RUSSIA")).toHaveLength(0);
+  });
+
+  it("replenishes that same unit in that same place once its country holds the region", () => {
+    const replenishOrders = replenishOrdersWhenHeldBy(COUNTRY);
+
+    expect(replenishOrders).toHaveLength(1);
+    expect(replenishOrders[0].unitId).toBe("test-inf-0");
+  });
+
+  it("also replenishes it where an ally of the same bloc holds the region", () => {
+    const replenishOrders = replenishOrdersWhenHeldBy("POLAND");
+
+    expect(replenishOrders).toHaveLength(1);
+    expect(replenishOrders[0].unitId).toBe("test-inf-0");
   });
 
   it("does not queue a second replenishment for an already pending unit", () => {

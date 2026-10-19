@@ -406,6 +406,17 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- Replenishing is allowed where the unit's own country or another country of its non-neutral bloc holds
+  the region; enemy- and neutral-held regions never qualify. Marek picked "replenishment needs region
+  control" (2026-10-19). The literal own-country-only reading was built and measured first: it stopped
+  Russia from restoring its garrison in Tiraspol, which Pridnestrovie holds (84 of the 91 top-ups the
+  10-turn balance sweep made outside a unit's own country; the other 7 were Hungary's), and the cascade
+  made `npm run balance-check` fail (Slovakia eliminated on turn 10). The bloc reading follows the supply
+  rule, which already treats bloc-held regions as friendly, and passes every check; neutral countries get
+  only their own regions because the NEUTRAL bloc is not an alliance. The check runs when the order is
+  queued, like all economy orders, so an order already queued still completes if the region changes
+  hands. Cost if wrong: a unit can still be restored in an ally's city; the strict version is one line in
+  `canReplenishIn` plus a balance retune.
 - The attack preview labels loss figures as an estimate, not a promise: the range is the
   resolver's band base times its ±15% seeded variance and its clamps, cut to whole units by the
   resolver's rounding, computed without drawing a random number. The ratio, support, fort and modifier parts mirror the resolver exactly. Cost if
@@ -582,6 +593,19 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (2026-10-19-start-screen-polish-design.md)
 
 ### Changed
+- Replenishing a unit now needs a region held by its own country or by a country of its own bloc, for the
+  player and for the AI. One predicate, `canReplenishIn` in
+  [`playerActions.ts`](./src/game/rules/playerActions.ts), serves all three callers:
+  `queueUnitReplenish` refuses a unit standing in an enemy- or neutral-held region with "Replenishing needs
+  a region held by your country or your bloc (<Region>)", the AI skips such units
+  ([`heuristicBot.ts`](./src/game/ai/heuristicBot.ts)), and the unit card shows a disabled Replenish button
+  with the reason ([`UnitCard.tsx`](./src/ui/windows/UnitCard.tsx)). Before, replenishing only checked that a
+  working barracks or factory stood in the unit's region, so a unit could be topped up from an enemy's or
+  a neutral's barracks. Tests that failed first: a Russian infantry in Berlin beside a working barracks
+  ([`playerActions.test.ts`](./src/game/rules/playerActions.test.ts)) and the AI with the same unit in a
+  neutral-held region ([`aiEconomyTurn.test.ts`](./src/game/ai/aiEconomyTurn.test.ts)); the allowed cases
+  (own region, same-bloc ally such as Tiraspol for Russia) are pinned beside them. Marek's decision,
+  2026-10-19 (feature batch report → "Still open"); see the Decision entry for why the rule is bloc-wide.
 - AI build-slot accounting: `findBuildRegion` and `totalSlotsRemaining` now count pending
   `buildFacility` orders in a region as occupied slots, matching the player rule in
   [`playerActions.ts`](./src/game/rules/playerActions.ts), so the AI can no longer double-book a

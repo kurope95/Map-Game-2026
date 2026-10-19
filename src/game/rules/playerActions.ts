@@ -47,6 +47,20 @@ const controlsRegion = (state: GameState, countryId: CountryId, regionId: string
   state.regions[regionId]?.controllerCountryId === countryId;
 const pendingOrders = (state: GameState, countryId: CountryId) => state.economyBuildOrders[countryId] ?? [];
 
+/**
+ * Replenishing restores troops that are already in the field, so it follows the supply rule (a region
+ * held by the unit's own bloc) rather than the ownership rule of construction: the region must be held
+ * by the unit's country or by another country of its BRICS / EU NATO bloc. Enemy- and neutral-held
+ * regions never qualify.
+ */
+export function canReplenishIn(state: GameState, countryId: CountryId, regionId: string): boolean {
+  const region = state.regions[regionId];
+  if (!region) return false;
+  if (region.controllerCountryId === countryId) return true;
+  const blocId = state.countries[countryId]?.blocId;
+  return blocId !== undefined && blocId !== "NEUTRAL" && region.controllerBlocId === blocId;
+}
+
 export function canAfford(stockpile: CountryStockpile | undefined, cost: Cost): boolean {
   if (!stockpile) return false;
   for (const [key, amount] of Object.entries(cost)) {
@@ -333,6 +347,13 @@ export function queueUnitReplenish(
   const sourceFacility = getBestOperationalFacility(state, unit.regionId, recruitRecipe.requiredFacility);
   const replenish = getReplenishmentCost(unit.type, unit.strength, sourceFacility?.level ?? 1);
   if (!replenish) return fail({ message: "Unit is already at full strength", tone: "info" });
+
+  if (!canReplenishIn(state, countryId, unit.regionId)) {
+    return fail({
+      message: `Replenishing needs a region held by your country or your bloc (${state.regions[unit.regionId]?.name})`,
+      tone: "warning",
+    });
+  }
 
   // Check required facility in the unit's current region
   if (!sourceFacility) {

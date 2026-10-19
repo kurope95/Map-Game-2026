@@ -13,7 +13,7 @@ import {
   getReplenishmentCost,
 } from "../content/economyRecipes";
 import { DOCTRINE_DEFINITIONS } from "../content/doctrines";
-import { purchaseDoctrine } from "../rules/playerActions";
+import { canReplenishIn, purchaseDoctrine } from "../rules/playerActions";
 import { applyDiplomacyAction, getCountryLeanBloc } from "../rules/diplomacy";
 import { AI_COUNTRY_PROFILES, AI_NATIONAL_GOALS, AI_ROUTE_WEIGHTS, AI_STRATEGY_WEIGHTS } from "../content/aiObjectives";
 import { recordAllyAttackClaims, shouldDeferAttackToAlly } from "./allyCoordination";
@@ -865,6 +865,8 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
       }> = [];
       for (const unit of myUnits) {
         if (pendingReplenishUnitIds.has(unit.id)) continue;
+        // Same rule as the player's queueUnitReplenish.
+        if (!canReplenishIn(currentState, countryId, unit.regionId)) continue;
         const recipe = getUnitRecipe(unit.type);
         if (!recipe) continue;
         const sourceFacility = currentState.regionEconomies[unit.regionId]?.facilities

@@ -1,6 +1,7 @@
 import "./UnitCard.css";
 import type { CSSProperties } from "react";
 import { getReplenishmentCost, getUnitRecruitmentRecipe, MAX_UNIT_STRENGTH } from "../../game/content/economyRecipes";
+import { canReplenishIn } from "../../game/rules/playerActions";
 import type { UnitDefinition } from "../../game/state/types";
 import { getEntrenchmentBonus, getSupplyStatus, getVeterancyLevel } from "../format/unitStatus";
 import { Badge, type BadgeTone } from "../kit/Badge";
@@ -85,6 +86,9 @@ export function UnitCard({ unit }: { unit: UnitDefinition }) {
             const alreadyReplenishing = (gameState.economyBuildOrders[playerCountryId] ?? []).some((o) => o.type === "replenishUnit" && o.unitId === unit.id);
             if (alreadyReplenishing) return <Button variant="secondary" size="sm" disabled>Replenishing…</Button>;
             if (!repInfo) return null;
+            if (!canReplenishIn(gameState, playerCountryId, unit.regionId)) {
+              return <Button variant="secondary" size="sm" disabled title="Replenishing needs a region held by your country or your bloc">Replenish</Button>;
+            }
             const costStr = Object.entries(repInfo.cost).map(([k, v]) => `${v}${k.slice(0, 3)}`).join("+");
             return (
               <Button
