@@ -13,7 +13,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 10,
     isCapital: true,
     isKeyCity: false,
-    adjacentRegionIds: ["saint-petersburg", "nizhny-novgorod", "bryansk", "smolensk", "kazan"],
+    adjacentRegionIds: ["saint-petersburg", "nizhny-novgorod", "bryansk", "smolensk"],
     infrastructure: [
       { type: "factory", level: 3, damaged: false },
       { type: "militaryFactory", level: 3, damaged: false },
@@ -78,7 +78,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 6,
     isCapital: false,
     isKeyCity: true,
-    adjacentRegionIds: ["moscow", "nizhny-novgorod"],
+    adjacentRegionIds: ["nizhny-novgorod"],
     infrastructure: [{ type: "factory", level: 2, damaged: false }]
   },
   {
@@ -93,7 +93,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 4,
     isCapital: false,
     isKeyCity: false,
-    adjacentRegionIds: ["moscow", "smolensk", "minsk", "gomel", "voronezh", "kursk"],
+    adjacentRegionIds: ["moscow", "smolensk", "gomel", "voronezh", "kursk"],
     infrastructure: [{ type: "supplyHub", level: 1, damaged: false }]
   },
   {
@@ -153,7 +153,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 7,
     isCapital: true,
     isKeyCity: false,
-    adjacentRegionIds: ["brest", "gomel", "bryansk", "smolensk", "warsaw"],
+    adjacentRegionIds: ["brest", "gomel", "smolensk", "vilnius"],
     infrastructure: [{ type: "airport", level: 2, damaged: false }]
   },
   {
@@ -246,7 +246,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 4,
     isCapital: false,
     isKeyCity: false,
-    adjacentRegionIds: ["donetsk", "zaporizhzhia"],
+    adjacentRegionIds: ["donetsk", "zaporizhzhia", "sevastopol"],
     infrastructure: [{ type: "factory", level: 1, damaged: false }]
   },
   {
@@ -307,7 +307,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 9,
     isCapital: true,
     isKeyCity: false,
-    adjacentRegionIds: ["hamburg", "essen", "dresden", "poznan", "wroclaw"],
+    adjacentRegionIds: ["hamburg", "dresden", "poznan", "wroclaw", "hannover"],
     infrastructure: [
       { type: "factory", level: 3, damaged: false },
       { type: "militaryFactory", level: 2, damaged: false },
@@ -356,7 +356,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 7,
     isCapital: false,
     isKeyCity: true,
-    adjacentRegionIds: ["berlin", "hannover", "munich"],
+    adjacentRegionIds: ["hannover", "munich"],
     infrastructure: [{ type: "militaryFactory", level: 2, damaged: false }]
   },
   {
@@ -371,7 +371,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 4,
     isCapital: false,
     isKeyCity: false,
-    adjacentRegionIds: ["hamburg", "essen"],
+    adjacentRegionIds: ["hamburg", "essen", "berlin"],
     infrastructure: []
   },
   {
@@ -401,7 +401,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 8,
     isCapital: true,
     isKeyCity: false,
-    adjacentRegionIds: ["gdansk", "poznan", "lublin", "krakow", "minsk", "bratislava", "brest", "wroclaw"],
+    adjacentRegionIds: ["gdansk", "poznan", "lublin", "krakow", "bratislava", "brest", "wroclaw", "kaunas"],
     infrastructure: [
       { type: "airport", level: 2, damaged: false },
       { type: "militaryFactory", level: 2, damaged: false }
@@ -494,7 +494,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 7,
     isCapital: true,
     isKeyCity: false,
-    adjacentRegionIds: ["belgrade", "odesa", "constanta", "chisinau", "cluj-napoca"],
+    adjacentRegionIds: ["belgrade", "constanta", "chisinau", "cluj-napoca"],
     infrastructure: [
       { type: "airport", level: 2, damaged: false },
       { type: "factory", level: 2, damaged: false }
@@ -647,7 +647,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 3,
     isCapital: false,
     isKeyCity: false,
-    adjacentRegionIds: ["riga", "kaunas"],
+    adjacentRegionIds: ["riga", "kaunas", "minsk"],
     infrastructure: []
   },
   {
@@ -662,7 +662,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 3,
     isCapital: false,
     isKeyCity: false,
-    adjacentRegionIds: ["riga", "vilnius", "kaliningrad"],
+    adjacentRegionIds: ["riga", "vilnius", "kaliningrad", "warsaw"],
     infrastructure: []
   },
   {
@@ -711,7 +711,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 6,
     isCapital: false,
     isKeyCity: true,
-    adjacentRegionIds: ["kyiv", "dnipro", "zaporizhzhia", "constanta", "bucharest"],
+    adjacentRegionIds: ["kyiv", "dnipro", "zaporizhzhia", "constanta"],
     infrastructure: [{ type: "airport", level: 2, damaged: false }]
   },
   {
@@ -756,7 +756,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 5,
     isCapital: false,
     isKeyCity: false,
-    adjacentRegionIds: ["zaporizhzhia"],
+    adjacentRegionIds: ["zaporizhzhia", "mariupol"],
     infrastructure: [
       { type: "airport", level: 1, damaged: false },
       { type: "supplyHub", level: 1, damaged: false }
@@ -801,7 +801,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 6,
     isCapital: true,
     isKeyCity: false,
-    adjacentRegionIds: ["novi-sad", "nis", "budapest", "bucharest", "sarajevo"],
+    adjacentRegionIds: ["novi-sad", "nis", "budapest", "bucharest", "sarajevo", "zagreb"],
     infrastructure: [
       { type: "airport", level: 1, damaged: false },
       { type: "militaryFactory", level: 1, damaged: false }
@@ -930,7 +930,7 @@ export const regionDefinitions: RegionDefinition[] = [
     industryWeight: 4,
     isCapital: true,
     isKeyCity: false,
-    adjacentRegionIds: ["sarajevo", "ljubljana"],
+    adjacentRegionIds: ["sarajevo", "ljubljana", "belgrade"],
     infrastructure: []
   },
   {

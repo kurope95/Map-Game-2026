@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
+import { migrateSaveAdjacency } from "../../game/state/migrateSaveAdjacency";
 import type { GameState } from "../../game/state/types";
 import { createSessionState, useGameSession } from "./useGameSession";
 import { useToasts } from "./useToasts";
@@ -46,7 +47,10 @@ function useGameValue() {
     selection.setSelectedUnitIds(new Set());
   }
 
-  function loadStateFromSave(nextState: GameState, label: string) {
+  function loadStateFromSave(savedState: GameState, label: string) {
+    // Saves carry their own adjacency; rebuild it from current content so a noding change
+    // applies to campaigns that started before it.
+    const nextState = migrateSaveAdjacency(savedState);
     session.setGameState(nextState);
     const loadedPlayerCountryId = nextState.playerCountryId ?? session.playerCountryId;
     session.setPlayerCountryId(loadedPlayerCountryId);

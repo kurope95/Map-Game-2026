@@ -76,7 +76,7 @@ const MANUAL_SPLIT_PLANS: Partial<Record<string, Array<{
     { key: "southern-arc", label: "Southern Arc", name: "Podolsk", lon: 0.35, lat: -0.85, terrain: "urban", pointsFactor: 0.56, populationFactor: 0.58, industryFactor: 0.56, linkIds: ["bryansk", "smolensk"] },
   ],
   "saint-petersburg": [
-    { key: "neva-corridor", label: "Neva Corridor", name: "Gatchina", lon: 0.7, lat: -0.8, terrain: "coastal", pointsFactor: 0.58, linkIds: ["tallinn", "moscow"] },
+    { key: "neva-corridor", label: "Neva Corridor", name: "Gatchina", lon: 0.7, lat: -0.8, terrain: "coastal", pointsFactor: 0.58, linkIds: ["moscow"] },
     { key: "gulf-shore", label: "Gulf Shore", name: "Kronstadt", lon: -0.75, lat: -0.25, terrain: "coastal", pointsFactor: 0.54, linkIds: ["tallinn", "helsinki"] },
   ],
   "rostov-on-don": [
@@ -84,10 +84,10 @@ const MANUAL_SPLIT_PLANS: Partial<Record<string, Array<{
     { key: "steppe-hinterland", label: "Steppe Hinterland", name: "Shakhty", lon: 0.65, lat: 0.55, terrain: "industrial", pointsFactor: 0.56, linkIds: ["voronezh", "lugansk"] },
   ],
   kazan: [
-    { key: "volga-bend", label: "Volga Bend", name: "Zelenodolsk", lon: -0.8, lat: -0.45, terrain: "industrial", pointsFactor: 0.56, linkIds: ["nizhny-novgorod", "moscow"] },
+    { key: "volga-bend", label: "Volga Bend", name: "Zelenodolsk", lon: -0.8, lat: -0.45, terrain: "industrial", pointsFactor: 0.56, linkIds: ["nizhny-novgorod"] },
   ],
   "nizhny-novgorod": [
-    { key: "oka-district", label: "Oka District", name: "Dzerzhinsk", lon: -0.75, lat: 0.45, terrain: "industrial", pointsFactor: 0.54, linkIds: ["moscow", "kazan"] },
+    { key: "oka-district", label: "Oka District", name: "Dzerzhinsk", lon: -0.75, lat: 0.45, terrain: "industrial", pointsFactor: 0.54, linkIds: ["kazan"] },
   ],
   kaliningrad: [
     { key: "coast", label: "Coast", name: "Baltiysk", lon: 0.75, lat: -0.55, terrain: "coastal", pointsFactor: 0.56, linkIds: ["gdansk"] },
@@ -175,7 +175,7 @@ const MANUAL_SPLIT_PLANS: Partial<Record<string, Array<{
     { key: "transylvania", label: "Transylvania", name: "Targu Mures", lon: -0.8, lat: 0.35, terrain: "urban", pointsFactor: 0.56, linkIds: ["bucharest", "chisinau"] },
   ],
   minsk: [
-    { key: "central-belt", label: "Central Belt", name: "Barysaw", lon: 0.85, lat: -0.25, terrain: "urban", pointsFactor: 0.56, linkIds: ["gomel", "warsaw"] },
+    { key: "central-belt", label: "Central Belt", name: "Barysaw", lon: 0.85, lat: -0.25, terrain: "urban", pointsFactor: 0.56, linkIds: ["gomel"] },
     { key: "western-gate", label: "Western Gate", name: "Molodechno", lon: -0.8, lat: 0.25, terrain: "urban", pointsFactor: 0.53, linkIds: ["brest", "warsaw"] },
   ],
   gomel: [
@@ -479,6 +479,10 @@ function applyGeneratedAdjacencyCorrections(scenario: ScenarioDefinition) {
   unlinkRegions(regionsById, "bratislava-eastern-slovakia", "prague");
   linkRegions(regionsById, "bratislava-eastern-slovakia", "krakow");
   linkRegions(regionsById, "bratislava-eastern-slovakia", "lviv");
+
+  // Narva is generated from Tallinn's fallback slice; the core noding reshuffle cuts its
+  // inherited Helsinki link so the Gulf of Finland is reached through Tallinn.
+  unlinkRegions(regionsById, "tallinn-east", "helsinki");
 }
 
 function boostCountryStockpiles(countries: CountryDefinition[], stockpiles: Record<CountryId, CountryStockpile>) {

@@ -36,6 +36,24 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Core noding reshuffle (plan 2026-10-19-gameplay-qol-batch → Task 1): 15 directed adjacency edits
+  across 16 regions in [`regions.ts`](./src/game/content/regions.ts) — Moscow–Kazan and
+  Bryansk–Minsk cut; Warsaw–Minsk cut, Warsaw–Kaunas added; Berlin–Essen cut, Berlin–Hannover
+  added; Odesa–Tiraspol and Odesa–Zaporizhzhia kept, Odesa–Tokmak still absent; Sevastopol–Odesa
+  and Sevastopol–Mariupol links cut; Vilnius–Minsk added; Belgrade–Zagreb and Bucharest–Belgrade
+  added. Runtime graph is now 222 symmetric edges in one component with zero bridges, no leaves
+  and articulation points exactly `helsinki` and `nizhny-novgorod`.
+  (plan 2026-10-19-gameplay-qol-batch → Task 1)
+- [`regionGraph.test.ts`](./src/game/state/regionGraph.test.ts): pins the post-reshuffle graph
+  (edge count, connectivity, bridges, articulation points, required corridors, all cuts and adds,
+  no direct Odesa–Tokmak, runtime graph equals scenario graph).
+- [`migrateSaveAdjacency.ts`](./src/game/state/migrateSaveAdjacency.ts): rebuilds both serialized
+  adjacency maps of a loaded save from current scenario content, so campaigns started before the
+  reshuffle use the new graph. Ownership, units, economy and orders are untouched; returns the same
+  object when the save is already current. Wired into `loadStateFromSave` in
+  [`GameProvider.tsx`](./src/ui/session/GameProvider.tsx).
+- `minsk-western-gate` keeps its direct Warsaw link: it is a generated satellite outside the tested
+  core 15 and cutting it would change the measured 222-edge result.
 - Primary-objective staging in [`heuristicBot.ts`](./src/game/ai/heuristicBot.ts): a route field is
   built toward the friendly transit regions bordering `primaryObjective` (the objective itself only
   when friendly-controlled); surplus land units with no attack, adjacent-reinforcement or march
@@ -326,6 +344,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- Saves carry their own adjacency and have no save-version field, so a noding change would strand
+  old campaigns on the old graph. Rather than bumping a save version, loading now calls
+  `migrateSaveAdjacency`, which rebuilds both adjacency maps from current content and leaves every
+  other part of the campaign untouched. Cost if wrong: a hand-authored save with a deliberately
+  custom graph loses that customization on load. (2026-10-19-gameplay-qol-batch-design.md)
 - The AI Intel panel renders each action's target, order and score but not `BotAction.reasons`, so
   the browser check verifies that recommendations compute and render, while the route and march
   reason strings are pinned by unit tests instead. Cost if wrong: the reason lines exist in the
@@ -477,6 +500,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (2026-10-19-start-screen-polish-design.md)
 
 ### Changed
+- Generated satellite links touched by the reshuffle: Kazan's Oka split inherits only
+  `nizhny-novgorod`; Nizhny Novgorod's split inherits only `kazan`; Minsk's central belt inherits
+  only `gomel`; Saint Petersburg's Neva corridor inherits only `moscow`; Tallinn's Narva satellite
+  loses its inherited Helsinki link so the Gulf of Finland is reached through Tallinn.
+  ([`createInitialState.ts`](./src/game/state/createInitialState.ts), plan 2026-10-19-gameplay-qol-batch → Task 1)
 - [`heuristicBot.ts`](./src/game/ai/heuristicBot.ts): the national-goal, ally-support and homeland
   evaluators now add route-progress value to `move` candidates from rear regions, using three
   distance fields built once per `planCountryTurn` (`buildRouteDistances` over unresolved national
@@ -733,6 +761,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- Noding cleanup (plan 2026-10-19-gameplay-qol-batch → Task 1): `npm run validate-map` passed for
+  63 regions; `npm run check:layers` PASS; `npx tsc -p tsconfig.app.json --noEmit` 0 errors;
+  `npm test` 358/358 in 46 files (10 new noding/migration tests); `npm run check-war-entry` passed;
+  `npm run smoke` passed RUSSIA, ROMANIA, AUSTRIA; `npm run balance-check` "Balance check passed";
+  `npm run build` OK.
 - AI pathfinding final verification (Task 6): `npx tsc -p tsconfig.app.json --noEmit` and
   `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm run build` OK; `npm run check:layers`
   PASS; `npm test` 348/348 in 44 files; `npm run smoke` passed RUSSIA, ROMANIA and AUSTRIA;
