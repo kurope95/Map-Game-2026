@@ -13,6 +13,7 @@ import {
   getUnitRecruitmentRecipe,
 } from "../content/economyRecipes";
 import { DOCTRINE_DEFINITIONS } from "../content/doctrines";
+import { describeCancelRefund, getCancelRefund } from "./buildRefund";
 import type {
   CountryId,
   CountryStockpile,
@@ -395,16 +396,20 @@ export function cancelBuildOrder(state: GameState, countryId: CountryId, orderId
   const orders = pendingOrders(state, countryId);
   const order = orders.find((o) => o.id === orderId);
   if (!order) return fail();
-  // Refund committed resources
+  // Everything comes back before the first end of turn; after that only the share of the build time still ahead.
+  const refund = getCancelRefund(order);
   const stockpile = { ...state.countryStockpiles[order.countryId] };
-  for (const [key, amount] of Object.entries(order.committed)) {
+  for (const [key, amount] of Object.entries(refund.amounts)) {
     stockpile[key as StockpileKey] += amount ?? 0;
   }
-  return succeed({
-    ...state,
-    countryStockpiles: { ...state.countryStockpiles, [order.countryId]: stockpile },
-    economyBuildOrders: { ...state.economyBuildOrders, [countryId]: orders.filter((o) => o.id !== orderId) },
-  });
+  return succeed(
+    {
+      ...state,
+      countryStockpiles: { ...state.countryStockpiles, [order.countryId]: stockpile },
+      economyBuildOrders: { ...state.economyBuildOrders, [countryId]: orders.filter((o) => o.id !== orderId) },
+    },
+    { message: describeCancelRefund(refund), tone: "info" }
+  );
 }
 
 export function purchaseDoctrine(state: GameState, countryId: CountryId, doctrineId: DoctrineUpgradeId): ActionResult {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EconomyBuildOrder, Facility } from "../../game/state/types";
-import { committedCostLabel, describeBuildOrder } from "./buildOrderText";
+import { cancelRefundLabel, committedCostLabel, describeBuildOrder } from "./buildOrderText";
 
 function order(overrides: Partial<EconomyBuildOrder>): EconomyBuildOrder {
   return {
@@ -45,6 +45,17 @@ describe("describeBuildOrder", () => {
     expect(describeBuildOrder(order({ type: "buildFortification" }), facilities)).toBe("Build fortification");
     expect(describeBuildOrder(order({ type: "upgradeFortification" }), facilities)).toBe("Upgrade fortification");
     expect(describeBuildOrder(order({ type: "repairFortification" }), facilities)).toBe("Repair fortification");
+  });
+});
+
+describe("cancelRefundLabel", () => {
+  it("promises the full refund before any work is done", () => {
+    expect(cancelRefundLabel(order({ turnsRemaining: 3, totalTurns: 3 }))).toBe("Cancel (full refund)");
+  });
+
+  it("states the share that comes back once work has started", () => {
+    expect(cancelRefundLabel(order({ turnsRemaining: 2, totalTurns: 3 }))).toBe("Cancel (67% refund)");
+    expect(cancelRefundLabel(order({ turnsRemaining: 1, totalTurns: 4 }))).toBe("Cancel (25% refund)");
   });
 });
 

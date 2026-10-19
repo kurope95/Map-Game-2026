@@ -406,6 +406,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- A cancelled build returns the share of its build time still ahead, rounded down per resource, and
+  everything before the first End Turn. Marek picked a proportional refund (2026-10-19); the full refund
+  in the first turn keeps a misclick free, and rounding down means a cancelled order never returns more
+  than it cost (a one-unit cost with two thirds of the time left returns nothing). An order from a save
+  without a recorded build time counts as unstarted. Cost if wrong: cancelling late in a long build loses
+  real resources, and the only way to use them is to finish the build.
 - Replenishing is allowed where the unit's own country or another country of its non-neutral bloc holds
   the region; enemy- and neutral-held regions never qualify. Marek picked "replenishment needs region
   control" (2026-10-19). The literal own-country-only reading was built and measured first: it stopped
@@ -593,6 +599,19 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (2026-10-19-start-screen-polish-design.md)
 
 ### Changed
+- Cancelling a queued build now refunds in proportion to the build time still ahead instead of always 100%.
+  [`getCancelRefund`](./src/game/rules/buildRefund.ts) returns everything while no turn of work has been
+  done (until the first End Turn after queuing) and afterwards `floor(committed × turnsRemaining /
+  totalTurns)` per resource. `cancelBuildOrder` uses it and reports the result in a toast ("Order
+  cancelled, 75% refunded (7 steel, 2 iron)"), and the cancel buttons in the Orders, Economy and
+  Recruitment panels name the share they would return
+  ([`buildOrderText.ts`](./src/ui/panels/buildOrderText.ts)). Only the player cancels; the AI never does,
+  so the balance sweep is unaffected. Tests that failed first:
+  [`buildRefund.test.ts`](./src/game/rules/buildRefund.test.ts) (8), three in
+  [`playerActions.test.ts`](./src/game/rules/playerActions.test.ts) including one that runs the real
+  engine for a turn, and two label tests in
+  [`buildOrderText.test.ts`](./src/ui/panels/buildOrderText.test.ts). Marek's decision, 2026-10-19
+  (feature batch report → "Still open").
 - Replenishing a unit now needs a region held by its own country or by a country of its own bloc, for the
   player and for the AI. One predicate, `canReplenishIn` in
   [`playerActions.ts`](./src/game/rules/playerActions.ts), serves all three callers:

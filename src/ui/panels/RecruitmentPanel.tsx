@@ -9,6 +9,7 @@ import { Window } from "../kit/Window";
 import { FACILITY_META } from "../kit/resources";
 import { UNIT_TYPE_LABELS } from "../kit/unitSymbols";
 import { useGame } from "../session/GameProvider";
+import { cancelRefundLabel } from "./buildOrderText";
 
 export function RecruitmentPanel() {
   const {
@@ -126,8 +127,8 @@ export function RecruitmentPanel() {
                   variant="ghost"
                   size="sm"
                   icon={X}
-                  title="Cancel (refund)"
-                  aria-label="Cancel (refund)"
+                  title={cancelRefundLabel(order)}
+                  aria-label={cancelRefundLabel(order)}
                   onClick={() => handleCancelBuildOrder(order.id)}
                 />
               </div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState } from "../state/createInitialState";
-import { evaluateWarEntryRules } from "./turnEngine";
+import { advanceTurn, evaluateWarEntryRules } from "./turnEngine";
 import { DOCTRINE_DEFINITIONS } from "../content/doctrines";
 import {
   FORTIFICATION_MAX_LEVEL,
@@ -14,7 +14,16 @@ import {
   getMilitaryProductionTurns,
   getReplenishmentCost,
 } from "../content/economyRecipes";
-import type { CountryId, CountryStockpile, Facility, GameState, RegionEconomy, RegionFortification } from "../state/types";
+import type {
+  CountryId,
+  CountryStockpile,
+  EconomyBuildOrder,
+  Facility,
+  GameState,
+  RegionEconomy,
+  RegionFortification,
+  StockpileKey,
+} from "../state/types";
 import {
   canAfford,
   canReplenishIn,
@@ -451,6 +460,47 @@ describe("cancelBuildOrder", () => {
 
   it("fails silently for an unknown order id", () => {
     expect(cancelBuildOrder(fresh(), RU, "nope")).toEqual({ ok: false });
+  });
+
+  it("tells the player the whole cost came back while no turn of work has been done", () => {
+    const built = expectOk(queueFacilityBuild(withStockpile(fresh(), RU, 999), RU, "moscow", "smelter", ids));
+    const cancelled = expectOk(cancelBuildOrder(built.state, RU, "build-test"));
+    expect(cancelled.toast).toEqual({ message: expect.stringMatching(/^Order cancelled, full refund \(/), tone: "info" });
+  });
+
+  it("refunds only the share of the build time still ahead once a turn of work is done", () => {
+    const funded = withStockpile(fresh(), RU, 100);
+    const inProgress: EconomyBuildOrder = {
+      id: "in-progress",
+      countryId: RU,
+      regionId: "moscow",
+      type: "buildFacility",
+      facilityType: "farm",
+      turnsRemaining: 3,
+      totalTurns: 4,
+      committed: { steel: 10, iron: 3 },
+    };
+    const state = { ...funded, economyBuildOrders: { ...funded.economyBuildOrders, [RU]: [inProgress] } };
+    const cancelled = expectOk(cancelBuildOrder(state, RU, "in-progress"));
+    expect(cancelled.state.countryStockpiles[RU].steel).toBe(107); // floor(10 * 3/4) of the 10 committed
+    expect(cancelled.state.countryStockpiles[RU].iron).toBe(102); // floor(3 * 3/4) of the 3 committed
+    expect(ordersOf(cancelled.state)).toEqual([]);
+    expect(cancelled.toast).toEqual({ message: "Order cancelled, 75% refunded (7 steel, 2 iron)", tone: "info" });
+  });
+
+  it("follows the engine: after one real turn of a build the refund is the share still ahead", () => {
+    const built = expectOk(queueFacilityBuild(withStockpile(fresh(), RU, 999), RU, "moscow", "smelter", ids)).state;
+    expect(ordersOf(built)[0].totalTurns).toBeGreaterThan(1);
+    const afterTurn = advanceTurn(built);
+    const progressed = ordersOf(afterTurn)[0];
+    expect(progressed.turnsRemaining).toBeLessThan(progressed.totalTurns);
+
+    const cancelled = expectOk(cancelBuildOrder(afterTurn, RU, progressed.id));
+    for (const [key, amount] of Object.entries(progressed.committed)) {
+      const gained =
+        cancelled.state.countryStockpiles[RU][key as StockpileKey] - afterTurn.countryStockpiles[RU][key as StockpileKey];
+      expect(gained, key).toBe(Math.floor(((amount ?? 0) * progressed.turnsRemaining) / progressed.totalTurns));
+    }
   });
 });
 

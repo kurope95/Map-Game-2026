@@ -5,7 +5,7 @@ import { UnitSymbol } from "../kit/UnitSymbol";
 import { Window } from "../kit/Window";
 import { NATION_COLORS } from "../theme/palette";
 import { useGame } from "../session/GameProvider";
-import { committedCostLabel, describeBuildOrder } from "./buildOrderText";
+import { cancelRefundLabel, committedCostLabel, describeBuildOrder } from "./buildOrderText";
 
 export function OrdersPanel() {
   const {
@@ -74,8 +74,8 @@ export function OrdersPanel() {
                   variant="ghost"
                   size="sm"
                   icon={X}
-                  title="Cancel (refund)"
-                  aria-label="Cancel (refund)"
+                  title={cancelRefundLabel(order)}
+                  aria-label={cancelRefundLabel(order)}
                   onClick={() => handleCancelBuildOrder(order.id)}
                 />
               </div>

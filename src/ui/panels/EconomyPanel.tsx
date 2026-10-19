@@ -9,6 +9,7 @@ import { Window } from "../kit/Window";
 import { FACILITY_META } from "../kit/resources";
 import { useGame } from "../session/GameProvider";
 import { canRepeatFacilityBuild } from "../session/lastFacilityBuild";
+import { cancelRefundLabel } from "./buildOrderText";
 
 export function EconomyPanel() {
   const {
@@ -108,8 +109,8 @@ export function EconomyPanel() {
                   variant="ghost"
                   size="sm"
                   icon={X}
-                  title="Cancel (refund)"
-                  aria-label="Cancel (refund)"
+                  title={cancelRefundLabel(order)}
+                  aria-label={cancelRefundLabel(order)}
                   onClick={() => handleCancelBuildOrder(order.id)}
                 />
               </div>

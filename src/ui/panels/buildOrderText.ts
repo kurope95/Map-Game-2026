@@ -1,3 +1,4 @@
+import { getCancelRefund } from "../../game/rules/buildRefund";
 import type { EconomyBuildOrder, Facility, StockpileKey } from "../../game/state/types";
 import { FACILITY_META, RESOURCE_META } from "../kit/resources";
 import { UNIT_TYPE_LABELS } from "../kit/unitSymbols";
@@ -23,6 +24,12 @@ export function describeBuildOrder(order: EconomyBuildOrder, facilities: readonl
     case "repairFortification":
       return "Repair fortification";
   }
+}
+
+/** Tooltip and accessible name of a construction cancel button: what comes back if it is cancelled now. */
+export function cancelRefundLabel(order: EconomyBuildOrder): string {
+  const { share } = getCancelRefund(order);
+  return share >= 1 ? "Cancel (full refund)" : `Cancel (${Math.round(share * 100)}% refund)`;
 }
 
 /** The resources already locked from the stockpile, e.g. "12 Steel · 3 Fuel". */
