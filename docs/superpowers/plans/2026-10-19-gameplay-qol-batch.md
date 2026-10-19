@@ -272,15 +272,15 @@ Commit: `Document the AI, noding, economy and preview batch`.
 
 ## Completion checklist
 
-- [ ] Core 15 noding edits applied exactly; graph test asserts 222 edges, no leaves/bridges.
-- [ ] Save migration restores the new graph on load; old fields untouched.
-- [ ] AI replenishes, repairs civilians, upgrades and buys doctrines; slot accounting matches the
+- [x] Core 15 noding edits applied exactly; graph test asserts 222 edges, no leaves/bridges.
+- [x] Save migration restores the new graph on load; old fields untouched.
+- [x] AI replenishes, repairs civilians, upgrades and buys doctrines; slot accounting matches the
       player rule.
-- [ ] Repeat-last-build works in the Economy panel; Orders panel lists the construction queue and
+- [x] Repeat-last-build works in the Economy panel; Orders panel lists the construction queue and
       supports cancel/refund.
-- [ ] Attack estimate visible in the tooltip, deterministic, includes pending support; click flow
+- [x] Attack estimate visible in the tooltip, deterministic, includes pending support; click flow
       unchanged.
-- [ ] `mapRenders: 0` in the pan/zoom benchmark.
-- [ ] Type check, build, full tests, validate-map, check-war-entry, smoke, balance-check pass.
-- [ ] Layout lock passes.
-- [ ] CHANGELOG and report written; nothing pushed.
+- [x] `mapRenders: 0` in the pan/zoom benchmark.
+- [x] Type check, build, full tests, validate-map, check-war-entry, smoke, balance-check pass.
+- [x] Layout lock passes.
+- [x] CHANGELOG and report written; nothing pushed.

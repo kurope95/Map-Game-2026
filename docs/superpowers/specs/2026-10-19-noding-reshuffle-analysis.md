@@ -1,10 +1,13 @@
 # Noding analysis and proposed reshuffle
 
 Date: 2026-10-19
-Status: **analysis only. Nothing in this document has been implemented or approved.**
-The graph, the generator rule and every adjacency in the repo are unchanged. This is the
-record of a study Marek asked for; it is not a plan to execute. Do not modify adjacency
-without Marek choosing a stage.
+Status: **core reshuffle implemented; the wider probe and the generator rule remain analysis
+only.** Marek chose the core 15-edit set, which shipped in commit `5281ab3` with a save-adjacency
+migration. `regions.ts` and the satellite link plans in `createInitialState.ts` carry the cuts and
+additions below; `regionGraph.test.ts` pins the resulting 222-edge graph. The wider probe, the
+generator-rule rewrite and the gameplay mechanics in this document were **not** implemented and
+still need Marek's decision. The `minsk-western-gate` satellite deliberately keeps its direct
+Warsaw link so the measured core graph is not changed.
 
 ## The question
 
@@ -217,13 +220,16 @@ These are candidates, not commitments. None is implemented.
 - **Re-run `npm run balance-check`.** Supply BFS, 2-hop air/missile range and the AI's adjacent
   scoring all shift with the graph, even though no rule changed.
 - **Do not touch `src/game/rules/` for a noding change.** This is content/state data.
-- **Do not implement any stage without Marek's choice.** The core 15, the generator rule, the
-  wider probe and the mechanics are four separate decisions.
+- **Do not implement another stage without Marek's choice.** The generator rule, the wider probe
+  and the mechanics are still separate decisions; only the core 15-edit set was approved and
+  implemented.
 
 ## Open questions for Marek
 
-1. **Odesa–Tokmak:** add a literal edge, or keep the 2-hop chain through Zaporizhzhia?
-2. **Which stage first:** generator rule, core 15 hand edits, wider probe, or a mechanic?
+1. **Odesa–Tokmak:** add a literal edge, or keep the 2-hop chain through Zaporizhzhia? (Still
+   open; the implementation kept the chain and added no direct edge.)
+2. **Which stage first:** the core 15-edit set was chosen and shipped in `5281ab3`. The generator
+   rule, wider probe and mechanics are still open.
 3. **Bern and Gatchina:** allow them to become leaves in the wider probe, or add relief links?
 4. **Edge types/rail costs:** in scope for the next gameplay spec, or is pure topology enough?
 
@@ -233,9 +239,9 @@ Pathfinding is **not out of scope**. The AI currently only scores adjacent regio
 ([`heuristicBot.ts`](../../../src/game/ai/heuristicBot.ts)); it has no route planning. A
 deterministic BFS or A* over 103 nodes is cheap. The natural layer is AI-only: compute
 distance-to-goal and let the AI pick the adjacent step that reduces it. That would not change
-player movement rules or require weighted edges. It should be its own spec/plan with tests and
-a balance-check, and it pairs naturally with a less redundant graph. It was **not** implemented
-in this pass.
+player movement rules or require weighted edges. It shipped later as its own spec and plan
+([`2026-10-19-ai-pathfinding-design.md`](./2026-10-19-ai-pathfinding-design.md)); it was not part
+of this noding pass.
 
 ## Verification of this analysis
 

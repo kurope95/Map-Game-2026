@@ -96,14 +96,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   replenishment, civilian repair priority, upgrades, doctrines and determinism;
   [`economyEngine.test.ts`](./src/game/rules/economyEngine.test.ts) pins deterministic completed
   unit and facility ids. (plan 2026-10-19-gameplay-qol-batch → Task 2)
-- Core noding reshuffle (plan 2026-10-19-gameplay-qol-batch → Task 1): 15 directed adjacency edits
-  across 16 regions in [`regions.ts`](./src/game/content/regions.ts) — Moscow–Kazan and
-  Bryansk–Minsk cut; Warsaw–Minsk cut, Warsaw–Kaunas added; Berlin–Essen cut, Berlin–Hannover
-  added; Odesa–Tiraspol and Odesa–Zaporizhzhia kept, Odesa–Tokmak still absent; Sevastopol–Odesa
-  and Sevastopol–Mariupol links cut; Vilnius–Minsk added; Belgrade–Zagreb and Bucharest–Belgrade
-  added. Runtime graph is now 222 symmetric edges in one component with zero bridges, no leaves
-  and articulation points exactly `helsinki` and `nizhny-novgorod`.
-  (plan 2026-10-19-gameplay-qol-batch → Task 1)
+- Core noding reshuffle (plan 2026-10-19-gameplay-qol-batch → Task 1): 10 cuts and 5 additions
+  across [`regions.ts`](./src/game/content/regions.ts) and the satellite link plans in
+  [`createInitialState.ts`](./src/game/state/createInitialState.ts) — Moscow–Kazan,
+  Zelenodolsk–Moscow, Dzerzhinsk–Moscow, Warsaw–Minsk (including Barysaw), Bryansk–Minsk,
+  Berlin–Essen, Odesa–Bucharest, Gatchina–Tallinn and Narva–Helsinki cut; Warsaw–Kaunas,
+  Berlin–Hannover, Vilnius–Minsk, Belgrade–Zagreb and Sevastopol–Mariupol added. Odesa–Tiraspol,
+  Odesa–Zaporizhzhia, Chisinau–Tiraspol, Brest–Warsaw, Brest–Minsk, Odesa–Constanta and the Tokmak
+  chain are kept; Odesa–Tokmak is still absent. Runtime graph is now 222 symmetric edges in one
+  component with zero bridges, no leaves and articulation points exactly `helsinki` and
+  `nizhny-novgorod`. (plan 2026-10-19-gameplay-qol-batch → Task 1)
 - [`regionGraph.test.ts`](./src/game/state/regionGraph.test.ts): pins the post-reshuffle graph
   (edge count, connectivity, bridges, articulation points, required corridors, all cuts and adds,
   no direct Odesa–Tokmak, runtime graph equals scenario graph).
