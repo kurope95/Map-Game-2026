@@ -184,10 +184,15 @@ untouched, and returns the same object when the save is already current. It is w
 - The wider probe (7 more cuts, 4 more adds) and a generator-rule rewrite were **not**
   implemented. They remain analysis in the spec and need Marek's decision.
 - `npm run validate-map` only covers the 63 static regions; the graph test covers the runtime 103.
-- **Documentation discrepancy:** the `5281ab3` commit message incorrectly says "Sevastopol–Odesa
-  and Sevastopol–Mariupol cut" and "Bucharest–Belgrade added". The code, the graph test and the
-  corrected CHANGELOG are authoritative: **Odesa–Bucharest was cut** and **Sevastopol–Mariupol was
-  added**; Bucharest–Belgrade already existed. The edits are exactly the table above.
+- **Documentation discrepancy:** the `5281ab3` commit message is wrong in several places and is
+  deliberately not rewritten (Marek's decision). It lists only six cuts, names "Sevastopol–Odesa and
+  Sevastopol–Mariupol" among them, says "Bucharest–Belgrade" was added, and contains the garbled phrase
+  "Odesa-Sevastopol is not added". The code, the graph test and the CHANGELOG are authoritative: the batch
+  made **ten cuts** (Moscow–Kazan, Zelenodolsk–Moscow, Dzerzhinsk–Moscow, Warsaw–Minsk, Barysaw–Warsaw,
+  Bryansk–Minsk, Berlin–Essen, Odesa–Bucharest, Gatchina–Tallinn, Narva–Helsinki) and **five adds**
+  (Warsaw–Kaunas, Berlin–Hannover, Vilnius–Minsk, Belgrade–Zagreb, Sevastopol–Mariupol). **Odesa–Bucharest
+  was cut** and **Sevastopol–Mariupol was added**; Bucharest–Belgrade already existed. The edits are exactly
+  the table above.
 
 ## 5. Feature 4 — Economy quality of life (`e58911c`)
 
