@@ -42,6 +42,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   national goals, allied shield goals, lost homeland and threatened fronts without replacing the
   hard-coded focus rules. Design only at this point; no AI behavior changed.
   (plan 2026-10-19-ai-pathfinding → Tasks 1–6)
+- AI characterization tests before pathfinding: [`heuristicBot.test.ts`](./src/game/ai/heuristicBot.test.ts)
+  pins determinism, one action per unit, legal targets, adjacent at-war attacks and the
+  lone-defender no-move rule; [`allyCoordination.test.ts`](./src/game/ai/allyCoordination.test.ts)
+  pins the ally claim ledger, the 1.5× deferral threshold and same-country accumulation. These
+  describe current behavior so the route stages can change scores without silently changing rules.
+  (plan 2026-10-19-ai-pathfinding → Task 1)
 - Standalone git repo pushed to https://github.com/kurope95/Map-Game-2026: `legacy` branch freezes
   the pre-improvement game, `main` carries all improvements. Added [`.gitignore`](./.gitignore)
   (node_modules, dist, .tmp-check, local settings) and [`.gitattributes`](./.gitattributes)
