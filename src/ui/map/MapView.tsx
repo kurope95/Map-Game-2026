@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef } from "react";
 import type { CountryId, GameState } from "../../game/state/types";
+import type { AttackEstimate } from "../../game/rules/combatEstimate";
 import { BUTTON_ZOOM, MapController } from "./MapController";
 import { mapViewPropsEqual } from "./mapViewProps";
 import { recordRender } from "./perf/frameStats";
@@ -13,6 +14,8 @@ export interface MapViewProps {
   validMoveTargets?: string[];
   /** Attacks, air support, bombard and missile targets, as today. */
   validAttackTargets?: string[];
+  /** Deterministic battle estimates for the regions the current selection can attack. */
+  attackPreviews?: Record<string, AttackEstimate>;
   showSupplyOverlay?: boolean;
   onSelectRegion?: (regionId: string) => void;
   onSelectUnit?: (unitId: string) => void;

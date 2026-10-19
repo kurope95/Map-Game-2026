@@ -44,6 +44,12 @@ describe("mapViewPropsEqual", () => {
     expect(mapViewPropsEqual({ ...base(), selectedUnitIds: undefined }, { ...base(), selectedUnitIds: [] })).toBe(true);
   });
 
+  it("compares the attack previews by reference, because the screen memo keeps their identity", () => {
+    const previews = {};
+    expect(mapViewPropsEqual({ ...base(), attackPreviews: previews }, { ...base(), attackPreviews: previews })).toBe(true);
+    expect(mapViewPropsEqual({ ...base(), attackPreviews: previews }, { ...base(), attackPreviews: { ...previews } })).toBe(false);
+  });
+
   it("is false when a callback changes, because the controller calls the latest ones", () => {
     expect(mapViewPropsEqual(base(), { ...base(), onSelectRegion: () => {} })).toBe(false);
     expect(mapViewPropsEqual(base(), { ...base(), onSelectUnit: () => {} })).toBe(false);

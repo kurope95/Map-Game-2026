@@ -36,6 +36,27 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Attack-odds preview in the map hover tooltip (plan 2026-10-19-gameplay-qol-batch → Task 4):
+  with units selected, hovering a valid attack target shows the likely band
+  (decisive/likely/marginal/unlikely), strength ratio, attacker and defender loss ranges, the
+  active-fort penalty, committed air support / bombardments / missile strikes and a capture
+  warning. The preview map is memoized in [`GameScreen.tsx`](./src/ui/screens/game/GameScreen.tsx),
+  compared by reference in [`mapViewProps.ts`](./src/ui/map/mapViewProps.ts), and rendered through
+  the imperative tooltip ([`MapController.ts`](./src/ui/map/MapController.ts),
+  [`TooltipView.ts`](./src/ui/map/TooltipView.ts), [`tooltip.ts`](./src/ui/map/tooltip.ts)), so
+  pan/zoom and hover still do not re-render the map through React.
+- Pure [`combatEstimate.ts`](./src/game/rules/combatEstimate.ts) exports `estimateAttack`: it mirrors
+  the resolver's deterministic modifiers (supply, veterancy, entrenchment, terrain, combined arms,
+  doctrines, anti-fort, fort protection/base power), applies pending player support damage before
+  computing the ratio, and never calls the seeded RNG. Bands are ratio ≥1.5 decisive, ≥1.0 likely,
+  ≥0.7 marginal, otherwise unlikely; loss ranges are the band base scaled by ±15%, clamped at 5–80%,
+  with the active-fort attacker penalty and defender reduction applied.
+- Preview tests: [`combatEstimate.test.ts`](./src/game/rules/combatEstimate.test.ts) covers band
+  boundaries, every modifier, fort level/health scaling, support orders, damage splits and clamps
+  (21 tests); [`orderResolution.test.ts`](./src/game/rules/orderResolution.test.ts) pins a fixed-seed
+  battle so the helper exports provably did not change resolver behavior; [`tooltip.test.ts`](./src/ui/map/tooltip.test.ts)
+  and [`mapViewProps.test.ts`](./src/ui/map/mapViewProps.test.ts) cover rendering, escaping and
+  preview identity.
 - Repeat-last-build in the Economy panel: a successful facility build is remembered for the
   session ([`useUiState.ts`](./src/ui/session/useUiState.ts)) and the Construct column offers
   `Repeat: <Facility> (<Region>)` above the recipe list. The button is enabled only during the
@@ -383,6 +404,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- The attack preview labels loss figures as an estimate, not a promise: the range is the
+  resolver's band base times its ±15% seeded variance and its clamps, computed without drawing a
+  random number. The ratio, support, fort and modifier parts mirror the resolver exactly. Cost if
+  wrong: an individual resolved battle can land outside the shown range, which is why the tooltip
+  never states a guaranteed outcome. (2026-10-19-gameplay-qol-batch-design.md)
 - Repeat-last-build is session-only and is not written to localStorage. A remembered build that
   survived a save or campaign load would be more confusing than useful, and the button is disabled
   whenever the remembered region is no longer player-controlled. Cost if wrong: the convenience
@@ -825,6 +851,17 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- Attack odds preview (plan 2026-10-19-gameplay-qol-batch → Task 4): `npx tsc -p
+  tsconfig.app.json --noEmit` and `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm run
+  check:layers` PASS; `npm test` 410/410 in 52 files; `npm run smoke` passed RUSSIA, ROMANIA,
+  AUSTRIA; `npm run balance-check` "Balance check passed for all playable nations"; `npm run build`
+  OK. Headless Chrome at 1440x900: hovering Odesa with one Russian infantry selected shows
+  `Attack estimate: unlikely (15% breakthrough) (ratio 0.40)`, then adding the armor changes it to
+  `likely victory (ratio 1.19)` with `Losses: attackers 33–41% · defenders 25–34%`; Kyiv, not a
+  valid target, shows no estimate; clicking Odesa issues both `attack` orders and the same
+  `2 unit(s) ordered to attack Odesa` toast as before. Pan/zoom benchmark: 200 frames, avg 57.41 ms,
+  p95 66.7 ms, max 66.8 ms, idle 16.7 ms, `mapRenders: 0` (`--disable-gpu`, so absolute times are
+  not comparable to `perf-legacy.md`). Layout lock PASS at 1440x900 and 1920x1080.
 - Economy QoL (plan 2026-10-19-gameplay-qol-batch → Task 3): `npx tsc -p tsconfig.app.json
   --noEmit` and `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm test` 383/383 in 50
   files; headless Chrome at 1440x900: building a Farm shows `Repeat: Farm (Moscow)`, repeating it

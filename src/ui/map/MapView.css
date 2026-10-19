@@ -110,6 +110,17 @@
   color: var(--warn);
 }
 
+.map-tooltip__estimate {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid var(--line);
+}
+
+.map-tooltip__estimate-title {
+  color: var(--text);
+  font-weight: 600;
+}
+
 /* Dev frame meter, toggled with F3. */
 .map-perf {
   position: absolute;

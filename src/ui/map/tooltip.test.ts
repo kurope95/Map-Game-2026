@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { AttackEstimate } from "../../game/rules/combatEstimate";
 import { createInitialState } from "../../game/state/createInitialState";
 import type { GameState } from "../../game/state/types";
 import { tooltipHtml, tooltipModel, tooltipPosition, type TooltipModel } from "./tooltip";
@@ -114,6 +115,50 @@ describe("tooltipHtml", () => {
     expect(html).not.toContain("<img");
     expect(html).not.toContain("<b>");
     expect(html).toContain("&lt;img src=x onerror=&quot;a&quot;&gt;&amp;");
+  });
+
+  const estimate: AttackEstimate = {
+    band: "likely",
+    ratio: 1.32,
+    attackerLossPct: { min: 0.21, max: 0.29 },
+    defenderLossPct: { min: 0.38, max: 0.52 },
+    attackerStrength: 14,
+    defenderStrength: 10.6,
+    airSupportBonus: 2,
+    support: { fighters: 1, bombardments: 1, missiles: 0 },
+    fort: { level: 2, health: 12, maxHealth: 16, attackerLossPenaltyPct: 0.12 },
+    notes: ["Defenders can retreat <b>and</b> the fort can hold."]
+  };
+
+  it("renders the attack estimate when the tooltip model carries one", () => {
+    const html = tooltipHtml({ ...model, estimate });
+    expect(html).toContain("map-tooltip__estimate");
+    expect(html).toContain("Attack estimate: likely victory (ratio 1.32)");
+    expect(html).toContain("Losses: attackers 21–29% · defenders 38–52%");
+    expect(html).toContain("Fort Lv.2 12/16: +12% attacker losses");
+    expect(html).toContain("Support: 1 fighter (+2), 1 bombardment");
+    expect(html).not.toContain("<b>");
+    expect(html).toContain("Defenders can retreat &lt;b&gt;and&lt;/b&gt; the fort can hold.");
+  });
+
+  it("omits the estimate block when there is no estimate", () => {
+    expect(tooltipHtml(model)).not.toContain("map-tooltip__estimate");
+    expect(tooltipHtml({ ...model, estimate: null })).not.toContain("Attack estimate");
+  });
+
+  it("shows an infinite ratio against no defenders and drops the support line without support", () => {
+    const html = tooltipHtml({
+      ...model,
+      estimate: { ...estimate, ratio: Infinity, support: { fighters: 0, bombardments: 0, missiles: 0 }, fort: null, notes: [] }
+    });
+    expect(html).toContain("(ratio ∞)");
+    expect(html).not.toContain("Support:");
+    expect(html).not.toContain("attacker losses");
+  });
+
+  it("passes the estimate through tooltipModel", () => {
+    expect(tooltipModel(state, "moscow", estimate)!.estimate).toBe(estimate);
+    expect(tooltipModel(state, "moscow")!.estimate).toBeNull();
   });
 });
 

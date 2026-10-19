@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { estimateAttack, type AttackEstimate } from "../../../game/rules/combatEstimate";
 import { MapView } from "../../map/MapView";
 import { EconomyLogicMap } from "../../windows/EconomyLogicMap";
 import "./GameScreen.css";
@@ -44,6 +45,17 @@ export function GameScreen() {
     [validTargets]
   );
   const unitIds = useMemo(() => [...selectedUnitIds], [selectedUnitIds]);
+  // Deterministic battle previews for the regions the selection can attack; identity-stable between renders.
+  const attackPreviews = useMemo(() => {
+    const previews: Record<string, AttackEstimate> = {};
+    if (selectedUnitIds.size === 0) return previews;
+    const ids = [...selectedUnitIds];
+    for (const regionId of validTargets.attacks) {
+      const preview = estimateAttack(gameState, ids, regionId);
+      if (preview) previews[regionId] = preview;
+    }
+    return previews;
+  }, [gameState, selectedUnitIds, validTargets.attacks]);
   const onSelectRegion = useStableCallback(handleSelectRegion);
   const onSelectUnit = useStableCallback(handleSelectUnitFromMap);
 
@@ -66,6 +78,7 @@ export function GameScreen() {
           onSelectUnit={onSelectUnit}
           validMoveTargets={validTargets.moves}
           validAttackTargets={attackTargets}
+          attackPreviews={attackPreviews}
           showSupplyOverlay={showSupplyOverlay}
         />
 

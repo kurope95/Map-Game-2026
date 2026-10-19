@@ -351,7 +351,8 @@ export class MapController {
       const hit = hitTest(pointer[0], pointer[1], this.frameHit, camera, geometry.lookup);
       if (hit.kind !== "sea" && hit.kind !== "pill") regionId = hit.regionId;
     }
-    this.tooltip.update(this.props?.state, regionId, pointer, this.viewport);
+    const preview = regionId ? this.props?.attackPreviews?.[regionId] ?? null : null;
+    this.tooltip.update(this.props?.state, regionId, pointer, this.viewport, preview);
     if (regionId === this.hoverRegionId) return false;
     this.hoverRegionId = regionId;
     return true;

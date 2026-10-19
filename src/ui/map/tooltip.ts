@@ -1,3 +1,4 @@
+import type { AttackBand, AttackEstimate } from "../../game/rules/combatEstimate";
 import type { BlocId, CountryId, GameState } from "../../game/state/types";
 import { flagSvgMarkup } from "../kit/flags";
 
@@ -11,13 +12,19 @@ export interface TooltipModel {
   units: { total: number; own: number; allied: number; enemy: number };
   fort: { level: number; health: number; maxHealth: number } | null;
   stability: number | null;
+  /** Present when the current selection can attack this region. */
+  estimate?: AttackEstimate | null;
 }
 
 const ALIGNED: readonly BlocId[] = ["BRICS", "EU_NATO"];
 const BLOC_LABELS: Record<BlocId, string> = { BRICS: "BRICS", EU_NATO: "EU NATO", NEUTRAL: "Neutral" };
 
 /** What the hover tooltip says about a region (spec 11.3); sides are relative to the player. */
-export function tooltipModel(state: GameState, regionId: string): TooltipModel | null {
+export function tooltipModel(
+  state: GameState,
+  regionId: string,
+  estimate: AttackEstimate | null = null
+): TooltipModel | null {
   const region = state.regions[regionId];
   if (!region) return null;
   const economy = state.regionEconomies[regionId];
@@ -45,7 +52,8 @@ export function tooltipModel(state: GameState, regionId: string): TooltipModel |
     occupiedFrom: originalId !== undefined && originalId !== region.controllerCountryId ? state.countries[originalId]?.name ?? originalId : null,
     units,
     fort: fort ? { level: fort.level, health: fort.health, maxHealth: fort.maxHealth } : null,
-    stability: economy ? economy.stability : null
+    stability: economy ? economy.stability : null,
+    estimate
   };
 }
 
@@ -53,6 +61,55 @@ const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;"
 
 function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => ESCAPES[char]);
+}
+
+const BAND_LABELS: Record<AttackBand, string> = {
+  decisive: "decisive victory",
+  likely: "likely victory",
+  marginal: "marginal (60% attacker win)",
+  unlikely: "unlikely (15% breakthrough)"
+};
+
+function formatPercent(fraction: number): string {
+  return `${Math.round(fraction * 100)}%`;
+}
+
+function formatPercentRange(range: { min: number; max: number }): string {
+  const min = Math.round(range.min * 100);
+  const max = Math.round(range.max * 100);
+  return min === max ? `${min}%` : `${min}–${max}%`;
+}
+
+/** The attack-estimate block; all text is ours, but notes still go through the escaper. */
+function estimateHtml(estimate: AttackEstimate): string {
+  const ratio = Number.isFinite(estimate.ratio) ? estimate.ratio.toFixed(2) : "∞";
+  const rows = [
+    `<div class="map-tooltip__row map-tooltip__estimate-title">Attack estimate: ${BAND_LABELS[estimate.band]} (ratio ${ratio})</div>`,
+    `<div class="map-tooltip__row">Losses: attackers ${formatPercentRange(estimate.attackerLossPct)} · defenders ${formatPercentRange(estimate.defenderLossPct)}</div>`
+  ];
+  if (estimate.fort) {
+    rows.push(
+      `<div class="map-tooltip__row">Fort Lv.${estimate.fort.level} ${estimate.fort.health}/${estimate.fort.maxHealth}: +${formatPercent(estimate.fort.attackerLossPenaltyPct)} attacker losses</div>`
+    );
+  }
+  const support: string[] = [];
+  if (estimate.support.fighters > 0) {
+    const plural = estimate.support.fighters === 1 ? "" : "s";
+    support.push(`${estimate.support.fighters} fighter${plural} (+${estimate.airSupportBonus})`);
+  }
+  if (estimate.support.bombardments > 0) {
+    support.push(`${estimate.support.bombardments} bombardment${estimate.support.bombardments === 1 ? "" : "s"}`);
+  }
+  if (estimate.support.missiles > 0) {
+    support.push(`${estimate.support.missiles} missile strike${estimate.support.missiles === 1 ? "" : "s"}`);
+  }
+  if (support.length > 0) {
+    rows.push(`<div class="map-tooltip__row">Support: ${support.join(", ")}</div>`);
+  }
+  for (const note of estimate.notes) {
+    rows.push(`<div class="map-tooltip__row map-tooltip__row--warn">${escapeHtml(note)}</div>`);
+  }
+  return `<div class="map-tooltip__estimate">${rows.join("")}</div>`;
 }
 
 /** The tooltip body. Every piece of game text is escaped; the only markup is ours and the flag SVG. */
@@ -81,6 +138,9 @@ export function tooltipHtml(model: TooltipModel): string {
   }
   if (model.stability !== null) {
     rows.push(`<div class="map-tooltip__row">Stability ${Math.round(model.stability)}%</div>`);
+  }
+  if (model.estimate) {
+    rows.push(estimateHtml(model.estimate));
   }
   return rows.join("");
 }

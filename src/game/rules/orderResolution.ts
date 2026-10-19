@@ -43,16 +43,16 @@ const VETERANCY_BONUS_PER_LEVEL = 0.05; // +5% per vet level
 const MAX_VETERANCY_LEVEL = 3;
 const ENTRENCHMENT_BONUS_PER_TURN = 0.05; // +5% defense per turn held
 const MAX_ENTRENCHMENT_BONUS = 0.25;
-const AIR_SUPPORT_MULTIPLIER = 0.25; // each fighter adds 25% of its strength
-const BOMBER_DAMAGE_FACTOR = 0.4; // each bomber deals 40% of its strength as pre-combat damage
-const TACTICAL_MISSILE_DAMAGE = 3; // flat damage per missile
-const STRATEGIC_MISSILE_DAMAGE = 5;
+export const AIR_SUPPORT_MULTIPLIER = 0.25; // each fighter adds 25% of its strength
+export const BOMBER_DAMAGE_FACTOR = 0.4; // each bomber deals 40% of its strength as pre-combat damage
+export const TACTICAL_MISSILE_DAMAGE = 3; // flat damage per missile
+export const STRATEGIC_MISSILE_DAMAGE = 5;
 const FACILITY_DAMAGE_CHANCE = 0.3; // 30% chance per facility during heavy combat
 const RETREAT_STRENGTH_LOSS = 0.1; // retreating units lose 10% additional strength
 export const MAX_UNITS_PER_REGION = 4; // hard limit on friendly units per region
-const FORT_PROTECTION_BY_LEVEL: Record<number, number> = { 1: 0.2, 2: 0.35, 3: 0.5 };
+export const FORT_PROTECTION_BY_LEVEL: Record<number, number> = { 1: 0.2, 2: 0.35, 3: 0.5 };
 const FORT_RETALIATION_BY_LEVEL: Record<number, number> = { 1: 1, 2: 2, 3: 3 };
-const FORT_BASE_POWER_BY_LEVEL: Record<number, number> = { 1: 8, 2: 14, 3: 20 };
+export const FORT_BASE_POWER_BY_LEVEL: Record<number, number> = { 1: 8, 2: 14, 3: 20 };
 
 // ---------------------------------------------------------------------------
 // Simple seeded PRNG for deterministic combat
@@ -77,11 +77,11 @@ function randomVariance(): number {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function isLandUnit(unit: UnitDefinition): boolean {
+export function isLandUnit(unit: UnitDefinition): boolean {
   return LAND_UNIT_TYPES.includes(unit.type);
 }
 
-function isAssaultUnit(unit: UnitDefinition): boolean {
+export function isAssaultUnit(unit: UnitDefinition): boolean {
   return ASSAULT_UNIT_TYPES.has(unit.type as LandUnitType);
 }
 
@@ -89,7 +89,7 @@ function isAirUnit(unit: UnitDefinition): boolean {
   return AIR_UNIT_TYPES.includes(unit.type);
 }
 
-function isMissileUnit(unit: UnitDefinition): boolean {
+export function isMissileUnit(unit: UnitDefinition): boolean {
   return MISSILE_UNIT_TYPES.includes(unit.type);
 }
 
@@ -97,7 +97,7 @@ function isCombatCapableUnit(unit: UnitDefinition): boolean {
   return isLandUnit(unit) || isAirUnit(unit) || isMissileUnit(unit);
 }
 
-function getSupplyCombatModifier(unit: UnitDefinition): number {
+export function getSupplyCombatModifier(unit: UnitDefinition): number {
   return isLandUnit(unit) && unit.supplyTurnsRemaining <= 0 ? UNSUPPLIED_COMBAT_MODIFIER : 1;
 }
 
@@ -105,11 +105,11 @@ function getVeterancyLevel(unit: UnitDefinition): number {
   return Math.min(unit.battlesWon ?? 0, MAX_VETERANCY_LEVEL);
 }
 
-function getVeterancyModifier(unit: UnitDefinition): number {
+export function getVeterancyModifier(unit: UnitDefinition): number {
   return 1 + getVeterancyLevel(unit) * VETERANCY_BONUS_PER_LEVEL;
 }
 
-function getEntrenchmentModifier(unit: UnitDefinition): number {
+export function getEntrenchmentModifier(unit: UnitDefinition): number {
   const turns = unit.entrenchmentTurns ?? 0;
   return 1 + Math.min(turns * ENTRENCHMENT_BONUS_PER_TURN, MAX_ENTRENCHMENT_BONUS);
 }
@@ -125,7 +125,7 @@ function getAssaultBounceChance(strengthRatio: number): number {
   return 0.85;
 }
 
-function getAntiFortModifier(unit: UnitDefinition): number {
+export function getAntiFortModifier(unit: UnitDefinition): number {
   switch (unit.type) {
     case "armor":
       return 1.75;
@@ -141,7 +141,7 @@ function getAntiFortModifier(unit: UnitDefinition): number {
   }
 }
 
-function getFortBombardDamage(unit: UnitDefinition): number {
+export function getFortBombardDamage(unit: UnitDefinition): number {
   switch (unit.type) {
     case "mlrs":
       return Math.max(2, Math.round(unit.strength * 0.8));
@@ -161,7 +161,7 @@ function isCountryAtWar(state: GameState, countryId: string): boolean {
   return cs ? cs.atWar : false;
 }
 
-function isEnemyBloc(state: GameState, blocA: BlocId | undefined, blocB: BlocId | undefined): boolean {
+export function isEnemyBloc(state: GameState, blocA: BlocId | undefined, blocB: BlocId | undefined): boolean {
   if (blocA === undefined || blocB === undefined) return false;
   return blocA !== blocB;
 }
@@ -172,7 +172,7 @@ function isNeutralMoldovaClosed(state: GameState, regionId: string): boolean {
   return region.homeCountryId === "MOLDOVA" && region.controllerCountryId === "MOLDOVA" && !isCountryAtWar(state, "MOLDOVA");
 }
 
-function countryHasDoctrine(state: GameState, countryId: CountryId, doctrineId: DoctrineUpgradeId): boolean {
+export function countryHasDoctrine(state: GameState, countryId: CountryId, doctrineId: DoctrineUpgradeId): boolean {
   return state.doctrineUpgrades?.[countryId]?.includes(doctrineId) ?? false;
 }
 

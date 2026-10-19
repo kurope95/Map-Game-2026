@@ -24,6 +24,7 @@ export function mapViewPropsEqual(prev: MapViewProps, next: MapViewProps): boole
     prev.highlightCountryId === next.highlightCountryId &&
     prev.onSelectRegion === next.onSelectRegion &&
     prev.onSelectUnit === next.onSelectUnit &&
+    prev.attackPreviews === next.attackPreviews &&
     sameIds(prev.selectedUnitIds, next.selectedUnitIds) &&
     sameIds(prev.validMoveTargets, next.validMoveTargets) &&
     sameIds(prev.validAttackTargets, next.validAttackTargets)
