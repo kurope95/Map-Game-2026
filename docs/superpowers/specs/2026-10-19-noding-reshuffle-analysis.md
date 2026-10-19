@@ -104,9 +104,9 @@ Verify these after any edit:
 - `brest`–`warsaw` and `brest`–`minsk` — the real crossing once the Warsaw–Minsk shortcuts go.
 - `odesa`–`constanta` — the southern coastal corridor once Odesa–Bucharest goes.
 
-**Unresolved:** Marek also named "Odesa–Tokmak". There is **no direct edge** today; it is the
-2-hop chain Odesa–Zaporizhzhia–Tokmak. Whether he wants a literal edge is an open question.
-Do not add it unilaterally.
+**Decided (2026-10-19):** Marek also named "Odesa–Tokmak". There is **no direct edge**; the
+required link is the 2-hop chain Odesa–Zaporizhzhia–Tokmak, and Marek chose to keep the chain.
+`regionGraph.test.ts` forbids a direct edge. Do not add one unless he reverses this.
 
 ## Proposed core reshuffle (15 edits)
 
@@ -226,8 +226,8 @@ These are candidates, not commitments. None is implemented.
 
 ## Open questions for Marek
 
-1. **Odesa–Tokmak:** add a literal edge, or keep the 2-hop chain through Zaporizhzhia? (Still
-   open; the implementation kept the chain and added no direct edge.)
+1. **Odesa–Tokmak:** add a literal edge, or keep the 2-hop chain through Zaporizhzhia?
+   **Decided 2026-10-19: keep the chain; no direct edge.** The graph test pins it.
 2. **Which stage first:** the core 15-edit set was chosen and shipped in `5281ab3`. The generator
    rule, wider probe and mechanics are still open.
 3. **Bern and Gatchina:** allow them to become leaves in the wider probe, or add relief links?

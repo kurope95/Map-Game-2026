@@ -36,6 +36,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Pin test for the AI's doctrine order in [`aiEconomyTurn.test.ts`](./src/game/ai/aiEconomyTurn.test.ts):
+  with exactly a doctrine plus the 10-point reserve in trade points the AI buys the doctrine and queues no
+  civilian factory, and with trade points to spare the same economy does queue the factory (the control
+  that keeps the first half from passing vacuously). Moving the purchase after the build ladder makes it
+  fail, which was checked by doing so. (feature batch report → "Still open")
 - Attack-odds preview in the map hover tooltip (plan 2026-10-19-gameplay-qol-batch → Task 4):
   with units selected, hovering a valid attack target shows the likely band
   (decisive/likely/marginal/unlikely), strength ratio, attacker and defender loss ranges, the
@@ -406,6 +411,14 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- The AI keeps buying a doctrine before it considers the civilian-factory branch. Marek's decision
+  (2026-10-19): leave the order; the code carries a comment and the pin test above guards it. The
+  10-turn balance sweep shows no nation stalling on it. Cost if wrong: a nation with few trade points
+  spends them on a doctrine instead of a civilian factory and grows its economy more slowly.
+- Marek kept the two-hop chain Odesa–Zaporizhzhia–Tokmak and wants no direct Odesa–Tokmak edge
+  (2026-10-19). [`regionGraph.test.ts`](./src/game/state/regionGraph.test.ts) already forbids one, so no
+  code changed; the noding analysis and the batch report now say "decided". Cost if wrong: units cannot
+  go from Odesa to Tokmak in one move.
 - A cancelled build returns the share of its build time still ahead, rounded down per resource, and
   everything before the first End Turn. Marek picked a proportional refund (2026-10-19); the full refund
   in the first turn keeps a misclick free, and rounding down means a cancelled order never returns more
@@ -913,6 +926,19 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- Rules follow-up to the batch review (feature batch report → "Still open"): `npx tsc -p
+  tsconfig.app.json --noEmit` and `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm test` 452/452
+  in 54 files (22 new; the replenish, refund and label tests were written first and seen failing, and the
+  doctrine pin test was mutation-checked); `npm run check:layers` PASS; `npm run smoke`, `npm run
+  balance-check`, `npm run check-war-entry` and `npm run validate-map` pass; `npm run build` OK. The
+  own-country-only replenish rule failed `npm run balance-check` (Slovakia eliminated on turn 10) after
+  Russia stopped restoring its Tiraspol garrison: the unmodified baseline sweep made 91 replenishments
+  outside the unit's own country, 84 of them Russia's in Tiraspol. Browser (dev build): the cancel button
+  reads "Cancel (full refund)" right after queuing a Power plant and "Cancel (33% refund)" after one End
+  Turn (the build stood at 1/3 turns), cancelling toasts "Order cancelled, 33% refunded (1 coal)"
+  (floor of 4 coal × 1/3); a damaged Russian infantry in Moscow shows an enabled
+  Replenish, one in Berlin (enemy-held) a disabled Replenish whose title says why, and the garrison in
+  Tiraspol (Pridnestrovie, BRICS) an enabled one.
 - Review follow-up for the attack preview and the Repeat button (plan 2026-10-19-gameplay-qol-batch → Tasks 3
   and 4): `npx tsc -p tsconfig.app.json --noEmit` and `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors;
   `npm test` 430/430 in 53 files (20 new: 8 estimator-against-resolver tests, 8 fixture and 4 tooltip and

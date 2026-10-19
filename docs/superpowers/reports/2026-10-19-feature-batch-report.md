@@ -56,7 +56,9 @@ All changes are in [`heuristicBot.ts`](../../../src/game/ai/heuristicBot.ts) unl
 2. **Unit replenishment.** A damaged unit whose region has an operational recruitment facility
    queues `replenishUnit` through the same cost profile the player uses. Candidates are sorted by
    weakest strength ratio, then frontline presence, then unit id, so the choice is deterministic.
-   This branch runs before new recruitment.
+   This branch runs before new recruitment. As first shipped it only checked for the facility; after
+   the review the unit's region must also be held by its own country or its bloc (see "Rules
+   decisions made after the review" in section 6).
 3. **Civilian facility repair.** Damaged non-military facilities (farm, mine, oil well, power
    plant, smelter, refinery, synthetic refinery, chemical plant, civilian factory) are repaired
    after the existing military-repair branch, skipping facilities that already have a pending
@@ -214,8 +216,9 @@ cancellable.
    [`OrdersPanel.tsx`](../../../src/ui/panels/OrdersPanel.tsx) lists every pending
    `economyBuildOrders[playerCountryId]` entry with a human-readable description
    (build/upgrade/repair/recruit/replenish/fortification), region name, committed resources,
-   `turnsRemaining/totalTurns`, and a cancel button that refunds through the existing
-   `cancelBuildOrder` action.
+   `turnsRemaining/totalTurns`, and a cancel button that returns the cost through the existing
+   `cancelBuildOrder` action (in full as first shipped; after the review in full before the first
+   End Turn and afterwards in proportion to the build time left, see section 6).
 3. **Pure helpers.** [`buildOrderText.ts`](../../../src/ui/panels/buildOrderText.ts) formats order
    descriptions and committed costs; [`lastFacilityBuild.ts`](../../../src/ui/session/lastFacilityBuild.ts)
    owns the remembered-build type and `canRepeatFacilityBuild`. Both are unit-tested.
@@ -388,9 +391,30 @@ that the resolver's per-unit rounding does not produce. Changes:
 - Also fixed: the remembered build for the Repeat button is now cleared on load and on a new game and is
   tagged with its country, so it can no longer show up as a stale disabled button in another game.
 
-Still open, deliberately not changed here (rules or balance decisions for Marek): the AI's and the
-player's unit replenishment do not check that the unit's region is controlled; cancelling a queued
-build refunds 100% at any stage of progress; the AI buys a doctrine before the civilian-factory branch.
+### Rules decisions made after the review (2026-10-19)
+
+The three rules questions the review left open were put to Marek, who picked a direction for each, and
+he also settled the one open map question. The CHANGELOG has an entry for each, with the tests that
+failed first.
+
+- **Replenishment** needs the unit's region to be held by its own country or by a country of its own
+  bloc, for the player and the AI (`canReplenishIn` in `playerActions.ts`); enemy- and neutral-held
+  regions never qualify, and neutral countries get only their own. The literal own-country-only reading
+  was built and measured first: it stopped Russia from restoring its Tiraspol garrison (the region is
+  held by Pridnestrovie; 84 of the 91 replenishments the unmodified 10-turn balance sweep made outside a
+  unit's own country, the other 7 were Hungary's) and made `npm run balance-check` fail (Slovakia
+  eliminated on turn 10), so the bloc reading, which is also what the supply rule treats as friendly,
+  shipped. Switching to own-country-only is one line plus a balance retune.
+- **Cancelling a queued build** refunds everything until the first End Turn after queuing and then
+  `floor(committed × turnsRemaining / totalTurns)` per resource (`getCancelRefund` in `buildRefund.ts`);
+  the cancel buttons show the share and a toast reports what came back. The AI never cancels.
+- **The AI buys a doctrine before the civilian-factory branch**: left as it is, by decision. A pin test
+  fails if the purchase moves after the build ladder, so a refactor cannot change the order silently.
+- **Odesa–Tokmak**: Marek kept the two-hop chain Odesa–Zaporizhzhia–Tokmak; there is no direct edge and
+  `regionGraph.test.ts` forbids one.
+
+Suite after these changes: 452 tests in 54 files; both type checks, `check:layers`, `smoke`,
+`balance-check`, `check-war-entry`, `validate-map` and `build` pass.
 
 ### Performance and layout
 
@@ -454,10 +478,12 @@ Test files touched by this batch and their test counts:
 A reviewer can reproduce the result with these steps:
 
 1. **Confirm scope and history.**
-   `git log --oneline 7f6fc36..HEAD` — expect the four feature commits and the docs commit.
-   `git status` — expect a clean tree. No commit on `legacy`, nothing pushed.
+   `git log --oneline 7f6fc36..HEAD` — expect the four feature commits, the docs commit, the review
+   follow-ups and the rules follow-up (replenishment and refund, section 6). `git status` — expect a
+   clean tree. No commit on `legacy`, nothing pushed.
 2. **Run the gates** from the table in section 7. The important one is the full suite:
-   `npx vitest run` must report 410 tests in 52 files.
+   `npx vitest run` must report all tests passing: 410 tests in 52 files at `7e01c72`, 452 in 54 files
+   after the rules follow-up.
 3. **Check the resolver was not changed**, only exported:
    `git diff 7f6fc36..7e01c72 -- src/game/rules/orderResolution.ts` — every added line should be an
    `export` keyword on an existing declaration. The characterization test in

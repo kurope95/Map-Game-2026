@@ -489,6 +489,8 @@ export function aiEconomyTurn(state: GameState, countryId: CountryId): GameState
   let currentState = state;
   const profile = AI_COUNTRY_PROFILES[countryId];
 
+  // Doctrines are bought first, ahead of the build ladder and its civilian-factory branch, on purpose
+  // (Marek, 2026-10-19: leave the order); a pin test in aiEconomyTurn.test.ts covers it.
   currentState = tryPurchaseDoctrine(currentState, countryId);
 
   // At most one facility upgrade per economy turn: upgrades are a long-term investment, and the

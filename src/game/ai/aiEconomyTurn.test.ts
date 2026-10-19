@@ -375,6 +375,25 @@ describe("aiEconomyTurn doctrines", () => {
     expect(owned[0]).toBe(DOCTRINE_DEFINITIONS[0].id);
   });
 
+  it("buys the doctrine before it spends trade points on a civilian factory, on purpose", () => {
+    const doctrine = DOCTRINE_DEFINITIONS[0];
+    const quietEconomy = {
+      facilities: [facility("power-1", "powerPlant", 3), facility("farm-1", "farm", 3), facility("barracks-1", "barracks", 3)],
+      pendingOrders: [],
+    };
+    const isCivilianFactoryBuild = (order: EconomyBuildOrder) => order.facilityType === "civilianFactory";
+
+    // Exactly the doctrine plus the AI's reserve: afterwards 11 trade points remain, too few (<= 12) for a factory.
+    const tight = aiEconomyTurn(fixture({ ...quietEconomy, tradePoints: doctrine.cost + 11 }), COUNTRY);
+    expect(tight.doctrineUpgrades?.[COUNTRY]).toEqual([doctrine.id]);
+    expect(orders(tight).some(isCivilianFactoryBuild)).toBe(false);
+
+    // Control: with trade points to spare the same economy does queue a civilian factory, so the check above can fail.
+    const rich = aiEconomyTurn(fixture({ ...quietEconomy, tradePoints: doctrine.cost + 200 }), COUNTRY);
+    expect(rich.doctrineUpgrades?.[COUNTRY]).toEqual([doctrine.id]);
+    expect(orders(rich).some(isCivilianFactoryBuild)).toBe(true);
+  });
+
   it("does not buy a doctrine whose cost plus the trade reserve is unaffordable", () => {
     const state = fixture({
       facilities: [facility("power-1", "powerPlant"), facility("farm-1", "farm")],
