@@ -407,8 +407,8 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Decision
 - The attack preview labels loss figures as an estimate, not a promise: the range is the
-  resolver's band base times its ±15% seeded variance and its clamps, computed without drawing a
-  random number. The ratio, support, fort and modifier parts mirror the resolver exactly. Cost if
+  resolver's band base times its ±15% seeded variance and its clamps, cut to whole units by the
+  resolver's rounding, computed without drawing a random number. The ratio, support, fort and modifier parts mirror the resolver exactly. Cost if
   wrong: an individual resolved battle can land outside the shown range, which is why the tooltip
   never states a guaranteed outcome. (2026-10-19-gameplay-qol-batch-design.md)
 - Repeat-last-build is session-only and is not written to localStorage. A remembered build that
@@ -816,6 +816,17 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [showcase.ts](./src/ui/map/render/layers/showcase.ts)
 
 ### Fixed
+- The attack preview no longer calls a fort-bound assault a victory. After the independent review
+  ([`combatEstimate.ts`](./src/game/rules/combatEstimate.ts), [`tooltip.ts`](./src/ui/map/tooltip.ts)):
+  the estimate now reports the fort's health after the assault and whether it holds, and a capture chance
+  (0 while a fort survives; the battle win chance times one minus the assault bounce chance when defenders
+  survive); the tooltip leads with it, and hides the battle row and the defender losses when nothing
+  defends. Attack orders already queued on the same region are counted with the selection, as the resolver
+  pools them, and loss ranges are the real spread after the resolver's per-unit rounding.
+  [`combatEstimate.resolver.test.ts`](./src/game/rules/combatEstimate.resolver.test.ts) pins the
+  estimator to the real resolver. Evidence: 400 seeds per case on Odesa at turn 1 captured 0 times against
+  "likely/decisive victory" while the level 3 fort stood. `getAssaultBounceChance` is now exported
+  (keyword only). (plan 2026-10-19-gameplay-qol-batch → Task 4, review follow-up)
 - `npm run check-war-entry` expected one lost Polish key city for the Czech Republic to join, but the
   shipped rule (unchanged since the original game) needs Poland's capital or two key cities, so the
   check was red on `legacy` and `main`. The check now tests one city (no entry), two (entry) and the

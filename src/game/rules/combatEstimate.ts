@@ -8,6 +8,7 @@ import {
   TACTICAL_MISSILE_DAMAGE,
   countryHasDoctrine,
   getAntiFortModifier,
+  getAssaultBounceChance,
   getEntrenchmentModifier,
   getFortBombardDamage,
   getSupplyCombatModifier,
@@ -24,15 +25,37 @@ export interface AttackEstimate {
   band: AttackBand;
   /** Attacker/defender effective strength; Infinity when nothing defends the region. */
   ratio: number;
-  /** Fractions of current unit strength (0–1): the resolver's base ±15%, clamped and fort-adjusted. */
+  /**
+   * Fractions of current unit strength (0–1) the attackers lose: the resolver's base ±15%, clamped and fort-adjusted,
+   * after its per-unit rounding (so this is the real spread of outcomes, not the nominal percentages).
+   */
   attackerLossPct: { min: number; max: number };
+  /** The same for the defenders that are still in the region when the battle starts; 0–0 when there are none. */
   defenderLossPct: { min: number; max: number };
   attackerStrength: number;
   defenderStrength: number;
+  /** Units counted as attackers: the selection plus attack orders already queued on this region. */
+  attackerCount: number;
+  /** How many of those are attack orders already queued (not part of the selection). */
+  queuedAttackers: number;
+  /** Enemy units in the region when the battle starts (after the player's queued bombardments and missiles). */
+  defenderCount: number;
   airSupportBonus: number;
   support: { fighters: number; bombardments: number; missiles: number };
-  /** `attackerLossPenaltyPct` is a fraction (0.12 = +12 percentage points of losses). */
-  fort: { level: number; health: number; maxHealth: number; attackerLossPenaltyPct: number } | null;
+  /**
+   * `attackerLossPenaltyPct` is a fraction (0.12 = +12 percentage points of losses). The assault damages the fort by a
+   * fixed amount (no dice): `healthAfter` is what is left, and the fort `holds` while that is above zero.
+   */
+  fort: {
+    level: number;
+    health: number;
+    maxHealth: number;
+    attackerLossPenaltyPct: number;
+    healthAfter: number;
+    holds: boolean;
+  } | null;
+  /** Chance (0–1) that the region changes hands this turn; 0 while a fort survives the assault. */
+  captureChance: number;
   /** Caveats worth showing next to the numbers; the UI renders them as-is. */
   notes: string[];
 }
@@ -51,6 +74,9 @@ const MAX_FORT_ATTACKER_LOSS = 0.85;
 const MIN_FORT_DEFENDER_LOSS = 0.03;
 const FORT_DEFENDER_LOSS_FACTOR = 0.65;
 const MLRS_BOMBARD_FACTOR = 0.55;
+// The resolver rolls these for marginal (0.7–1.0) and unlikely (< 0.7) battles; 1.0 and above always wins.
+const WIN_CHANCE_MARGINAL = 0.6;
+const WIN_CHANCE_UNLIKELY = 0.15;
 
 function bandFor(ratio: number): AttackBand {
   if (ratio >= 1.5) return "decisive";
@@ -75,6 +101,27 @@ function fortPenaltyFor(fortStrengthRatio: number): number {
   return 0.02;
 }
 
+/** The share of anti-fort power that becomes fort damage (the resolver's thresholds). */
+function fortDamageMultiplierFor(fortStrengthRatio: number): number {
+  if (fortStrengthRatio >= 2.5) return 0.7;
+  if (fortStrengthRatio >= 1.8) return 0.5;
+  if (fortStrengthRatio >= 1.2) return 0.35;
+  if (fortStrengthRatio >= 0.8) return 0.2;
+  return 0.05;
+}
+
+/**
+ * The fraction of `strengths` lost when every unit is cut to round(strength × (1 − loss)), as the resolver does
+ * (a unit that rounds to zero is gone). More loss never leaves more, so evaluating the two ends of the variance
+ * range gives the true minimum and maximum.
+ */
+function lossFraction(strengths: readonly number[], loss: number): number {
+  const total = strengths.reduce((sum, strength) => sum + strength, 0);
+  if (total <= 0) return 0;
+  const remaining = strengths.reduce((sum, strength) => sum + Math.max(0, Math.round(strength * (1 - loss))), 0);
+  return (total - remaining) / total;
+}
+
 interface LivingDefender {
   unit: UnitDefinition;
   strength: number;
@@ -86,8 +133,9 @@ function damageShare(damage: number, defenderCount: number): number {
 
 /**
  * A deterministic mirror of the land-battle calculation in `resolveOrders`, used by the hover
- * tooltip. It includes the player's pending air support, bombardment and missile orders, never
- * calls the seeded RNG, and does not mutate the state. The resolver stays the source of truth.
+ * tooltip. It includes the player's pending air support, bombardment and missile orders and the attack orders
+ * already queued on the region (the resolver pools them), never calls the seeded RNG, and does not mutate the
+ * state. The resolver stays the source of truth; `combatEstimate.resolver.test.ts` checks the two against each other.
  */
 export function estimateAttack(
   state: GameState,
@@ -102,12 +150,25 @@ export function estimateAttack(
     .filter((unit): unit is UnitDefinition => unit !== undefined);
   if (selected.length === 0) return null;
 
-  const attackers = selected.filter(isAssaultUnit);
-  const attackerBlocId = (attackers[0] ?? selected[0]).blocId;
-
-  // ── Pending player support targeting this region, applied in resolver order ──
+  // ── Pending player orders aimed at this region ──
   const pending = state.pendingOrders?.[state.playerCountryId] ?? [];
   const supportOrders = pending.filter((order) => order.targetRegionId === targetRegionId);
+
+  // The resolver groups every attack order on a region into one assault, so attacks the player has already queued
+  // here fight together with the selection (a selected unit whose attack is already queued counts once).
+  const selectedAssault = selected.filter(isAssaultUnit);
+  const selectedIds = new Set(selectedAssault.map((unit) => unit.id));
+  const queuedAttackers = [
+    ...new Map(
+      supportOrders
+        .filter((order) => order.type === "attack" && !selectedIds.has(order.unitId))
+        .map((order) => state.units[order.unitId])
+        .filter((unit): unit is UnitDefinition => unit !== undefined && isAssaultUnit(unit))
+        .map((unit) => [unit.id, unit] as const)
+    ).values()
+  ];
+  const attackers = [...selectedAssault, ...queuedAttackers];
+  const attackerBlocId = (attackers[0] ?? selected[0]).blocId;
 
   const defenderUnits = Object.values(state.units).filter(
     (unit) => unit.regionId === targetRegionId && isEnemyBloc(state, unit.blocId, attackerBlocId)
@@ -236,30 +297,66 @@ export function estimateAttack(
   const fortStrengthRatio = fortDefensePower > 0 ? antiFortPower / fortDefensePower : Infinity;
   const fortPenalty = fortIsActive ? fortPenaltyFor(fortStrengthRatio) : 0;
 
-  let attackerLossPct = lossRange(LOSS_BASE[band].attacker);
-  let defenderLossPct = ratio >= 5 ? { min: 1, max: 1 } : lossRange(LOSS_BASE[band].defender);
+  // ── Loss ranges: the variance extremes, cut to whole units the way the resolver does ──
+  const attackerBase = lossRange(LOSS_BASE[band].attacker);
+  const defenderBase = ratio >= 5 ? { min: 1, max: 1 } : lossRange(LOSS_BASE[band].defender);
+  let attackerLow = attackerBase.min;
+  let attackerHigh = attackerBase.max;
+  let defenderLow = defenderBase.min;
+  let defenderHigh = defenderBase.max;
   if (fortIsActive) {
-    attackerLossPct = {
-      min: Math.min(MAX_FORT_ATTACKER_LOSS, attackerLossPct.min + fortPenalty),
-      max: Math.min(MAX_FORT_ATTACKER_LOSS, attackerLossPct.max + fortPenalty)
-    };
-    defenderLossPct = {
-      min: Math.max(MIN_FORT_DEFENDER_LOSS, defenderLossPct.min * FORT_DEFENDER_LOSS_FACTOR),
-      max: Math.max(MIN_FORT_DEFENDER_LOSS, defenderLossPct.max * FORT_DEFENDER_LOSS_FACTOR)
-    };
+    attackerLow = Math.min(MAX_FORT_ATTACKER_LOSS, attackerLow + fortPenalty);
+    attackerHigh = Math.min(MAX_FORT_ATTACKER_LOSS, attackerHigh + fortPenalty);
+    defenderLow = Math.max(MIN_FORT_DEFENDER_LOSS, defenderLow * FORT_DEFENDER_LOSS_FACTOR);
+    defenderHigh = Math.max(MIN_FORT_DEFENDER_LOSS, defenderHigh * FORT_DEFENDER_LOSS_FACTOR);
+  }
+  const attackerUnitStrengths = attackers.map((unit) => unit.strength);
+  const survivorStrengths = survivors.map((defender) => defender.strength);
+  const attackerLossPct = {
+    min: lossFraction(attackerUnitStrengths, attackerLow),
+    max: lossFraction(attackerUnitStrengths, attackerHigh)
+  };
+  const defenderLossPct =
+    survivors.length > 0
+      ? { min: lossFraction(survivorStrengths, defenderLow), max: lossFraction(survivorStrengths, defenderHigh) }
+      : { min: 0, max: 0 };
+
+  // ── The fort: damaged by a fixed amount, and while it stands the region cannot be taken ──
+  const fortDamage = fortIsActive ? Math.max(1, Math.round(antiFortPower * fortDamageMultiplierFor(fortStrengthRatio))) : 0;
+  const fortHealthAfter = fortIsActive ? Math.max(0, fortHealth - fortDamage) : 0;
+  const fortHolds = fortIsActive && fortHealthAfter > 0;
+
+  // ── Capture: no fort left standing and no defender left in the region ──
+  let captureChance: number;
+  if (fortHolds) {
+    captureChance = 0;
+  } else if (survivors.length === 0) {
+    captureChance = 1;
+  } else {
+    const meanDefenderLoss = (defenderLow + defenderHigh) / 2;
+    const someSurvive = survivors.some((defender) => Math.round(defender.strength * (1 - meanDefenderLoss)) >= 1);
+    const winChance = ratio >= 1.0 ? 1 : ratio >= 0.7 ? WIN_CHANCE_MARGINAL : WIN_CHANCE_UNLIKELY;
+    // surviving defenders only give way if the battle is won and the assault does not bounce back
+    captureChance = someSurvive ? winChance * (1 - getAssaultBounceChance(ratio)) : 1;
   }
 
   const notes: string[] = [];
+  if (queuedAttackers.length > 0) {
+    const count = queuedAttackers.length;
+    notes.push(`Counts ${count} attack${count === 1 ? "" : "s"} already queued on this region.`);
+  }
   if (survivors.length === 0) {
     notes.push(
-      fortIsActive
-        ? "No defending units; the fort must be broken to capture the region."
-        : "No defenders: the region should fall."
+      fortHolds
+        ? "No defending units, but the fort survives this assault, so the region cannot be taken this turn."
+        : fortIsActive
+          ? "No defending units; the assault breaks the fort and takes the region."
+          : "No defenders: the region should fall."
     );
-  } else if (fortIsActive) {
-    notes.push("Capture is not guaranteed: defenders can retreat and the fort can hold.");
+  } else if (fortHolds) {
+    notes.push("The fort holds this turn: defenders and fort take losses, but the region cannot fall.");
   } else {
-    notes.push("Defenders can retreat, so capture is not guaranteed.");
+    notes.push("Defenders may retreat instead of dying; the capture chance includes the chance that a won assault bounces back.");
   }
 
   return {
@@ -269,6 +366,9 @@ export function estimateAttack(
     defenderLossPct,
     attackerStrength,
     defenderStrength,
+    attackerCount: attackers.length,
+    queuedAttackers: queuedAttackers.length,
+    defenderCount: survivors.length,
     airSupportBonus,
     support: { fighters, bombardments, missiles },
     fort: fortIsActive
@@ -276,9 +376,12 @@ export function estimateAttack(
           level: fort!.level,
           health: fortHealth,
           maxHealth: fort!.maxHealth,
-          attackerLossPenaltyPct: fortPenalty
+          attackerLossPenaltyPct: fortPenalty,
+          healthAfter: fortHealthAfter,
+          holds: fortHolds
         }
       : null,
+    captureChance,
     notes
   };
 }

@@ -63,11 +63,12 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => ESCAPES[char]);
 }
 
+/** The battle itself (the dice roll the resolver makes); whether the region falls is the capture chance. */
 const BAND_LABELS: Record<AttackBand, string> = {
-  decisive: "decisive victory",
-  likely: "likely victory",
-  marginal: "marginal (60% attacker win)",
-  unlikely: "unlikely (15% breakthrough)"
+  decisive: "decisive win",
+  likely: "likely win",
+  marginal: "toss-up (60% win)",
+  unlikely: "unlikely (15% win)"
 };
 
 function formatPercent(fraction: number): string {
@@ -80,16 +81,28 @@ function formatPercentRange(range: { min: number; max: number }): string {
   return min === max ? `${min}%` : `${min}–${max}%`;
 }
 
+/** What the player actually wants to know: does the region change hands this turn? */
+function captureHeadline(estimate: AttackEstimate): string {
+  if (estimate.fort?.holds) return "no capture this turn, the fort holds";
+  if (estimate.captureChance >= 0.995) return "capture expected";
+  if (estimate.captureChance < 0.005) return "capture almost impossible";
+  return `capture about ${formatPercent(estimate.captureChance)}`;
+}
+
 /** The attack-estimate block; all text is ours, but notes still go through the escaper. */
 function estimateHtml(estimate: AttackEstimate): string {
-  const ratio = Number.isFinite(estimate.ratio) ? estimate.ratio.toFixed(2) : "∞";
-  const rows = [
-    `<div class="map-tooltip__row map-tooltip__estimate-title">Attack estimate: ${BAND_LABELS[estimate.band]} (ratio ${ratio})</div>`,
-    `<div class="map-tooltip__row">Losses: attackers ${formatPercentRange(estimate.attackerLossPct)} · defenders ${formatPercentRange(estimate.defenderLossPct)}</div>`
-  ];
+  const rows = [`<div class="map-tooltip__row map-tooltip__estimate-title">Attack estimate: ${captureHeadline(estimate)}</div>`];
+  const defended = estimate.defenderCount > 0;
+  if (defended) {
+    const ratio = Number.isFinite(estimate.ratio) ? estimate.ratio.toFixed(2) : "∞";
+    rows.push(`<div class="map-tooltip__row">Battle: ${BAND_LABELS[estimate.band]} (ratio ${ratio})</div>`);
+  }
+  const losses = `attackers ${formatPercentRange(estimate.attackerLossPct)}${defended ? ` · defenders ${formatPercentRange(estimate.defenderLossPct)}` : ""}`;
+  rows.push(`<div class="map-tooltip__row">Losses: ${losses}</div>`);
   if (estimate.fort) {
+    const { level, health, healthAfter, maxHealth, holds, attackerLossPenaltyPct } = estimate.fort;
     rows.push(
-      `<div class="map-tooltip__row">Fort Lv.${estimate.fort.level} ${estimate.fort.health}/${estimate.fort.maxHealth}: +${formatPercent(estimate.fort.attackerLossPenaltyPct)} attacker losses</div>`
+      `<div class="map-tooltip__row">Fort Lv.${level}: ${health} → ${healthAfter}/${maxHealth}, ${holds ? "holds" : "broken"} · +${formatPercent(attackerLossPenaltyPct)} attacker losses</div>`
     );
   }
   const support: string[] = [];

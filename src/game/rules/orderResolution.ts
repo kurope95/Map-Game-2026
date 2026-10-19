@@ -114,7 +114,7 @@ export function getEntrenchmentModifier(unit: UnitDefinition): number {
   return 1 + Math.min(turns * ENTRENCHMENT_BONUS_PER_TURN, MAX_ENTRENCHMENT_BONUS);
 }
 
-function getAssaultBounceChance(strengthRatio: number): number {
+export function getAssaultBounceChance(strengthRatio: number): number {
   if (strengthRatio >= 5) return 0;
   if (strengthRatio >= 4) return 0.05;
   if (strengthRatio >= 3) return 0.12;

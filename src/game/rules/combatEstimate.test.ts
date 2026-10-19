@@ -228,7 +228,7 @@ describe("estimateAttack fortifications", () => {
       fort: { level: 2, health: 16, maxHealth: 16, damaged: false }
     });
     expect(result.defenderStrength).toBeCloseTo(8 * 1.35 + 14);
-    expect(result.fort).toEqual({ level: 2, health: 16, maxHealth: 16, attackerLossPenaltyPct: 0.12 });
+    expect(result.fort).toMatchObject({ level: 2, health: 16, maxHealth: 16, attackerLossPenaltyPct: 0.12 });
   });
 
   it("scales fort base power with its remaining health", () => {
@@ -247,10 +247,13 @@ describe("estimateAttack fortifications", () => {
       fort: { level: 3, health: 24, maxHealth: 24, damaged: false }
     });
     expect(result.fort?.attackerLossPenaltyPct).toBe(0.18);
-    expect(result.attackerLossPct.min).toBeCloseTo(0.5 * 0.85 + 0.18);
-    expect(result.attackerLossPct.max).toBeCloseTo(0.5 * 1.15 + 0.18);
-    expect(result.defenderLossPct.min).toBeCloseTo(0.15 * 0.85 * 0.65);
-    expect(result.defenderLossPct.max).toBeCloseTo(0.15 * 1.15 * 0.65);
+    // base 0.5 ±15% plus the 0.18 penalty gives 0.605-0.755; the resolver rounds each unit's remaining strength:
+    // 8 × (1 - 0.605) = 3.16 -> 3 left (5 lost = 62.5%), 8 × (1 - 0.755) = 1.96 -> 2 left (6 lost = 75%)
+    expect(result.attackerLossPct.min).toBeCloseTo(0.625);
+    expect(result.attackerLossPct.max).toBeCloseTo(0.75);
+    // defenders: 0.15 ±15% times 0.65 is 0.083-0.112, which rounds to one point of an 8 either way (12.5%)
+    expect(result.defenderLossPct.min).toBeCloseTo(0.125);
+    expect(result.defenderLossPct.max).toBeCloseTo(0.125);
   });
 
   it("treats a fort at zero health as inactive", () => {
@@ -403,23 +406,91 @@ describe("estimateAttack pending support", () => {
 });
 
 describe("estimateAttack loss ranges", () => {
-  it("uses the band base ±15% and the resolver clamps", () => {
+  // The resolver takes the band base ±15% (clamped), then cuts every unit to round(strength × (1 - loss)),
+  // so the range the player sees is what those two extremes leave after rounding.
+  it("uses the band base ±15%, the resolver clamps and its per-unit rounding", () => {
     const likely = estimate({ attackers: [unit({ strength: 10 })], defenders: [defender({ strength: 8 })] });
-    expect(likely.attackerLossPct.min).toBeCloseTo(0.2125);
-    expect(likely.attackerLossPct.max).toBeCloseTo(0.2875);
-    expect(likely.defenderLossPct.min).toBeCloseTo(0.3825);
-    expect(likely.defenderLossPct.max).toBeCloseTo(0.5175);
+    // attackers 0.2125-0.2875: 10 -> 8 or 7 left, so 20-30%; defenders 0.3825-0.5175: 8 -> 5 or 4 left, so 37.5-50%
+    expect(likely.attackerLossPct.min).toBeCloseTo(0.2);
+    expect(likely.attackerLossPct.max).toBeCloseTo(0.3);
+    expect(likely.defenderLossPct.min).toBeCloseTo(0.375);
+    expect(likely.defenderLossPct.max).toBeCloseTo(0.5);
 
     const decisive = estimate({ attackers: [unit({ strength: 50 })], defenders: [defender({ strength: 8 })] });
-    expect(decisive.attackerLossPct.min).toBeCloseTo(0.085);
-    expect(decisive.attackerLossPct.max).toBeCloseTo(0.115);
+    // 0.085-0.115 of 50 is 46 or 44 left (8-12%); a ratio of 5 or more wipes the defenders out
+    expect(decisive.attackerLossPct.min).toBeCloseTo(0.08);
+    expect(decisive.attackerLossPct.max).toBeCloseTo(0.12);
     expect(decisive.defenderLossPct).toEqual({ min: 1, max: 1 });
 
     const unlikely = estimate({ attackers: [unit({ strength: 6 })], defenders: [defender({ strength: 10 })] });
-    expect(unlikely.attackerLossPct.min).toBeCloseTo(0.425);
-    expect(unlikely.attackerLossPct.max).toBeCloseTo(0.575);
-    expect(unlikely.defenderLossPct.min).toBeCloseTo(0.1275);
-    expect(unlikely.defenderLossPct.max).toBeCloseTo(0.1725);
+    // attackers 0.425-0.575 of 6 is 3 left either way (50%); defenders 0.1275-0.1725 of 10 is 9 or 8 left (10-20%)
+    expect(unlikely.attackerLossPct.min).toBeCloseTo(0.5);
+    expect(unlikely.attackerLossPct.max).toBeCloseTo(0.5);
+    expect(unlikely.defenderLossPct.min).toBeCloseTo(0.1);
+    expect(unlikely.defenderLossPct.max).toBeCloseTo(0.2);
+  });
+
+  it("has no defender losses and a zero defender count when nothing defends the region", () => {
+    const result = estimate({ defenders: [] });
+    expect(result.defenderCount).toBe(0);
+    expect(result.defenderLossPct).toEqual({ min: 0, max: 0 });
+  });
+
+  it("counts the attackers and the defenders", () => {
+    const result = estimate(
+      { attackers: [unit({ id: "a1" }), unit({ id: "a2" })], defenders: [defender({ id: "d1" }), defender({ id: "d2" }), defender({ id: "d3" })] },
+      ["a1", "a2"]
+    );
+    expect(result.attackerCount).toBe(2);
+    expect(result.defenderCount).toBe(3);
+    expect(result.queuedAttackers).toBe(0);
+  });
+});
+
+describe("estimateAttack capture chance", () => {
+  // Mirrors the resolver: a won battle only takes the region if the defenders then give way, and the assault
+  // can bounce back (getAssaultBounceChance); the battle itself is won 100% / 60% / 15% by band.
+  it("is the bounce-adjusted win chance when defenders survive the battle", () => {
+    // ratio 1.25 (likely): wins always, bounce chance 50%
+    expect(estimate({ attackers: [unit({ strength: 10 })], defenders: [defender({ strength: 8 })] }).captureChance).toBeCloseTo(0.5);
+    // ratio 0.7 (marginal): 60% win, bounce chance 65%
+    expect(estimate({ attackers: [unit({ strength: 7 })], defenders: [defender({ strength: 10 })] }).captureChance).toBeCloseTo(0.6 * 0.35);
+    // ratio 0.6 (unlikely): 15% win, bounce chance 85%
+    expect(estimate({ attackers: [unit({ strength: 6 })], defenders: [defender({ strength: 10 })] }).captureChance).toBeCloseTo(0.15 * 0.15);
+  });
+
+  it("is certain when nothing defends the region, or when the battle wipes every defender out", () => {
+    expect(estimate({ defenders: [] }).captureChance).toBe(1);
+    // ratio 6.25: defenders lose everything
+    expect(estimate({ attackers: [unit({ strength: 50 })], defenders: [defender({ strength: 8 })] }).captureChance).toBe(1);
+  });
+
+  it("is zero while a fort survives the assault, however good the battle odds are", () => {
+    const strongAttack = estimate({
+      attackers: [unit({ strength: 40 })],
+      defenders: [defender({ strength: 4 })],
+      fort: { level: 3, health: 24, maxHealth: 24, damaged: false }
+    });
+    expect(strongAttack.band).toBe("decisive");
+    expect(strongAttack.fort?.holds).toBe(true);
+    expect(strongAttack.fort!.healthAfter).toBeGreaterThan(0);
+    expect(strongAttack.fort!.healthAfter).toBeLessThan(24);
+    expect(strongAttack.captureChance).toBe(0);
+  });
+
+  it("is certain when nothing defends and the assault breaks the fort", () => {
+    const result = estimate({
+      attackers: [unit({ strength: 40 })],
+      defenders: [],
+      fort: { level: 1, health: 2, maxHealth: 10, damaged: true }
+    });
+    expect(result.fort).toMatchObject({ health: 2, healthAfter: 0, holds: false });
+    expect(result.captureChance).toBe(1);
+  });
+
+  it("never reports a fort outcome without a fort", () => {
+    const result = estimate();
+    expect(result.fort).toBeNull();
   });
 });
 

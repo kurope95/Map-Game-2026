@@ -117,6 +117,7 @@ describe("tooltipHtml", () => {
     expect(html).toContain("&lt;img src=x onerror=&quot;a&quot;&gt;&amp;");
   });
 
+  // A defended region, no fort: the battle is "likely" but the assault can still bounce back.
   const estimate: AttackEstimate = {
     band: "likely",
     ratio: 1.32,
@@ -124,36 +125,91 @@ describe("tooltipHtml", () => {
     defenderLossPct: { min: 0.38, max: 0.52 },
     attackerStrength: 14,
     defenderStrength: 10.6,
+    attackerCount: 2,
+    queuedAttackers: 0,
+    defenderCount: 1,
     airSupportBonus: 2,
     support: { fighters: 1, bombardments: 1, missiles: 0 },
-    fort: { level: 2, health: 12, maxHealth: 16, attackerLossPenaltyPct: 0.12 },
-    notes: ["Defenders can retreat <b>and</b> the fort can hold."]
+    fort: null,
+    captureChance: 0.5,
+    notes: ["Defenders can retreat <b>and</b> bounce back."]
+  };
+  // The Odesa case: nothing defends, but a level 3 fort survives the assault.
+  const fortHolds: AttackEstimate = {
+    ...estimate,
+    band: "likely",
+    ratio: 1.19,
+    attackerLossPct: { min: 0.33, max: 0.41 },
+    defenderLossPct: { min: 0, max: 0 },
+    defenderCount: 0,
+    support: { fighters: 0, bombardments: 0, missiles: 0 },
+    airSupportBonus: 0,
+    fort: { level: 3, health: 24, maxHealth: 24, attackerLossPenaltyPct: 0.12, healthAfter: 19, holds: true },
+    captureChance: 0,
+    notes: []
   };
 
-  it("renders the attack estimate when the tooltip model carries one", () => {
+  it("leads with the capture chance and shows the battle, the losses and the support", () => {
     const html = tooltipHtml({ ...model, estimate });
     expect(html).toContain("map-tooltip__estimate");
-    expect(html).toContain("Attack estimate: likely victory (ratio 1.32)");
+    expect(html).toContain("Attack estimate: capture about 50%");
+    expect(html).toContain("Battle: likely win (ratio 1.32)");
     expect(html).toContain("Losses: attackers 21–29% · defenders 38–52%");
-    expect(html).toContain("Fort Lv.2 12/16: +12% attacker losses");
     expect(html).toContain("Support: 1 fighter (+2), 1 bombardment");
     expect(html).not.toContain("<b>");
-    expect(html).toContain("Defenders can retreat &lt;b&gt;and&lt;/b&gt; the fort can hold.");
+    expect(html).toContain("Defenders can retreat &lt;b&gt;and&lt;/b&gt; bounce back.");
+  });
+
+  it("says no capture and shows the fort before and after when it holds, and hides what does not apply", () => {
+    const html = tooltipHtml({ ...model, estimate: fortHolds });
+    expect(html).toContain("Attack estimate: no capture this turn, the fort holds");
+    expect(html).toContain("Fort Lv.3: 24 → 19/24, holds · +12% attacker losses");
+    expect(html).toContain("Losses: attackers 33–41%");
+    expect(html).not.toContain("defenders 0");
+    expect(html).not.toMatch(/Losses:[^<]*defenders/);
+    expect(html).not.toContain("Battle:");
+    expect(html).not.toContain("Support:");
+    expect(html).not.toContain("victory");
+  });
+
+  it("says the fort is broken, and expects capture, when the assault breaks it", () => {
+    const html = tooltipHtml({
+      ...model,
+      estimate: { ...fortHolds, fort: { level: 1, health: 2, maxHealth: 10, attackerLossPenaltyPct: 0.02, healthAfter: 0, holds: false }, captureChance: 1 }
+    });
+    expect(html).toContain("Attack estimate: capture expected");
+    expect(html).toContain("Fort Lv.1: 2 → 0/10, broken · +2% attacker losses");
+  });
+
+  it("expects capture without a battle row when nothing defends and there is no fort", () => {
+    const html = tooltipHtml({
+      ...model,
+      estimate: { ...fortHolds, fort: null, captureChance: 1, ratio: Infinity, band: "decisive", attackerLossPct: { min: 0.09, max: 0.12 } }
+    });
+    expect(html).toContain("Attack estimate: capture expected");
+    expect(html).toContain("Losses: attackers 9–12%");
+    // the region's own fort row sits above the estimate; the estimate block itself must have none
+    const estimateBlock = html.slice(html.indexOf("map-tooltip__estimate"));
+    expect(estimateBlock).not.toContain("Battle:");
+    expect(estimateBlock).not.toContain("Fort Lv");
+    expect(html).not.toContain("∞");
+  });
+
+  it("keeps small chances readable", () => {
+    expect(tooltipHtml({ ...model, estimate: { ...estimate, captureChance: 0.0225 } })).toContain("capture about 2%");
+    expect(tooltipHtml({ ...model, estimate: { ...estimate, captureChance: 0.004 } })).toContain("capture almost impossible");
+  });
+
+  it("describes the battle odds with plain words", () => {
+    const labelFor = (band: AttackEstimate["band"]) => tooltipHtml({ ...model, estimate: { ...estimate, band } });
+    expect(labelFor("decisive")).toContain("Battle: decisive win");
+    expect(labelFor("marginal")).toContain("Battle: toss-up (60% win)");
+    expect(labelFor("unlikely")).toContain("Battle: unlikely (15% win)");
   });
 
   it("omits the estimate block when there is no estimate", () => {
     expect(tooltipHtml(model)).not.toContain("map-tooltip__estimate");
     expect(tooltipHtml({ ...model, estimate: null })).not.toContain("Attack estimate");
-  });
-
-  it("shows an infinite ratio against no defenders and drops the support line without support", () => {
-    const html = tooltipHtml({
-      ...model,
-      estimate: { ...estimate, ratio: Infinity, support: { fighters: 0, bombardments: 0, missiles: 0 }, fort: null, notes: [] }
-    });
-    expect(html).toContain("(ratio ∞)");
-    expect(html).not.toContain("Support:");
-    expect(html).not.toContain("attacker losses");
   });
 
   it("passes the estimate through tooltipModel", () => {
