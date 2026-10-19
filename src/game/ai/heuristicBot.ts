@@ -12,7 +12,7 @@ import {
 import { applyDiplomacyAction, getCountryLeanBloc } from "../rules/diplomacy";
 import { AI_COUNTRY_PROFILES, AI_NATIONAL_GOALS, AI_ROUTE_WEIGHTS, AI_STRATEGY_WEIGHTS } from "../content/aiObjectives";
 import { recordAllyAttackClaims, shouldDeferAttackToAlly } from "./allyCoordination";
-import { buildRouteDistances, getRouteProgress, type RouteDistances } from "./pathfinding";
+import { buildRouteDistances, getRouteDistance, getRouteProgress, type RouteDistances } from "./pathfinding";
 
 export interface BotAction {
   unitId: string;
@@ -1147,6 +1147,14 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
       const rightPriority = (right.isCritical ? 20 : 0) + right.hostileAdjacents.length * 5 + right.deficit * 4;
       return rightPriority - leftPriority;
     });
+  const threatDistances: RouteDistances | null =
+    reinforcementTargets.length > 0
+      ? buildRouteDistances(
+          state,
+          countryId,
+          new Set(reinforcementTargets.map((entry) => entry.regionId))
+        )
+      : null;
 
   const actions: BotAction[] = [];
   const claimedTargetCounts = new Map<string, number>();
@@ -1164,6 +1172,7 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
 
   const allCandidates: CandidateAction[] = [];
   const attackTargetCaps = new Map<string, number>();
+  const adjacentReinforcementTargets = new Set<string>();
 
   for (const entry of frontlineData) {
     if (entry.desiredDefenders <= 0) continue;
@@ -1331,6 +1340,7 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
           nationalGoalPriorityMap,
           routeDistances
         );
+        adjacentReinforcementTargets.add(`${unit.id}:${targetId}`);
         allCandidates.push({
           unitId: unit.id,
           fromRegionId: unit.regionId,
@@ -1427,6 +1437,53 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
 
     if (!canLeaveRegion) {
       continue;
+    }
+
+    // Multi-hop reinforcement: a surplus unit in the interior marches one step
+    // closer to the nearest threatened front. The existing branch above only
+    // knows adjacent targets, so interior reserves used to sit still.
+    if (threatDistances) {
+      for (const targetId of moves) {
+        if (adjacentReinforcementTargets.has(`${unit.id}:${targetId}`)) continue;
+        if (getRouteProgress(threatDistances, unit.regionId, targetId) <= 0) continue;
+        const remainingDistance = getRouteDistance(threatDistances, targetId);
+        if (remainingDistance > AI_ROUTE_WEIGHTS.maxMarchDistance) continue;
+
+        const threatenedId = threatDistances.sources.get(targetId);
+        const threatenedFront = threatenedId ? frontlineByRegionId.get(threatenedId) : undefined;
+        if (!threatenedId || !threatenedFront) continue;
+
+        const targetSupplied = suppliedRegionIds.has(targetId) && state.regions[targetId].controllerBlocId === unit.blocId;
+        if (criticallyUnsupplied && !targetSupplied) continue;
+        const supplyAdjustment =
+          !sourceSupplied && targetSupplied ? 24 :
+          sourceSupplied && !targetSupplied ? -18 :
+          !sourceSupplied && !targetSupplied ? -8 :
+          0;
+        const priority =
+          (threatenedFront.isCritical ? 20 : 0) +
+          threatenedFront.hostileAdjacents.length * 5 +
+          threatenedFront.deficit * 4;
+        const score =
+          AI_ROUTE_WEIGHTS.reinforcementMarchBase +
+          priority -
+          remainingDistance * AI_ROUTE_WEIGHTS.reinforcementMarchPerHop +
+          supplyAdjustment;
+
+        allCandidates.push({
+          unitId: unit.id,
+          fromRegionId: unit.regionId,
+          targetRegionId: targetId,
+          orderType: "move",
+          score,
+          reasons: [
+            `Marches to reinforce ${state.regions[threatenedId].name}; ${remainingDistance} hop${remainingDistance === 1 ? "" : "s"} from the front.`,
+            targetSupplied
+              ? "March stays inside the capital supply network."
+              : "March ends outside the capital supply network.",
+          ],
+        });
+      }
     }
 
     for (const targetId of moves) {

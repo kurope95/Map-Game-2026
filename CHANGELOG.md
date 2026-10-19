@@ -36,6 +36,18 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Multi-hop reinforcement marches in [`heuristicBot.ts`](./src/game/ai/heuristicBot.ts): each turn one
+  route field is built from the regions with a defender deficit (`reinforcementTargets`); surplus
+  land units whose region can spare them gain a `move` candidate for every legal step that reduces
+  distance to the nearest such front, up to `AI_ROUTE_WEIGHTS.maxMarchDistance` (6) hops. Score is
+  `reinforcementMarchBase (24) + threat priority - remainingDistance * 6 + supplyAdjustment`, with a
+  reason naming the threatened region and the remaining hops. This is the stage that lets interior
+  reserves reach a front they do not border; adjacent reinforcement, defender reservation and the
+  critical-supply gate are unchanged. (plan 2026-10-19-ai-pathfinding → Task 4)
+- Tests for reinforcement marches: a surplus pair in Kursk marches toward Gomel (distance to the
+  region named in the reason falls), and a critically unsupplied unit whose capital is lost issues
+  no move. The lone-defender test from Task 1 still passes unchanged.
+  (plan 2026-10-19-ai-pathfinding → Task 4)
 - AI route-progress integration tests in [`heuristicBot.test.ts`](./src/game/ai/heuristicBot.test.ts):
   a rear unit marches one hop toward an unresolved national goal (Vilnius), a lost starting region
   (Kaliningrad) and an allied shield objective (Gomel); each asserts the emitted move reduces route
@@ -301,6 +313,18 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- March radius is measured at the destination: a step is eligible when the target's remaining
+  distance to the front is at most `maxMarchDistance` (6), so a unit 7 hops out can still take the
+  step that brings it within 6. The plan says only `distance <= maxMarchDistance`, and the
+  destination distance is what the score also uses. Cost if wrong: the AI can begin a march from
+  one hop beyond the intended radius. (plan 2026-10-19-ai-pathfinding → Task 4)
+- The march test asserts distance reduction against the single threatened region named in the
+  reason, not against a field built from every region adjacent to an enemy. The bot's threat set is
+  `reinforcementTargets` (deficit > 0); in the test scenario Vilnius and Dnipro are threatened but
+  fully garrisoned, so the all-threatened field measured a sideways step while the bot's field
+  measured progress. The assertion still proves the emitted step closes on the threatened region
+  it claims to reinforce. Cost if wrong: the test is coupled to the reason wording.
+  (plan 2026-10-19-ai-pathfinding → Task 4)
 - AI route weights calibrated to 30/26/22 (`AI_ROUTE_WEIGHTS` in
   [`aiObjectives.ts`](./src/game/content/aiObjectives.ts)) instead of the plan's 12/10/8. At the
   plan's values the route bonus after the 0.6 strategy scaling was ~+2.2 adjustment points — inside
@@ -678,6 +702,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- AI reinforcement marches (Task 4): `npx tsc -p tsconfig.app.json --noEmit` and
+  `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm run build` OK; `npm run check:layers`
+  PASS; `npm test` 346/346 in 44 files; `npm run smoke` passed RUSSIA, ROMANIA and AUSTRIA;
+  `npm run balance-check` "Balance check passed"; `npm run check-war-entry` passed. The march test
+  was watched fail with marches disabled (no route reason) before the branch existed.
+  (plan 2026-10-19-ai-pathfinding → Task 4)
 - AI route-progress scoring (Task 3): `npx tsc -p tsconfig.app.json --noEmit` and
   `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm run build` OK; `npm run check:layers`
   PASS; `npm test` 344/344 in 44 files; `npm run smoke` passed RUSSIA, ROMANIA and AUSTRIA;

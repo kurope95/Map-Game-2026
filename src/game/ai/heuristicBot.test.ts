@@ -183,3 +183,46 @@ describe("planCountryTurn route progress", () => {
     ).toBe(true);
   });
 });
+
+describe("planCountryTurn reinforcement marches", () => {
+  it("marches a surplus rear unit toward a threatened front", () => {
+    let state = fresh();
+    for (const goal of AI_NATIONAL_GOALS.RUSSIA) state = withController(state, goal, "RUSSIA");
+    // Deep in the interior, with no adjacent front and no national goal pulling
+    // it: the only reason to move is the reinforcement march.
+    state = relocateUnit(state, "ru-inf-1", "kursk");
+    state = relocateUnit(state, "ru-arm-1", "kursk");
+
+    const action = actionFor(state, "RUSSIA", "ru-inf-1");
+    const marchReason = action.reasons.find((reason) => reason.includes("Marches to reinforce"));
+
+    expect(action.orderType).toBe("move");
+    expect(marchReason).toBeDefined();
+
+    const threatenedName = marchReason!.match(/Marches to reinforce (.+);/)?.[1];
+    const threatenedId = Object.values(state.regions).find((region) => region.name === threatenedName)?.id;
+    expect(threatenedId).toBeDefined();
+
+    const distances = buildRouteDistances(state, "RUSSIA", new Set([threatenedId!]));
+    expect(distances.distances.get(action.targetRegionId)!).toBeLessThan(distances.distances.get("kursk")!);
+  });
+
+  it("does not march a critically unsupplied unit out of supply", () => {
+    let state = fresh();
+    for (const goal of AI_NATIONAL_GOALS.RUSSIA) state = withController(state, goal, "RUSSIA");
+    // Lose the capital: no region is connected to the supply network anymore.
+    state = withController(state, "moscow", "UKRAINE");
+    state = relocateUnit(state, "ru-inf-1", "voronezh");
+    state = {
+      ...state,
+      units: {
+        ...state.units,
+        "ru-inf-1": { ...state.units["ru-inf-1"], supplyTurnsRemaining: 0 },
+      },
+    };
+
+    const action = actionFor(state, "RUSSIA", "ru-inf-1");
+
+    expect(action.orderType).not.toBe("move");
+  });
+});

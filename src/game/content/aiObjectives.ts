@@ -12,6 +12,8 @@ export const AI_ROUTE_WEIGHTS = {
   allyGoalProgress: 26,
   homelandProgress: 22,
   maxMarchDistance: 6,
+  reinforcementMarchBase: 24,
+  reinforcementMarchPerHop: 6,
 } as const;
 
 export interface AiCountryProfile {
