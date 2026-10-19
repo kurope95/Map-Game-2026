@@ -66,6 +66,7 @@ function useGameValue() {
     session.setLastBotDecision(null);
     session.setTurnReport(null);
     session.setTurnReportOpen(false);
+    ui.setLastFacilityBuild(null); // the Repeat button belongs to the game it was used in
     ui.setBottomOpen(true);
     ui.setActiveTab("region");
     saveSlots.setSaveLoadOpen(false);
@@ -83,6 +84,7 @@ function useGameValue() {
     session.setLastBotDecision(null);
     session.setTurnReport(null);
     session.setTurnReportOpen(false);
+    ui.setLastFacilityBuild(null); // the Repeat button belongs to the game it was used in
     ui.setBottomOpen(true);
     ui.setActiveTab("region");
     ui.setGlobalUnitsOpen(false);

@@ -827,6 +827,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   estimator to the real resolver. Evidence: 400 seeds per case on Odesa at turn 1 captured 0 times against
   "likely/decisive victory" while the level 3 fort stood. `getAssaultBounceChance` is now exported
   (keyword only). (plan 2026-10-19-gameplay-qol-batch → Task 4, review follow-up)
+- The Repeat-last-build button no longer survives into another game: the remembered build is cleared on
+  load and on a new game ([`GameProvider.tsx`](./src/ui/session/GameProvider.tsx)) and carries its country
+  ([`lastFacilityBuild.ts`](./src/ui/session/lastFacilityBuild.ts)). (plan 2026-10-19-gameplay-qol-batch →
+  Task 3, review follow-up)
+- The batch report no longer says the AI's queue-filling loop was new; it already existed. What changed is
+  that pending builds count against building slots (`docs/superpowers/reports/2026-10-19-feature-batch-report.md`).
 - `npm run check-war-entry` expected one lost Polish key city for the Czech Republic to join, but the
   shipped rule (unchanged since the original game) needs Poland's capital or two key cities, so the
   check was red on `legacy` and `main`. The check now tests one city (no entry), two (entry) and the

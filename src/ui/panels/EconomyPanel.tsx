@@ -122,7 +122,7 @@ export function EconomyPanel() {
       {/* COL 2: Build */}
       <div className="economy-tab__col">
         <div className="economy-section__title">Construct Facility</div>
-        {lastFacilityBuild && (
+        {lastFacilityBuild && lastFacilityBuild.countryId === playerCountryId && (
           <div className="economy-repeat">
             <Button
               variant="secondary"

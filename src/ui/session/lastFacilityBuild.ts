@@ -4,11 +4,13 @@ import type { CountryId, FacilityType } from "../../game/state/types";
 export interface LastFacilityBuild {
   regionId: string;
   facilityType: FacilityType;
+  /** The country that queued it: a remembered build never carries over to another country's game. */
+  countryId: CountryId;
 }
 
 /**
  * The Repeat affordance is enabled only when the remembered build can still be queued:
- * something was built, it is the player's turn, and the region is still player-controlled.
+ * something was built by this country, it is the player's turn, and the region is still player-controlled.
  * Slot and resource legality stays with `queueFacilityBuild`.
  */
 export function canRepeatFacilityBuild(
@@ -17,5 +19,5 @@ export function canRepeatFacilityBuild(
   playerCountryId: CountryId,
   playerTurnActive: boolean
 ): boolean {
-  return last !== null && playerTurnActive && region?.controllerCountryId === playerCountryId;
+  return last !== null && last.countryId === playerCountryId && playerTurnActive && region?.controllerCountryId === playerCountryId;
 }

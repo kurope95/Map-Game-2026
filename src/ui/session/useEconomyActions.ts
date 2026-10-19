@@ -45,7 +45,7 @@ export function useEconomyActions({
     const result = queueFacilityBuild(gameState, playerCountryId, regionId, facilityType);
     applyAction(result);
     // Only a queue that actually succeeded becomes the repeat target.
-    if (result.ok) rememberFacilityBuild({ regionId, facilityType });
+    if (result.ok) rememberFacilityBuild({ regionId, facilityType, countryId: playerCountryId });
   }
 
   function handleUpgradeFacility(facilityId: string, regionId: string) {

@@ -48,10 +48,11 @@ use the economy it already has, without letting it run away with the game.
 
 All changes are in [`heuristicBot.ts`](../../../src/game/ai/heuristicBot.ts) unless noted.
 
-1. **Queue filling.** `aiEconomyTurn` now loops up to the nation's queue cap instead of returning
-   after one action. Caps: major 4, middle 3, minor 2. Existing pending builds count against the
-   cap, and pending facility builds are counted per region so two buildings are not double-booked
-   into one region.
+1. **Pending builds count against building slots.** The per-turn loop up to the nation's queue cap
+   (major 4, middle 3, minor 2) already existed before this batch. What changed is that pending
+   facility builds are now counted per region, in `findBuildRegion` and in `totalSlotsRemaining`,
+   so two buildings are not double-booked into one region. (An earlier version of this report said
+   the loop itself was new; the independent review found that it was not.)
 2. **Unit replenishment.** A damaged unit whose region has an operational recruitment facility
    queues `replenishUnit` through the same cost profile the player uses. Candidates are sorted by
    weakest strength ratio, then frontline presence, then unit id, so the choice is deterministic.
@@ -350,6 +351,41 @@ Environment: headless Chrome, 1440x900, dev server; game started as RUSSIA, turn
 - Hovering Kyiv, which is not a valid attack target from Tiraspol, showed no estimate block.
 - Clicking Odesa issued `attack` orders for both selected units and produced the unchanged
   `2 unit(s) ordered to attack Odesa` toast. The click path was not modified.
+
+### Revision after the independent review
+
+Two independent reviews found that the first version of the preview was honest about the battle but
+misleading about the thing the player cares about, whether the region is taken. A resolver probe
+(400 spread seeds per case, Odesa at turn 1) showed it: with the level 3 fort standing, every setup the
+tooltip called "likely victory (ratio 1.19)" or "decisive victory (ratio 1.59)" captured **0 of 400**
+times, because the fort is only damaged (24 to 19 and 24 to 13 health) and capture needs it destroyed.
+Without a fort, "decisive" still captured only 65% and 78% of the time because a won assault can bounce
+back. The preview also showed defender losses when nothing defended, ignored attack orders the player
+had already queued on the same region (the resolver pools them), and showed nominal loss percentages
+that the resolver's per-unit rounding does not produce. Changes:
+
+- `estimateAttack` now returns the fort outcome (`fort.healthAfter`, `fort.holds`; the fort damage is
+  fixed, no dice), `captureChance` (0 while a fort survives, 1 with no defenders or when the battle wipes
+  them out, otherwise the battle win chance times one minus the assault bounce chance), the attacker and
+  defender counts, and `queuedAttackers`.
+- Attack orders the player has already queued on the target are counted together with the selection
+  (a selected unit that is already queued counts once), as the resolver pools them.
+- Loss ranges are what the resolver's variance extremes leave after its per-unit rounding, so the range is
+  the real spread (for example 12-24% where the nominal figure said 17-20%).
+- The tooltip now leads with the capture outlook ("no capture this turn, the fort holds", "capture
+  expected", "capture about 65%"), shows the battle odds and the defender losses only when defenders
+  exist, and shows the fort before and after.
+- `getAssaultBounceChance` is exported from `orderResolution.ts` (keyword only, no logic change).
+- [`combatEstimate.resolver.test.ts`](../../../src/game/rules/combatEstimate.resolver.test.ts) checks
+  the estimator against the real resolver on the Odesa scenario: fort health after, no capture while the
+  fort stands, capture when it breaks, capture frequency within 7 points over 300 seeds, loss ranges that
+  enclose every observed loss, and queued attacks.
+- Also fixed: the remembered build for the Repeat button is now cleared on load and on a new game and is
+  tagged with its country, so it can no longer show up as a stale disabled button in another game.
+
+Still open, deliberately not changed here (rules or balance decisions for Marek): the AI's and the
+player's unit replenishment do not check that the unit's region is controlled; cancelling a queued
+build refunds 100% at any stage of progress; the AI buys a doctrine before the civilian-factory branch.
 
 ### Performance and layout
 

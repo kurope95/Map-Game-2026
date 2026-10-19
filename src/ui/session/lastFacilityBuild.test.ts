@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { canRepeatFacilityBuild } from "./lastFacilityBuild";
 
-const build = { regionId: "moscow", facilityType: "farm" as const };
+const build = { regionId: "moscow", facilityType: "farm" as const, countryId: "RUSSIA" as const };
 const controlled = { controllerCountryId: "RUSSIA" as const };
 
 describe("canRepeatFacilityBuild", () => {
@@ -19,6 +19,11 @@ describe("canRepeatFacilityBuild", () => {
 
   it("rejects when the remembered region is no longer player-controlled", () => {
     expect(canRepeatFacilityBuild(build, { controllerCountryId: "GERMANY" }, "RUSSIA", true)).toBe(false);
+  });
+
+  it("rejects a build remembered in another country's game (a new game or a load as someone else)", () => {
+    expect(canRepeatFacilityBuild(build, { controllerCountryId: "GERMANY" }, "GERMANY", true)).toBe(false);
+    expect(canRepeatFacilityBuild({ ...build, countryId: "GERMANY" }, { controllerCountryId: "GERMANY" }, "GERMANY", true)).toBe(true);
   });
 
   it("rejects when the remembered region no longer exists", () => {
