@@ -10,8 +10,9 @@ import {
   getMilitaryProductionTurns,
 } from "../content/economyRecipes";
 import { applyDiplomacyAction, getCountryLeanBloc } from "../rules/diplomacy";
-import { AI_COUNTRY_PROFILES, AI_NATIONAL_GOALS, AI_STRATEGY_WEIGHTS } from "../content/aiObjectives";
+import { AI_COUNTRY_PROFILES, AI_NATIONAL_GOALS, AI_ROUTE_WEIGHTS, AI_STRATEGY_WEIGHTS } from "../content/aiObjectives";
 import { recordAllyAttackClaims, shouldDeferAttackToAlly } from "./allyCoordination";
+import { buildRouteDistances, getRouteProgress, type RouteDistances } from "./pathfinding";
 
 export interface BotAction {
   unitId: string;
@@ -45,6 +46,22 @@ function clampPriority(value: number): number {
 function buildNationalGoalSet(state: GameState, countryId: CountryId): Set<string> {
   const configured = AI_NATIONAL_GOALS[countryId] ?? [];
   return new Set(configured.filter((regionId) => state.regions[regionId] !== undefined));
+}
+
+/** True when the country holds the region and no adjacent enemy can attack it. */
+function isRearRegion(state: GameState, countryId: CountryId, regionId: string): boolean {
+  const blocId = state.countries[countryId]?.blocId;
+  const region = state.regions[regionId];
+  if (!region) return false;
+
+  return !region.adjacentRegionIds.some((adjacentId) => {
+    const adjacent = state.regions[adjacentId];
+    return (
+      adjacent.controllerBlocId !== undefined &&
+      adjacent.controllerBlocId !== blocId &&
+      state.countryStates[adjacent.controllerCountryId]?.atWar === true
+    );
+  });
 }
 
 function buildNationalGoalPriorityMap(state: GameState, countryId: CountryId): Map<string, number> {
@@ -117,10 +134,12 @@ function evaluateKeyNodePriority(
 function evaluateNationalGoalPriority(
   state: GameState,
   countryId: CountryId,
+  fromRegionId: string,
   targetRegionId: string,
   orderType: "move" | "attack" | "airSupport" | "bombard" | "missileStrike",
   unresolvedNationalGoals: Set<string>,
-  nationalGoalPriorityMap: Map<string, number>
+  nationalGoalPriorityMap: Map<string, number>,
+  routeDistances: RouteDistances
 ) {
   const target = state.regions[targetRegionId];
   if (!target) return { value: 0, reasons: [] as string[] };
@@ -148,15 +167,28 @@ function evaluateNationalGoalPriority(
     reasons.push("Consolidate currently held objective belt.");
   }
 
+  if (orderType === "move" && isRearRegion(state, countryId, fromRegionId)) {
+    const progress = getRouteProgress(routeDistances, fromRegionId, targetRegionId);
+    if (progress > 0) {
+      const sourceId = routeDistances.sources.get(targetRegionId);
+      const sourcePriority = sourceId ? (nationalGoalPriorityMap.get(sourceId) ?? 55) : 55;
+      const sourceName = sourceId ? (state.regions[sourceId]?.name ?? sourceId) : "national objective";
+      value += AI_ROUTE_WEIGHTS.nationalGoalProgress * progress * (sourcePriority / 100);
+      reasons.push(`Route step closes ${progress} hop${progress === 1 ? "" : "s"} on ${sourceName}.`);
+    }
+  }
+
   return { value: clampPriority(value), reasons };
 }
 
 function evaluateAllySupportPriority(
   state: GameState,
   countryId: CountryId,
+  fromRegionId: string,
   targetRegionId: string,
   orderType: "move" | "attack" | "airSupport" | "bombard" | "missileStrike",
-  allyDefenseGoals: Set<string>
+  allyDefenseGoals: Set<string>,
+  routeDistances: RouteDistances
 ) {
   const target = state.regions[targetRegionId];
   if (!target || allyDefenseGoals.size === 0) return { value: 0, reasons: [] as string[] };
@@ -182,15 +214,29 @@ function evaluateAllySupportPriority(
     reasons.push("Break enemy pressure on allied shield objective.");
   }
 
+  if (orderType === "move" && isRearRegion(state, countryId, fromRegionId)) {
+    const progress = getRouteProgress(routeDistances, fromRegionId, targetRegionId);
+    if (progress > 0) {
+      const sourceId = routeDistances.sources.get(targetRegionId);
+      const sourceName = sourceId
+        ? (state.regions[sourceId]?.name ?? sourceId)
+        : "allied shield objective";
+      value += AI_ROUTE_WEIGHTS.allyGoalProgress * progress;
+      reasons.push(`Route step closes ${progress} hop${progress === 1 ? "" : "s"} on ${sourceName}.`);
+    }
+  }
+
   return { value: clampPriority(value), reasons };
 }
 
 function evaluateHomelandPriority(
   state: GameState,
   countryId: CountryId,
+  fromRegionId: string,
   targetRegionId: string,
   orderType: "move" | "attack" | "airSupport" | "bombard" | "missileStrike",
-  suppliedRegionIds: Set<string>
+  suppliedRegionIds: Set<string>,
+  routeDistances: RouteDistances
 ) {
   const target = state.regions[targetRegionId];
   if (!target) return { value: 0, reasons: [] as string[] };
@@ -246,7 +292,25 @@ function evaluateHomelandPriority(
     reasons.push("Break encirclement around isolated territory.");
   }
 
+  if (orderType === "move" && isRearRegion(state, countryId, fromRegionId)) {
+    const progress = getRouteProgress(routeDistances, fromRegionId, targetRegionId);
+    if (progress > 0) {
+      const sourceId = routeDistances.sources.get(targetRegionId);
+      const sourceName = sourceId
+        ? (state.regions[sourceId]?.name ?? sourceId)
+        : "lost homeland";
+      value += AI_ROUTE_WEIGHTS.homelandProgress * progress;
+      reasons.push(`Route step closes ${progress} hop${progress === 1 ? "" : "s"} on ${sourceName}.`);
+    }
+  }
+
   return { value: clampPriority(value), reasons };
+}
+
+interface StrategicRouteDistances {
+  nationalGoals: RouteDistances;
+  allyGoals: RouteDistances;
+  homeland: RouteDistances;
 }
 
 function buildStrategicAdjustment(
@@ -258,14 +322,15 @@ function buildStrategicAdjustment(
   orderType: "move" | "attack" | "airSupport" | "bombard" | "missileStrike",
   unresolvedNationalGoals: Set<string>,
   suppliedRegionIds: Set<string>,
-  nationalGoalPriorityMap: Map<string, number>
+  nationalGoalPriorityMap: Map<string, number>,
+  routeDistances: StrategicRouteDistances
 ) {
   const profile = AI_COUNTRY_PROFILES[countryId];
   const allyDefenseGoals = new Set((profile?.allyDefenseGoals ?? []).filter((regionId) => state.regions[regionId] !== undefined));
-  const homeland = evaluateHomelandPriority(state, countryId, targetRegionId, orderType, suppliedRegionIds);
+  const homeland = evaluateHomelandPriority(state, countryId, fromRegionId, targetRegionId, orderType, suppliedRegionIds, routeDistances.homeland);
   const keyNode = evaluateKeyNodePriority(state, countryId, targetRegionId, orderType);
-  const nationalGoal = evaluateNationalGoalPriority(state, countryId, targetRegionId, orderType, unresolvedNationalGoals, nationalGoalPriorityMap);
-  const allySupport = evaluateAllySupportPriority(state, countryId, targetRegionId, orderType, allyDefenseGoals);
+  const nationalGoal = evaluateNationalGoalPriority(state, countryId, fromRegionId, targetRegionId, orderType, unresolvedNationalGoals, nationalGoalPriorityMap, routeDistances.nationalGoals);
+  const allySupport = evaluateAllySupportPriority(state, countryId, fromRegionId, targetRegionId, orderType, allyDefenseGoals, routeDistances.allyGoals);
   const randomPriority = deterministicNoise(`${state.turn}|${countryId}|${unitId}|${fromRegionId}|${targetRegionId}|${orderType}`) * 100;
   const weightedPriority =
     homeland.value * AI_STRATEGY_WEIGHTS.homelandCohesion +
@@ -1055,6 +1120,20 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
   const nationalGoalPriorityMap = buildNationalGoalPriorityMap(state, countryId);
   const nationalGoalSet = buildNationalGoalSet(state, countryId);
   const unresolvedNationalGoals = getUnresolvedNationalGoals(state, countryId, nationalGoalSet);
+  const allyDefenseGoalSet = new Set(
+    (profile?.allyDefenseGoals ?? []).filter((regionId) => state.regions[regionId] !== undefined)
+  );
+  const lostHomelandRegions = new Set(
+    state.countries[countryId].startingRegionIds.filter((regionId) => {
+      const region = state.regions[regionId];
+      return region !== undefined && region.controllerCountryId !== countryId;
+    })
+  );
+  const routeDistances: StrategicRouteDistances = {
+    nationalGoals: buildRouteDistances(state, countryId, unresolvedNationalGoals),
+    allyGoals: buildRouteDistances(state, countryId, allyDefenseGoalSet),
+    homeland: buildRouteDistances(state, countryId, lostHomelandRegions),
+  };
   const countryUnits = Object.values(state.units).filter((unit) => unit.countryId === countryId);
   const frontlineData = getCountryFrontlineData(state, countryId);
   const frontlineByRegionId = new Map(frontlineData.map((entry) => [entry.regionId, entry]));
@@ -1124,7 +1203,8 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
         "airSupport",
         unresolvedNationalGoals,
         suppliedRegionIds,
-        nationalGoalPriorityMap
+        nationalGoalPriorityMap,
+        routeDistances
       );
       allCandidates.push({
         unitId: unit.id,
@@ -1158,7 +1238,8 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
         "bombard",
         unresolvedNationalGoals,
         suppliedRegionIds,
-        nationalGoalPriorityMap
+        nationalGoalPriorityMap,
+        routeDistances
       );
       allCandidates.push({
         unitId: unit.id,
@@ -1194,7 +1275,8 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
         "missileStrike",
         unresolvedNationalGoals,
         suppliedRegionIds,
-        nationalGoalPriorityMap
+        nationalGoalPriorityMap,
+        routeDistances
       );
       allCandidates.push({
         unitId: unit.id,
@@ -1246,7 +1328,8 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
           "move",
           unresolvedNationalGoals,
           suppliedRegionIds,
-          nationalGoalPriorityMap
+          nationalGoalPriorityMap,
+          routeDistances
         );
         allCandidates.push({
           unitId: unit.id,
@@ -1297,7 +1380,8 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
         "attack",
         unresolvedNationalGoals,
         suppliedRegionIds,
-        nationalGoalPriorityMap
+        nationalGoalPriorityMap,
+        routeDistances
       );
       const isDirectNationalGoal = unresolvedNationalGoals.has(targetId);
       const targetCap = Math.max(
@@ -1367,7 +1451,8 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
         "move",
         unresolvedNationalGoals,
         suppliedRegionIds,
-        nationalGoalPriorityMap
+        nationalGoalPriorityMap,
+        routeDistances
       );
       allCandidates.push({
         unitId: unit.id,
@@ -1396,6 +1481,9 @@ export function planCountryTurn(state: GameState, countryId: CountryId): BotDeci
   const assignedUnits = new Set<string>();
   for (const candidate of allCandidates) {
     if (assignedUnits.has(candidate.unitId)) continue;
+    // A negative score means every option for this unit is worse than staying
+    // put. Holding preserves the unit instead of feeding it into a lost fight.
+    if (candidate.score < 0) continue;
     if (candidate.orderType === "attack") {
       const unit = state.units[candidate.unitId];
       const allyDefer = shouldDeferAttackToAlly(

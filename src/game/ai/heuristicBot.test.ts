@@ -2,13 +2,40 @@ import { describe, expect, it } from "vitest";
 import { createInitialState } from "../state/createInitialState";
 import { evaluateWarEntryRules } from "../rules/turnEngine";
 import { getValidTargets } from "../rules/orderResolution";
+import { AI_NATIONAL_GOALS } from "../content/aiObjectives";
 import { planCountryTurn, type BotAction } from "./heuristicBot";
+import { buildRouteDistances } from "./pathfinding";
 import type { CountryId, GameState } from "../state/types";
 
 const SAMPLE_COUNTRIES: CountryId[] = ["RUSSIA", "ROMANIA", "AUSTRIA"];
 
 function fresh(countryId: CountryId = "RUSSIA"): GameState {
   return evaluateWarEntryRules(createInitialState(countryId));
+}
+
+function withController(state: GameState, regionId: string, countryId: CountryId): GameState {
+  const region = state.regions[regionId];
+  return {
+    ...state,
+    regions: {
+      ...state.regions,
+      [regionId]: {
+        ...region,
+        controllerCountryId: countryId,
+        controllerBlocId: state.countries[countryId].blocId,
+      },
+    },
+  };
+}
+
+function relocateUnit(state: GameState, unitId: string, regionId: string): GameState {
+  return { ...state, units: { ...state.units, [unitId]: { ...state.units[unitId], regionId } } };
+}
+
+function actionFor(state: GameState, countryId: CountryId, unitId: string): BotAction {
+  const action = planCountryTurn(state, countryId).actions.find((candidate) => candidate.unitId === unitId);
+  expect(action).toBeDefined();
+  return action!;
 }
 
 function legalTargets(state: GameState, action: BotAction): string[] {
@@ -94,5 +121,65 @@ describe("planCountryTurn characterization", () => {
 
     expect(action).toBeDefined();
     expect(action!.orderType).not.toBe("move");
+  });
+});
+
+describe("planCountryTurn route progress", () => {
+  it("moves a rear unit one step toward an unresolved national goal", () => {
+    let state = fresh();
+    for (const goal of AI_NATIONAL_GOALS.RUSSIA.filter((regionId) => regionId !== "vilnius")) {
+      state = withController(state, goal, "RUSSIA");
+    }
+    state = relocateUnit(state, "ru-inf-1", "saint-petersburg-neva-corridor");
+    const distances = buildRouteDistances(state, "RUSSIA", new Set(["vilnius"]));
+
+    const action = actionFor(state, "RUSSIA", "ru-inf-1");
+
+    expect(action.orderType).toBe("move");
+    expect(distances.distances.get(action.targetRegionId)!).toBeLessThan(
+      distances.distances.get("saint-petersburg-neva-corridor")!
+    );
+    expect(
+      action.reasons.some((reason) => reason.includes("National goal: Route step closes 1 hop on Vilnius."))
+    ).toBe(true);
+  });
+
+  it("moves a rear unit one step toward a lost starting region", () => {
+    let state = fresh();
+    for (const goal of AI_NATIONAL_GOALS.RUSSIA) {
+      state = withController(state, goal, "RUSSIA");
+    }
+    state = withController(state, "kaliningrad", "UKRAINE");
+    state = relocateUnit(state, "ru-inf-1", "saint-petersburg-neva-corridor");
+    const distances = buildRouteDistances(state, "RUSSIA", new Set(["kaliningrad"]));
+
+    const action = actionFor(state, "RUSSIA", "ru-inf-1");
+
+    expect(action.orderType).toBe("move");
+    expect(distances.distances.get(action.targetRegionId)!).toBeLessThan(
+      distances.distances.get("saint-petersburg-neva-corridor")!
+    );
+    expect(
+      action.reasons.some((reason) => reason.includes("Homeland cohesion: Route step closes 1 hop on Kaliningrad."))
+    ).toBe(true);
+  });
+
+  it("moves a rear unit one step toward an allied shield objective", () => {
+    let state = fresh();
+    for (const goal of AI_NATIONAL_GOALS.RUSSIA) {
+      state = withController(state, goal, "RUSSIA");
+    }
+    state = relocateUnit(state, "ru-inf-1", "nizhny-novgorod-oka-district");
+    const distances = buildRouteDistances(state, "RUSSIA", new Set(["gomel", "minsk", "brest"]));
+
+    const action = actionFor(state, "RUSSIA", "ru-inf-1");
+
+    expect(action.orderType).toBe("move");
+    expect(distances.distances.get(action.targetRegionId)!).toBeLessThan(
+      distances.distances.get("nizhny-novgorod-oka-district")!
+    );
+    expect(
+      action.reasons.some((reason) => reason.includes("Ally support: Route step closes 1 hop on Gomel."))
+    ).toBe(true);
   });
 });

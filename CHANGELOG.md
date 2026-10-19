@@ -36,6 +36,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- AI route-progress integration tests in [`heuristicBot.test.ts`](./src/game/ai/heuristicBot.test.ts):
+  a rear unit marches one hop toward an unresolved national goal (Vilnius), a lost starting region
+  (Kaliningrad) and an allied shield objective (Gomel); each asserts the emitted move reduces route
+  distance and carries the route reason. Written first and watched fail (no route scores existed).
+  (plan 2026-10-19-ai-pathfinding → Task 3)
 - AI pathfinding design [`2026-10-19-ai-pathfinding-design.md`](./docs/superpowers/specs/2026-10-19-ai-pathfinding-design.md)
   and implementation plan [`2026-10-19-ai-pathfinding.md`](./docs/superpowers/plans/2026-10-19-ai-pathfinding.md):
   a recomputed distance field over the existing transit rules so the AI can march toward distant
@@ -296,6 +301,24 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- AI route weights calibrated to 30/26/22 (`AI_ROUTE_WEIGHTS` in
+  [`aiObjectives.ts`](./src/game/content/aiObjectives.ts)) instead of the plan's 12/10/8. At the
+  plan's values the route bonus after the 0.6 strategy scaling was ~+2.2 adjustment points — inside
+  the deterministic noise band (up to 12) and below key-node staging (+10) — so none of the three
+  integration tests flipped. At 30/26/22 all three flip. Cost if wrong: route progress can outweigh
+  key-node staging; `npm run balance-check` and `npm run smoke` guard the result.
+  (plan 2026-10-19-ai-pathfinding → Task 3)
+- Route-progress bonuses only apply to moves out of a rear region (`isRearRegion`: no adjacent
+  region held by an at-war enemy). This keeps the new term strategic and stops it perturbing
+  frontline combat decisions. Cost if wrong: the AI claims no route credit for a step made under
+  fire, so its behaviour on the front is unchanged, which is acceptable.
+  (plan 2026-10-19-ai-pathfinding → Task 3)
+- Greedy assignment now holds a unit instead of accepting any candidate scored below zero. Without
+  the floor PRIDNESTROVIE's last defender suicided into a losing attack after the route changes
+  shifted Romanian/Ukrainian combat timing, so `npm run balance-check` failed (minUnits 0 while at
+  war); with it, all 24 nations pass. Cost if wrong: the AI is less aggressive in hopeless
+  situations — intended.
+  (plan 2026-10-19-ai-pathfinding → Task 3)
 - AI route BFS expands each destination one step even when the destination itself is enemy-held, so
   its friendly neighbours get distance 1; every region reached at distance > 0 must be legal transit.
   This keeps an enemy-held national goal as an attack terminal instead of a corridor.
@@ -399,6 +422,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (2026-10-19-start-screen-polish-design.md)
 
 ### Changed
+- [`heuristicBot.ts`](./src/game/ai/heuristicBot.ts): the national-goal, ally-support and homeland
+  evaluators now add route-progress value to `move` candidates from rear regions, using three
+  distance fields built once per `planCountryTurn` (`buildRouteDistances` over unresolved national
+  goals, allied shield goals and lost starting regions). Existing hard-coded focus rules and
+  one-hop scoring are unchanged, so the route term only steers units toward objectives they
+  already know about. (plan 2026-10-19-ai-pathfinding → Task 3)
 - [`orderResolution.ts`](./src/game/rules/orderResolution.ts): extracted the country-level transit
   predicate as exported `isRegionOpenForCountryTransit` with an `ignoreStacking` option;
   `isRegionOpenForTransit` delegates to it. Pure refactor, no unit movement change.
@@ -649,6 +678,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- AI route-progress scoring (Task 3): `npx tsc -p tsconfig.app.json --noEmit` and
+  `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm run build` OK; `npm run check:layers`
+  PASS; `npm test` 344/344 in 44 files; `npm run smoke` passed RUSSIA, ROMANIA and AUSTRIA;
+  `npm run balance-check` "Balance check passed"; `npm run check-war-entry` passed.
+  (plan 2026-10-19-ai-pathfinding → Task 3)
 - AI pathfinding groundwork (Tasks 1–2): `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
   `npm test -- --run` 341/341 in 44 files, `npm run smoke` passed for RUSSIA, ROMANIA and AUSTRIA,
   `npm run balance-check` passed for all 24 nations. No AI behavior changed.

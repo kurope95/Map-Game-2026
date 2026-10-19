@@ -7,6 +7,13 @@ export const AI_STRATEGY_WEIGHTS = {
   randomness: 0.2,
 } as const;
 
+export const AI_ROUTE_WEIGHTS = {
+  nationalGoalProgress: 30,
+  allyGoalProgress: 26,
+  homelandProgress: 22,
+  maxMarchDistance: 6,
+} as const;
+
 export interface AiCountryProfile {
   allyDefenseGoals?: string[];
   primaryObjectiveBonus?: number;
