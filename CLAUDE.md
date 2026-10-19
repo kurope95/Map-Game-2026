@@ -38,6 +38,8 @@ Two checks run in the browser rather than in Node:
   panels through the UI and records 20 probed containers); the result is diffed against
   `docs/superpowers/baselines/layout-<width>x<height>.json` with
   `node scripts/layout/compare-layout.mjs <baseline> <capture>`, which must print `Layout lock: PASS`.
+  Baselines exist for 1440x900, 1920x1080 and 1366x768. The capture also records horizontal overflow, and
+  the comparison fails when any container reaches more than 4 px past the window's right edge.
 - **Pan/zoom benchmark (C2):** `scripts/perf/pan-zoom-bench.js` is evaluated in the page, drives 180
   scripted pointer frames plus 20 wheel steps and returns frame times, React map renders and the idle
   frame interval. It only measures while the browser pane is visible.

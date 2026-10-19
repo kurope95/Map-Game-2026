@@ -38,6 +38,12 @@ export function compareLayout(baseline, candidate) {
     failures.push(`viewport: ${bv.width}x${bv.height} -> ${cv.width}x${cv.height}`);
   }
 
+  // Content wider than the window is cut off at the right edge, whatever the baseline says. The capture
+  // records scrollWidth - clientWidth per container; older captures have no such field.
+  for (const [name, overflow] of Object.entries(candidate.overflow ?? {})) {
+    if (overflow > TOLERANCE_PX) failures.push(`overflow.${name}: content is ${Math.round(overflow)} px wider than the window`);
+  }
+
   for (const name of baseline.missing ?? []) {
     failures.push(`${name}: missing in baseline`);
   }

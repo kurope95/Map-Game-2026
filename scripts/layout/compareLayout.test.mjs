@@ -51,6 +51,21 @@ describe("compareLayout", () => {
     const other = structuredClone(base); other.viewport = { width: 1920, height: 1080 };
     expect(compareLayout(base, other).failures).toContain("viewport: 1440x900 -> 1920x1080");
   });
+  it("fails a capture whose content is wider than the window, whatever the baseline says", () => {
+    const wide = structuredClone(base); wide.overflow = { document: 0, shell: 40, "top-bar": 40, "map-stage": 40, "bottom-bar": 0 };
+    const r = compareLayout(base, wide);
+    expect(r.ok).toBe(false);
+    expect(r.failures).toEqual([
+      "overflow.shell: content is 40 px wider than the window",
+      "overflow.top-bar: content is 40 px wider than the window",
+      "overflow.map-stage: content is 40 px wider than the window",
+    ]);
+  });
+  it("tolerates overflow of up to 4 px and captures without overflow data", () => {
+    const fits = structuredClone(base); fits.overflow = { document: 0, shell: 4, "top-bar": 0, "map-stage": 0, "bottom-bar": 0 };
+    expect(compareLayout(base, fits).ok).toBe(true);
+    expect(compareLayout(base, structuredClone(base)).ok).toBe(true); // older captures have no overflow field
+  });
   it("knows which fields each probe compares", () => {
     expect(PROBE_FIELDS["panel-region"]).toEqual({ fields: ["left", "bottom"] });
     expect(PROBE_FIELDS["top-bar"]).toEqual({ fields: ["left", "top", "width", "height"], items: true });

@@ -36,6 +36,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- The layout lock now catches this class of bug. [`capture-layout.js`](./scripts/layout/capture-layout.js)
+  records how far the document, the game shell, the top bar, the map stage and the bottom bar reach past the
+  window's right edge, [`compareLayout.mjs`](./scripts/layout/compareLayout.mjs) fails any capture over its
+  4 px tolerance whatever the baseline says (two tests, written first and seen failing), and a third baseline,
+  [`layout-1366x768.json`](./docs/superpowers/baselines/layout-1366x768.json), covers a common laptop width.
+  Before the fix the capture at 1366x768 reported 41 px of overflow on the shell, the top bar, the map stage
+  and the bottom bar; after it, 0.
 - Pin test for the AI's doctrine order in [`aiEconomyTurn.test.ts`](./src/game/ai/aiEconomyTurn.test.ts):
   with exactly a doctrine plus the 10-point reserve in trade points the AI buys the doctrine and queues no
   civilian factory, and with trade points to spare the same economy does queue the factory (the control
@@ -873,6 +880,16 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [showcase.ts](./src/ui/map/render/layers/showcase.ts)
 
 ### Fixed
+- The right side of the main screen was cut off on windows narrower than about 1410 px (Marek's
+  screenshot, 2026-10-19). The top bar's minimum width (all its stats and buttons side by side: 1406 px for
+  Russia, more for longer nation names) stretched the grid's implicit column, so the map, its `+` `−` Reset
+  controls, the unit drawer and the bottom bar were all laid out wider than the window and clipped at its
+  right edge, and the Save and Load icons fell off the bar. [`GameScreen.css`](./src/ui/screens/game/GameScreen.css)
+  now fixes the column to `minmax(0, 1fr)`; [`TopBar.tsx`](./src/ui/hud/TopBar.tsx) puts the readouts and the
+  actions in two groups and [`TopBar.css`](./src/ui/hud/TopBar.css) lets the bar wrap, so the action group drops
+  to a second row (right-aligned) when the window is too narrow for both. Below 1700 px the bar also drops its
+  dividers and tightens its gaps, so it stays on one row down to about 1210 px for Russia and about 1380 px
+  for Bosnia and Herzegovina. Item order, rows and anchors are unchanged and the layout lock still passes.
 - The attack preview no longer calls a fort-bound assault a victory. After the independent review
   ([`combatEstimate.ts`](./src/game/rules/combatEstimate.ts), [`tooltip.ts`](./src/ui/map/tooltip.ts)):
   the estimate now reports the fort's health after the assault and whether it holds, and a capture chance
@@ -927,6 +944,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- Right-edge cut-off fix: `npx tsc -p tsconfig.app.json --noEmit` and `npx tsc -p tsconfig.scripts.json
+  --noEmit` 0 errors; `npm test` 454/454 in 54 files; `npm run check:layers` PASS; `npm run build` OK.
+  Browser (dev build, emulated windows): 41 px of overflow at 1366x768 before the fix and 0 after. For Russia
+  the bar stays one row (36 px) at 1280x720, 1366x768 and 1440x900; for Bosnia and Herzegovina, the longest
+  name, it stays one row at 1440 and 1536 and wraps to two rows (actions right-aligned, nothing cut) at 1366;
+  at 1100 it wraps to two rows; at none of these does anything pass the right edge. `Layout lock: PASS`
+  against the 1440x900 and 1920x1080 baselines and the new 1366x768 one.
 - Rules follow-up to the batch review (feature batch report → "Still open"): `npx tsc -p
   tsconfig.app.json --noEmit` and `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm test` 452/452
   in 54 files (22 new; the replenish, refund and label tests were written first and seen failing, and the

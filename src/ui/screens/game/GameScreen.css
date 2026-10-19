@@ -7,6 +7,9 @@
   width: 100vw;
   height: 100vh;
   display: grid;
+  /* A plain implicit column would grow to the widest item's minimum width (the top bar's), pushing the
+     map, its controls and the bottom bar past the right edge of the window. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto 1fr auto;
   overflow: hidden;
 }

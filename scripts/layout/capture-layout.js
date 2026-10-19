@@ -11,7 +11,9 @@
 //   { viewport: {width, height},
 //     probes: { [name]: { rect: {left, top, right, bottom, width, height, centerX, centerY},
 //                         items?: [{key, centerY}] } },
-//     missing: string[] }
+//     missing: string[],
+//     overflow: { document, shell, "top-bar", "map-stage", "bottom-bar": number } }   (px of content or
+//                 container past the window's right edge; compareLayout fails anything above 4 px)
 //
 // Convention for new code: put data-layout="<probe name>" on every probed element,
 // data-layout-key="<key>" on every top-bar and bottom-bar control and on the map controls, and
@@ -183,5 +185,22 @@
   // Back to the initial screen.
   if (regionOpenAtStart) await tab("region");
 
-  return { viewport: { width: window.innerWidth, height: window.innerHeight }, probes, missing };
+  // Horizontal overflow: how far a container's content reaches past its own box (scrollWidth -
+  // clientWidth) or the container itself past the window's right edge. Anything above the tolerance
+  // means the right edge of the screen is cut off at this window width.
+  const overflowOf = (el) => {
+    if (!el) return 0;
+    const pastBox = el.scrollWidth - el.clientWidth;
+    const pastWindow = el.getBoundingClientRect().right - window.innerWidth;
+    return Math.max(0, Math.round(Math.max(pastBox, pastWindow)));
+  };
+  const overflow = {
+    document: overflowOf(document.documentElement),
+    shell: overflowOf(q(".game-shell")),
+    "top-bar": overflowOf(finders["top-bar"]()),
+    "map-stage": overflowOf(finders["map-stage"]()),
+    "bottom-bar": overflowOf(finders["bottom-bar"]()),
+  };
+
+  return { viewport: { width: window.innerWidth, height: window.innerHeight }, probes, missing, overflow };
 })()

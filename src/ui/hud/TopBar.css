@@ -2,14 +2,30 @@
 
 .top-bar {
   display: flex;
+  /* Never run past the right edge: when the readouts and the actions do not fit side by side, the
+     action group drops to a second row (right-aligned) and the bar grows to two rows. */
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  height: 36px;
+  gap: 2px 6px;
+  min-height: 36px;
   padding: 4px 10px;
   background: #14181c;
   border-bottom: 1px solid var(--gold);
   z-index: 10;
   user-select: none;
+}
+
+/* Readouts on the left, actions on the right. Each group keeps its items on one row until even the
+   group alone is wider than the window. */
+.top-bar__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+}
+
+.top-bar__group--actions {
+  margin-left: auto;
 }
 
 .top-bar__brand {
@@ -131,4 +147,26 @@
 .top-bar__stat--active .top-bar__stat-value,
 .top-bar__stat--active .top-bar__stat-label {
   color: var(--gold-bright);
+}
+
+/* On windows narrower than 1700 px the bar tightens up (no dividers, smaller gaps, narrower select and
+   buttons) so it still fits on one row at common laptop widths such as 1366 and 1536 px, even for a long
+   nation name such as Bosnia and Herzegovina. Wider windows keep the roomy layout of the layout lock. */
+@media (max-width: 1699px) {
+  .top-bar,
+  .top-bar__group {
+    column-gap: 4px;
+  }
+
+  .top-bar__divider {
+    display: none;
+  }
+
+  .top-bar__select {
+    max-width: 120px;
+  }
+
+  .top-bar .btn {
+    padding: 3px 7px;
+  }
 }
