@@ -1,7 +1,8 @@
 # AI pathfinding — design
 
 Date: 2026-10-19
-Status: **design only. No AI behavior has changed yet.**
+Status: **implemented (Tasks 1–5 of the plan).** All stages below are in `main`; measured results and
+the resolved open questions are recorded under "Implementation status" at the end.
 The implementation plan is [`2026-10-19-ai-pathfinding.md`](../plans/2026-10-19-ai-pathfinding.md).
 
 ## The problem
@@ -141,11 +142,14 @@ Each evaluator gains `fromRegionId` (it already receives `targetRegionId`) and t
 The bonus is **added to**, not substituted for, the existing direct/adjacent values:
 
 - National goal move that reduces distance: `AI_ROUTE_WEIGHTS.nationalGoalProgress`
-  (default 12), scaled by goal priority / 100.
-- Ally goal move that reduces distance: 10.
-- Homeland move that reduces distance: 8.
+  (implemented 30), scaled by goal priority / 100.
+- Ally goal move that reduces distance: 26.
+- Homeland move that reduces distance: 22.
 - A move that increases distance gets no bonus (and no penalty in version 1; the existing
   destination score already discourages bad moves).
+- The plan's proposed 12/10/8 were raised during Task 3: after the 0.6 strategy scaling and against
+  deterministic noise up to 12, they produced a ~2-point adjustment that never flipped a candidate.
+
 
 The route weights live in `aiObjectives.ts` next to `AI_STRATEGY_WEIGHTS`, so tuning is visible in
 one place.
@@ -165,12 +169,15 @@ region (`targetFront`), i.e. adjacent to the unit. Add a second branch for surpl
 - Keep the existing `sourceDeficit` and supply penalties. A march is a move, so all existing move
   filters apply.
 
-### Primary-objective staging (stage 4, optional)
+### Primary-objective staging (stage 4, implemented)
 
-If balance allows, surplus units with no defensive or reinforcement candidate can march toward a
-friendly staging region adjacent to the primary objective, capped at
-`primaryObjectiveAttackCap` units. This makes attacks mass instead of trickling in. It is a separate
-stage because it changes offense more than the other stages.
+A surplus unit with no attack, adjacent-reinforcement or march candidate marches toward the staging
+line of the primary objective: the objective itself when own-controlled, plus every adjacent region
+that is open to transit and controlled by the country or by a country already at war. Neutral allied
+territory is excluded even where movement is legal, because attacks launched from it are blocked.
+The score is `primaryStagingBase (24) + primaryObjectiveBonus * 0.2 - distance * 6`, and assignment
+is capped at `primaryObjectiveAttackCap` units (minimum 3). This makes attacks mass instead of
+trickling in.
 
 ## Hard-coded rules that must survive
 
@@ -196,7 +203,7 @@ Pathfinding only adds an intermediate-hop gradient and (in stage 3) march candid
 | Full region blocks the shortest step | Distances ignore stacking; `getValidTargets` filters the emitted move. The unit may step sideways or hold instead; never an invalid order. |
 | Units stranded in a non-belligerent ally | Moves into an allied host are legal, but attacks from it require the host to be at war. Staging candidates should prefer own-controlled regions; if the only staging region is an allied non-belligerent, do not march there for an attack. |
 | Supply attrition on long routes | Existing supply penalties stay; `criticallyUnsupplied` units may only move into supplied regions. Stage 3 adds no exemption. |
-| Double-counting with the existing one-hop approach bonus | The existing direct/adjacent values are terminal values; the progress bonus is small (8–12) and additive. A unit one hop from the goal still gets the larger existing bonus. |
+| Double-counting with the existing one-hop approach bonus | The existing direct/adjacent values are terminal values; the progress bonus (22–30 raw, scaled by 0.6) is additive. A unit one hop from the goal still gets the larger existing bonus. |
 | Balance regression | Required gates after every stage: `npm run smoke`, `npm run balance-check`, and `npm run check-war-entry` (war timing can shift). |
 | Determinism / flaky smoke | `smoke` does not seed combat or `Math.random`; compare balance-check (seeded) for reproducibility and treat smoke as a crash/flow check. Do not add new randomness to the route layer. |
 | Performance | One BFS per objective set per country per turn: at most five 103-node traversals, ~500 node visits, shared across every candidate. No per-candidate BFS. |
@@ -213,17 +220,21 @@ Pathfinding only adds an intermediate-hop gradient and (in stage 3) march candid
   scoring; that is a separate, smaller improvement.
 - It does not change player movement rules, combat, supply or diplomacy.
 
-## Open questions for Marek
+## Open questions for Marek (version 1 defaults)
 
 1. **March radius:** 6 hops is the proposed cap for reinforcement marches. Larger makes the AI
    respond across the whole country; smaller keeps it local. Which feels right?
+   *Implemented as 6 (`AI_ROUTE_WEIGHTS.maxMarchDistance`, measured at the destination).*
 2. **Staging in allied territory:** the rules allow movement but not attacks from a non-belligerent
    ally. Should the AI ever stage there (and wait for the ally to enter the war), or only on its own
-   soil?
+   soil? *Implemented: only own-controlled regions or regions held by a country already at war;
+   neutral allies are skipped. Ordinary moves into allied territory are unchanged.*
 3. **Primary-objective staging:** is massing units before an attack wanted, or should the AI keep
-   attacking with whatever is adjacent?
+   attacking with whatever is adjacent? *Implemented: massing is on, capped at
+   `primaryObjectiveAttackCap` (Russia 5, Novorossia 4, minimum 3).*
 4. **Route memory:** should a unit remember its destination between turns? It reduces oscillation
    but adds a field to `UnitDefinition` and to saves. Recommendation: no for version 1.
+   *Implemented: no stored route; every turn recomputes the distance fields.*
 
 ## Verification plan
 
@@ -234,3 +245,31 @@ Pathfinding only adds an intermediate-hop gradient and (in stage 3) march candid
 - `npx tsc -p tsconfig.app.json --noEmit`, `npm test`, `npm run smoke`,
   `npm run balance-check`, `npm run check-war-entry`.
 - Browser check of the AI recommendation tab (it calls the same `planCountryTurn`).
+
+## Implementation status (2026-10-19)
+
+Implemented in `main` as five commits:
+
+| Task | Commit | What changed |
+|---|---|---|
+| 1 | `55d4aef` | Characterization tests pinning the current `planCountryTurn` behavior |
+| 2 | `f7a8da5` | `pathfinding.ts` route fields and shared `isRegionOpenForCountryTransit` |
+| 3 | `6d6d7e6` | Route-progress scoring in the national-goal, ally-support and homeland evaluators; weights 30/26/22 |
+| 4 | `68edf80` | Multi-hop reinforcement marches toward threatened fronts, radius 6 |
+| 5 | `72b1fa0` | Primary-objective staging, capped at `primaryObjectiveAttackCap` |
+
+Measured results:
+
+- `npm test`: 348 tests in 44 files pass; the AI suite includes the characterization, route,
+  march and staging scenarios (18 tests in [`heuristicBot.test.ts`](../../../src/game/ai/heuristicBot.test.ts)).
+- `npm run smoke` passes for RUSSIA, ROMANIA and AUSTRIA; `npm run balance-check` passes for all
+  24 nations; `npm run check-war-entry` passes; the type checks, `npm run build` and
+  `npm run check:layers` pass.
+- Browser check in headless Chrome at 1440x900: starting as Russia and opening the AI Intel tab
+  computes the recommendation without errors and shows scored moves (`Warsaw ← bombard 156`,
+  `Minsk ← move 60`, `Tallinn ← airSupport 43`, holds at 0). The panel renders actions and scores
+  but not `BotAction.reasons`, so the route reason strings themselves are asserted by unit tests,
+  not in the panel. The pan/zoom benchmark reports `mapRenders: 0` across three runs
+  (avg 59.8–59.9 ms, p95 66.7–66.8 ms in this headless, `--disable-gpu`, 60 Hz pane), confirming
+  pan and zoom never re-render the map through React. These absolute frame times are not comparable
+  to [`perf-legacy.md`](../baselines/perf-legacy.md), which used a GPU-enabled 120 Hz environment.

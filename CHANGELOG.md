@@ -326,6 +326,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- The AI Intel panel renders each action's target, order and score but not `BotAction.reasons`, so
+  the browser check verifies that recommendations compute and render, while the route and march
+  reason strings are pinned by unit tests instead. Cost if wrong: the reason lines exist in the
+  engine but are still not visible to the player in that panel.
+  (plan 2026-10-19-ai-pathfinding → Task 6)
 - Staging candidates score by the target's distance to the staging line, not by the unit's own
   distance (same destination-distance reading as the march radius). Cost if wrong: the score decays
   with the remaining route, which is the intended pull toward the staging line.
@@ -728,6 +733,15 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- AI pathfinding final verification (Task 6): `npx tsc -p tsconfig.app.json --noEmit` and
+  `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm run build` OK; `npm run check:layers`
+  PASS; `npm test` 348/348 in 44 files; `npm run smoke` passed RUSSIA, ROMANIA and AUSTRIA;
+  `npm run balance-check` "Balance check passed"; `npm run check-war-entry` passed. Headless Chrome
+  at 1440x900: Start as Russia opens the game, the AI Intel tab computes and renders the
+  recommendation (Warsaw bombard 156, Minsk move 60, Tallinn airSupport 43, holds 0), and the
+  pan/zoom benchmark returned `mapRenders: 0` in three runs (avg 59.75/59.83/59.91 ms,
+  p95 66.7/66.7/66.8 ms; idle 16.7 ms; `--disable-gpu`, so absolute times are not comparable to
+  `perf-legacy.md`). (plan 2026-10-19-ai-pathfinding → Task 6)
 - AI primary-objective staging (Task 5): `npx tsc -p tsconfig.app.json --noEmit` and
   `npx tsc -p tsconfig.scripts.json --noEmit` 0 errors; `npm run build` OK; `npm run check:layers`
   PASS; `npm test` 348/348 in 44 files; `npm run smoke` passed RUSSIA, ROMANIA and AUSTRIA;
