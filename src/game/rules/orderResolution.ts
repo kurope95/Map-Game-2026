@@ -176,21 +176,36 @@ function countryHasDoctrine(state: GameState, countryId: CountryId, doctrineId: 
   return state.doctrineUpgrades?.[countryId]?.includes(doctrineId) ?? false;
 }
 
-function isRegionOpenForTransit(state: GameState, unit: UnitDefinition, targetRegionId: string): boolean {
-  const targetRegion = state.regions[targetRegionId];
-  if (!targetRegion) return false;
-  if (isNeutralMoldovaClosed(state, targetRegionId)) return false;
+function countBlocUnitsInRegion(state: GameState, regionId: string, blocId: BlocId | undefined): number {
+  return Object.values(state.units).filter(
+    (unit) => unit.regionId === regionId && unit.blocId === blocId
+  ).length;
+}
 
-  if (targetRegion.controllerCountryId === unit.countryId) {
+/**
+ * Country-level transit rule. `ignoreStacking` lets the AI pathfinder treat a
+ * full region as a temporary local obstacle instead of a permanent wall.
+ */
+export function isRegionOpenForCountryTransit(
+  state: GameState,
+  countryId: CountryId,
+  blocId: BlocId | undefined,
+  regionId: string,
+  options?: { ignoreStacking?: boolean }
+): boolean {
+  const targetRegion = state.regions[regionId];
+  if (!targetRegion) return false;
+  if (isNeutralMoldovaClosed(state, regionId)) return false;
+
+  if (targetRegion.controllerCountryId === countryId) {
     // Check stacking limit for own regions
-    const friendlyCount = Object.values(state.units).filter(
-      u => u.regionId === targetRegionId && u.blocId === unit.blocId
-    ).length;
-    if (friendlyCount >= MAX_UNITS_PER_REGION) return false;
+    if (!options?.ignoreStacking && countBlocUnitsInRegion(state, regionId, blocId) >= MAX_UNITS_PER_REGION) {
+      return false;
+    }
     return true;
   }
 
-  if (targetRegion.controllerBlocId !== unit.blocId) {
+  if (targetRegion.controllerBlocId !== blocId) {
     return false;
   }
 
@@ -198,16 +213,19 @@ function isRegionOpenForTransit(state: GameState, unit: UnitDefinition, targetRe
   if (!targetCountry) return false;
 
   // Check stacking limit for allied regions
-  const friendlyCount = Object.values(state.units).filter(
-    u => u.regionId === targetRegionId && u.blocId === unit.blocId
-  ).length;
-  if (friendlyCount >= MAX_UNITS_PER_REGION) return false;
+  if (!options?.ignoreStacking && countBlocUnitsInRegion(state, regionId, blocId) >= MAX_UNITS_PER_REGION) {
+    return false;
+  }
 
   if (targetCountry.alignment === "neutral") {
-    return canBlocUseTransit(state, unit.blocId, targetCountry.id);
+    return canBlocUseTransit(state, blocId, targetCountry.id);
   }
 
   return true;
+}
+
+function isRegionOpenForTransit(state: GameState, unit: UnitDefinition, targetRegionId: string): boolean {
+  return isRegionOpenForCountryTransit(state, unit.countryId, unit.blocId, targetRegionId);
 }
 
 function canLaunchAttackFrom(state: GameState, unit: UnitDefinition): boolean {

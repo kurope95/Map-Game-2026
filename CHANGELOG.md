@@ -48,6 +48,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   pins the ally claim ledger, the 1.5× deferral threshold and same-country accumulation. These
   describe current behavior so the route stages can change scores without silently changing rules.
   (plan 2026-10-19-ai-pathfinding → Task 1)
+- AI route-distance field [`pathfinding.ts`](./src/game/ai/pathfinding.ts): multi-source BFS over the
+  existing land-transit rule (`buildRouteDistances`, `getRouteDistance`, `getRouteProgress`). Enemy-held
+  destinations are attack terminals, stacking is ignored until a move is emitted, and Moldova stays
+  closed while neutral. Tests cover the real 103-region map, an enemy border, BFS invariants and the
+  progress sign.
+  (plan 2026-10-19-ai-pathfinding → Task 2)
 - Standalone git repo pushed to https://github.com/kurope95/Map-Game-2026: `legacy` branch freezes
   the pre-improvement game, `main` carries all improvements. Added [`.gitignore`](./.gitignore)
   (node_modules, dist, .tmp-check, local settings) and [`.gitattributes`](./.gitattributes)
@@ -290,6 +296,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjacency was changed and no stage is approved.**
 
 ### Decision
+- AI route BFS expands each destination one step even when the destination itself is enemy-held, so
+  its friendly neighbours get distance 1; every region reached at distance > 0 must be legal transit.
+  This keeps an enemy-held national goal as an attack terminal instead of a corridor.
+  (plan 2026-10-19-ai-pathfinding → Task 2)
 - Task 27 (map labels and extras), choices where the spec or plan left room (plan 2026-10-18-visual-overhaul → Task 27):
   deposit chips sit above the city marker (plan: 16 px above), not below as spec 11.4 #15 words it, because the counters
   occupy the space under the city; nation names are drawn beneath the link network, markers and counters (not on top
@@ -389,6 +399,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (2026-10-19-start-screen-polish-design.md)
 
 ### Changed
+- [`orderResolution.ts`](./src/game/rules/orderResolution.ts): extracted the country-level transit
+  predicate as exported `isRegionOpenForCountryTransit` with an `ignoreStacking` option;
+  `isRegionOpenForTransit` delegates to it. Pure refactor, no unit movement change.
+  (plan 2026-10-19-ai-pathfinding → Task 2)
 - This changelog's planning links now point at `CLAUDE.md` and `docs/superpowers/`; the earlier
   entries are filed under the `0.1.0` legacy release below.
 - Map points moved verbatim from `src/ui/mapLayout.ts` to
@@ -635,6 +649,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never called, so no behavior is lost with it. (plan 2026-10-18-visual-overhaul → Task 28)
 
 ### Verified
+- AI pathfinding groundwork (Tasks 1–2): `npx tsc -p tsconfig.app.json --noEmit` 0 errors,
+  `npm test -- --run` 341/341 in 44 files, `npm run smoke` passed for RUSSIA, ROMANIA and AUSTRIA,
+  `npm run balance-check` passed for all 24 nations. No AI behavior changed.
+  (plan 2026-10-19-ai-pathfinding → Tasks 1–2)
 - Task 29 start screen, checked in headless Chrome at 1440x900 and 1920x1080: 24 cards in columns of
   6/11/7, Start as Russia enters the game, hovering Austria switches the showcase highlight, End Turn
   writes the autosave, reloading shows "Continue · Russia, turn 2" (resumes on turn 2), and Load game
